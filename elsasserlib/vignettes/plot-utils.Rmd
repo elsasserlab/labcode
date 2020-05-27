@@ -1,0 +1,124 @@
+---
+title: "Using plot themes"
+author: "Carmen Navarro"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{plot-utils}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteDepends{elsasserlib}
+  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+```{r setup}
+library(elsasserlib)
+library(ggplot2)
+library(scales)
+```
+
+## Summary
+
+This is a brief documentation on how to use the plot themes included in the
+package. The idea is that this can help us keep a consistent *look and feel* 
+when getting plots ready for publication. The most relevant need that triggered
+this was that we need pretty huge font sizes for the print panel version of the
+plots.
+
+## Example
+
+So as an example let's take the usual `iris` dataset and plot it normally using
+ggplot:
+
+```{r fig.width=7, fig.height=7} 
+normal.plot <- ggplot(iris, aes(x=Sepal.Width, y=Sepal.Length)) + 
+  geom_point() + 
+  ggtitle("Your usual default ggplot scatterplot")
+
+normal.plot
+```
+
+You can modify the default behavior in your plot by adding one of the available
+themes there are.
+
+```{r fig.width=7, fig.height=7} 
+normal.plot + 
+  ggtitle("Different looks for same plot") +
+  theme_elsasserlab_screen()
+
+```
+
+Just some tweaking to the looks of the plot, because I like more minimalistic
+plots. If you want to use the `print` version, you just need to call `theme_elsasserlab_print()`
+after:
+
+```{r fig.width=7, fig.height=7} 
+normal.plot + 
+  ggtitle("Large fonts") +
+  theme_elsasserlab_print()
+
+```
+
+## Customizing base themes
+
+You can use the parameter `base_size` to tune the size of things in both screen
+and print plots.
+
+```{r fig.width=7, fig.height=7}
+
+# Same plot with slightly less huge fonts
+normal.plot + 
+  ggtitle("Not-so-large fonts") +
+  theme_elsasserlab_print(base_size=18)
+
+```
+
+In general, it's pretty simple and works as any `ggplot2` operation. You can
+still override specifics if you need. Say that you want to rotate axis labels
+because you have long text there.
+
+
+```{r fig.width=7, fig.height=7}
+normal.plot + 
+  ggtitle("Back to screen theme + rotated axis labels") +
+  theme_elsasserlab_screen() +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+```
+
+## Custom palette
+
+This is something I did for myself because I did not quite like the colorsets
+for qualitative datasets I found. So I manually picked a few that I think play
+nice together and can be fairly distinguishable from each other.
+
+`palette_categorical(n)` will give you a list of up to 12 colors for categorical
+data. If you ask for more than n though, it will provide something very similar
+to default ggplot hue scale.
+
+```{r fig.width=7, fig.height=7}
+categorical.plot <- ggplot(iris, aes(x=Sepal.Length, y=Sepal.Width, color=Species)) +
+  geom_point() +
+  theme_elsasserlab_screen() +
+  scale_color_manual(values=palette_categorical(3))
+
+categorical.plot
+```
+
+These are the colors included:
+```{r fig.width=7, fig.height=7}
+show_col(palette_categorical(12))
+```
+
