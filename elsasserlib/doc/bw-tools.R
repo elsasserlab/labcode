@@ -56,7 +56,7 @@ table(as.factor(loci$name))
 summary.score <- bw_bed(bw.file, bed.file, per.locus.stat = "mean", aggregate.by = mean)
 
 # We get a GRanges object which one score per locus
-head(summary.score)
+summary.score
 
 ## -----------------------------------------------------------------------------
 # We intersect these two files, but this time we summarize by median
@@ -67,6 +67,13 @@ median.score <- bw_bed(bw.file,
 
 # We get a GRanges object which one score group of loci
 median.score
+
+## -----------------------------------------------------------------------------
+ggplot(summary.score, aes(x=name, y=score, fill=name)) + 
+  geom_bar(stat='identity') + 
+  ylab('Mean coverage') +
+  xlab('ChromHMM7 (subsampled)') +
+  theme_elsasserlab_screen()
 
 ## ----results = "asis"---------------------------------------------------------
 print(?bw_bins)

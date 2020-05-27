@@ -1,5 +1,7 @@
 ---
 title: "BigWig tools"
+author: "Carmen Navarro"
+date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
     theme: cayman
@@ -107,8 +109,9 @@ head(summary.score)
 ```
 
 Note the `per.locus.stat` parameter is a parameter that is passed to `rtracklayer`.
-They provide functionality to calculate min, max, mean, sd and coverage, but I
-am not sure what the results for coverage are, so I would recommend using mean.
+They provide functionality to calculate min, max, mean, sd and coverage, but the
+meaning of coverage results is not clear to me, so I would recommend using mean,
+which is the actual mean of the coverage calculated in the analysed bin.
 
 When intersecting a `BED` file with a `BigWig` file, sometimes we have a `name`
 field that has some category, for instance:
@@ -128,7 +131,7 @@ be done with the same function:
 summary.score <- bw_bed(bw.file, bed.file, per.locus.stat = "mean", aggregate.by = mean)
 
 # We get a GRanges object which one score per locus
-head(summary.score)
+summary.score
 ```
 
 Note the difference between `per.locus.stats`, which aggregates data within a 
@@ -146,6 +149,17 @@ median.score <- bw_bed(bw.file,
 
 # We get a GRanges object which one score group of loci
 median.score
+```
+
+With this info you could already have an idea of which loci groups have more
+coverage than others:
+
+```{r} 
+ggplot(summary.score, aes(x=name, y=score, fill=name)) + 
+  geom_bar(stat='identity') + 
+  ylab('Mean coverage') +
+  xlab('ChromHMM7 (subsampled)') +
+  theme_elsasserlab_screen()
 ```
 
 ## Computing binned values on several bigWig files
