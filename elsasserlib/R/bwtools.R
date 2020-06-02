@@ -4,15 +4,67 @@
 #' Build a binned-scored GRanges object from a bigWig file. The aggregating
 #' function can be min, max, sd, mean.
 #'
-#' @param bwfile BigWig file to be summarized.
-#' @param stat Aggregating function. Mean by default. Choices: min, max, sd, mean.
+#' @param bwfile BigWig file to be summarized (or list)
+#' @param colnames List of names to give to the mcols of the returned GRanges object
+#' @param stat Aggregating function (per locus). Mean by default. Choices: min, max, sd, mean.
 #' @param bsize Bin size. Default 10000.
 #' @param genome Genome. Available choices are mm9, hg38.
+#' @return A GenomicRanges object with each bwfile as a metadata column named after colnames.
 #' @export
-#' @importFrom rtracklayer BigWigFile
-bw_bins <- function(bwfile, stat='mean', bsize=10000, genome='mm9') {
+bw_bins <- function(bwfiles, colnames, stat='mean', bsize=10000, genome='mm9') {
   tiles <- build_bins(bsize=bsize, genome=genome)
-  bw_ranges(bwfile, tiles, per.locus.stat=stat)
+  multi_bw_ranges(bwfiles, colnames, tiles, per.locus.stat=stat)
+}
+
+#' Intersect a list of bw files with a GRanges object
+#'
+#' Build a binned-scored GRanges object from a list of bigWig files. The aggregating
+#' function can be min, max, sd, mean.
+#'
+#' @param bwfilelist BigWig file to be summarized.
+#' @param col.names Names to be assigned to the columns
+#' @param gr GRanges object to intersect
+#' @param stat Aggregating function per stat
+#' @importFrom GenomicRanges makeGRangesFromDataFrame
+multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
+  summaries <- purrr::map(bwfilelist, bw_ranges, gr=gr, per.locus.stat=per.locus.stat)
+  with.names <- purrr::map2(summaries, colnames, rename_score)
+  df.fg <- Reduce(function(...) merge(..., all=TRUE), with.names)
+  if (length(bwfilelist) > 1) {
+    df.fg <- df.fg %>% dplyr::arrange(seqnames, start)
+  }
+
+  makeGRangesFromDataFrame(df.fg, keep.extra.columns = T)
+}
+
+
+multi_bw_bed <- function(bwfiles, colnames, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
+  bed <- import(bedfile)
+  result <- multi_bw_ranges(bwfiles, colnames, gr=bed, per.locus.stat=per.locus.stat)
+  # summaries <- purrr::map(bwfiles, bw_ranges, gr=bed, per.locus.stat=per.locus.stat)
+  # with.names <- purrr::map2(summaries, colnames, rename_score)
+  # result <- Reduce(function(...) merge(..., all=TRUE), with.names)
+  if (! is.null(aggregate.by)) {
+    if ( 'name' %in% names(mcols(bed)) ) {
+      result$name <- bed$name
+    }
+    print(colnames)
+    print(result)
+    df <- aggregate_scores(result, group.col='name', aggregate.by=aggregate.by)
+    result <- df
+  }
+
+  result
+}
+
+
+#' Rename score function of a GRanges object
+#'
+#' @param gr GRanges object
+#' @param new.name Name to give to the column.
+rename_score <- function(gr, new.name) {
+  colnames(mcols(gr)) <- replace(colnames(mcols(gr)), colnames(mcols(gr))=='score', new.name)
+  gr
 }
 
 #' Build a bins GRanges object.
@@ -80,10 +132,10 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
 bw_bed <- function(bwfile, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
   bed <- import(bedfile)
   result <- bw_ranges(bwfile, bed, per.locus.stat=per.locus.stat)
+  if ( 'name' %in% names(mcols(bed)) ) {
+    result$name <- bed$name
+  }
   if (! is.null(aggregate.by)) {
-    if ( 'name' %in% names(mcols(bed)) ) {
-      result$name <- bed$name
-    }
     df <- aggregate_scores(result[,c('score','name')], group.col='name', aggregate.by=aggregate.by)
     result <- df
   }
@@ -95,41 +147,12 @@ bw_bed <- function(bwfile, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   df <- data.frame(mcols(scored.gr))
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
-    df <- aggregate(formula(paste0('score~',group.col)), data=df, aggregate.by)
-    # Select only name and score
-    df <- df[, c(group.col, 'score')]
-    colnames(df) <- c(group.col, 'score')
-  } else {
-    warning(paste(group.col, 'not found in GRanges object. Returning non-aggregated, per-locus values'))
+    df <- df %>%
+      group_by_(group.col) %>%
+      summarise(across(where(is.numeric), aggregate.by))
   }
-  df
+  as.data.frame(df)
 }
 
-#' Build a binned-scored GRanges object from a list of bigWig files
-#'
-#' Build a binned-scored GRanges object from a list of bigWig files. The aggregating
-#' function can be min, max, sd, mean.
-#'
-#' @param bwfile BigWig file to be summarized.
-#' @param stat Aggregating function. Mean by default. Choices: min, max, sd, mean.
-#' @param bsize Bin size. Default 10000.
-#' @param genome Genome. Available choices are mm9, hg38.
-#' @export
-multi_bw_ranges <- function(bwfilelist, col.names, gr, stat='mean') {
-  summaries <- purrr::map(bwfilelist, bw_ranges, gr=gr, per.locus.stat=stat)
-  with.names <- purrr::map2(summaries, col.names, rename_score)
-  df.fg <- Reduce(function(...) merge(..., all=TRUE), with.names)
-  df.fg %>% dplyr::arrange(seqnames, start)
-  # GenomicRanges::makeGRangesFromDataFrame(df.fg, keep.extra.columns = T)
-  # df.fg[with(df.fg, order('seqnames', 'start')), ]
-  # rownames(df.fg) <- df.fg$name
-  # df.fg$name <- NULL
-  # df.fg
-}
 
-# Assumes only score
-rename_score <- function(gr, new.name) {
-  colnames(mcols(gr)) <- replace(colnames(mcols(gr)), colnames(mcols(gr))=='score', new.name)
-  gr
-}
 

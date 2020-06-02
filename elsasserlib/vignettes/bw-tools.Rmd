@@ -165,7 +165,8 @@ ggplot(summary.score, aes(x=name, y=score, fill=name)) +
 ## Computing binned values on several bigWig files
 
 Many times you will want to look at several `bigWig` files at the same time.
-For this, you can call `multi_bw_ranges`.
+For this, you can call `multi_bw_ranges`. It takes a list of `bigWig` files
+and *intersects* them with a `GRanges` object.
 
 ## More documentation
 Even though this is a mixed-code package, it is documented as any proper R 
