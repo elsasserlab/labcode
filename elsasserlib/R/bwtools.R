@@ -4,18 +4,18 @@
 #' Build a binned-scored GRanges object from a bigWig file. The aggregating
 #' function can be min, max, sd, mean.
 #'
-#' @param bwfile BigWig file to be summarized (or list)
-#' @param colnames List of names to give to the mcols of the returned GRanges object
+#' @param bwfile BigWig file to be summarized (or list).
+#' @param colnames List of names to give to the mcols of the returned GRanges object.
 #' @param stat Aggregating function (per locus). Mean by default. Choices: min, max, sd, mean.
 #' @param bsize Bin size. Default 10000.
 #' @param genome Genome. Available choices are mm9, hg38.
 #' @return A GenomicRanges object with each bwfile as a metadata column named after colnames.
 #' @export
 bw_bins <- function(bwfiles, colnames, stat='mean', bsize=10000, genome='mm9') {
-  tiles <- build_bins(bsize=bsize, genome=genome)
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
   }
+  tiles <- build_bins(bsize=bsize, genome=genome)
   multi_bw_ranges(bwfiles, colnames, tiles, per.locus.stat=stat)
 }
 
@@ -40,8 +40,22 @@ multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
   makeGRangesFromDataFrame(df.fg, keep.extra.columns = T)
 }
 
-
-multi_bw_bed <- function(bwfiles, colnames, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
+#' Build a scored GRanges object from a BED file.
+#'
+#' Build a scored GRanges object from a bigWig file and a BED file.
+#' The aggregating function (per locus) can be min, max, sd, mean.
+#'
+#' @param bwfiles BigWig file (or list) to be summarized.
+#' @param colnames Column names of the score fields. Must have the same length as bigwig file list.
+#' @param bedfile BED file to intersect with the BigWig file.
+#' @param per.locus.stat Aggregate per locus function.
+#' @param aggregate.by Statistic to aggregate per group. If NULL, values are not aggregated. This is the behavior by default.
+#' @export
+#' @importFrom rtracklayer import BigWigFile
+bw_bed <- function(bwfiles, colnames, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
+  if (length(bwfiles) != length(colnames)) {
+    stop("BigWig file list and column names must have the same length.")
+  }
   bed <- import(bedfile)
   result <- multi_bw_ranges(bwfiles, colnames, gr=bed, per.locus.stat=per.locus.stat)
   if ( 'name' %in% names(mcols(bed)) ) {
@@ -54,7 +68,6 @@ multi_bw_bed <- function(bwfiles, colnames, bedfile, per.locus.stat='mean', aggr
 
   result
 }
-
 
 #' Rename score function of a GRanges object
 #'
@@ -106,40 +119,12 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @param gr GRanges object file to be summarized.
 #' @param per.locus.stat Aggregating function (per locus). Mean by default. Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @importFrom rtracklayer BigWigFile
-#' @export
 #' @return Data frame with columns score and group.col (if provided).
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
   unlist(explicit_summary(bw, gr, type=per.locus.stat))
 }
-
-#'
-#' #' Build a scored GRanges object from a BED file.
-#' #'
-#' #' Build a scored GRanges object from a bigWig file and a BED file.
-#' #' The aggregating function (per locus) can be min, max, sd, mean.
-#' #'
-#' #' @param bwfile BigWig file to be summarized.
-#' #' @param bedfile BED file to intersect with the BigWig file.
-#' #' @param per.locus.stat Aggregate per locus
-#' #' @param aggregate.by Statistic to aggregate per group. If NULL, values are not aggregated. This is the behavior by default.
-#' #' @param keep.name Keep the name of specific locus (adds one mdata col to the GRanges object). True by default.
-#' #' @export
-#' #' @importFrom rtracklayer import BigWigFile
-#' bw_bed <- function(bwfile, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
-#'   bed <- import(bedfile)
-#'   result <- bw_ranges(bwfile, bed, per.locus.stat=per.locus.stat)
-#'   if ( 'name' %in% names(mcols(bed)) ) {
-#'     result$name <- bed$name
-#'   }
-#'   if (! is.null(aggregate.by)) {
-#'     df <- aggregate_scores(result[,c('score','name')], group.col='name', aggregate.by=aggregate.by)
-#'     result <- df
-#'   }
-#'
-#'   result
-#' }
 
 #'
 #' Aggregate scores of a GRanges object on a specific field
@@ -159,6 +144,3 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   }
   as.data.frame(df)
 }
-
-
-
