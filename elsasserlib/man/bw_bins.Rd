@@ -4,16 +4,24 @@
 \alias{bw_bins}
 \title{Build a binned-scored GRanges object from a bigWig file}
 \usage{
-bw_bins(bwfile, stat = "mean", bsize = 10000, genome = "mm9")
+bw_bins(bwfiles, colnames = NULL, stat = "mean", bsize = 10000, genome = "mm9")
 }
 \arguments{
-\item{bwfile}{BigWig file to be summarized.}
+\item{colnames}{List of names to give to the mcols of the returned GRanges
+object. If NULL, filenames are used (default).}
 
-\item{stat}{Aggregating function. Mean by default. Choices: min, max, sd, mean.}
+\item{stat}{Aggregating function (per locus). Mean by default.
+Choices: min, max, sd, mean.}
 
 \item{bsize}{Bin size. Default 10000.}
 
 \item{genome}{Genome. Available choices are mm9, hg38.}
+
+\item{bwfile}{BigWig file to be summarized (or list).}
+}
+\value{
+A GenomicRanges object with each bwfile as a metadata column named
+    after colnames.
 }
 \description{
 Build a binned-scored GRanges object from a bigWig file. The aggregating

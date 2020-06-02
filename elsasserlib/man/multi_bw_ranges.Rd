@@ -2,20 +2,20 @@
 % Please edit documentation in R/bwtools.R
 \name{multi_bw_ranges}
 \alias{multi_bw_ranges}
-\title{Build a binned-scored GRanges object from a list of bigWig files}
+\title{Intersect a list of bw files with a GRanges object}
 \usage{
-multi_bw_ranges(bwfilelist, col.names, gr, stat = "mean")
+multi_bw_ranges(bwfilelist, colnames, gr, per.locus.stat = "mean")
 }
 \arguments{
-\item{stat}{Aggregating function. Mean by default. Choices: min, max, sd, mean.}
+\item{bwfilelist}{BigWig file to be summarized.}
 
-\item{bwfile}{BigWig file to be summarized.}
+\item{gr}{GRanges object to intersect}
 
-\item{bsize}{Bin size. Default 10000.}
+\item{per.locus.stat}{Aggregating function per stat}
 
-\item{genome}{Genome. Available choices are mm9, hg38.}
+\item{col.names}{Names to be assigned to the columns}
 }
 \description{
-Build a binned-scored GRanges object from a list of bigWig files. The aggregating
-function can be min, max, sd, mean.
+Build a binned-scored GRanges object from a list of bigWig files. The
+aggregating function per locus can be min, max, sd, mean.
 }

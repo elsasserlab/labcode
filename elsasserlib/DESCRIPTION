@@ -1,7 +1,7 @@
 Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: person("Carmen", "Navarro", email = "carmen.navarro@scilifelab.se",
   role = c("aut", "cre"))
 Maintainer: Carmen Navarro <carmen.navarro@scilifelab.se>

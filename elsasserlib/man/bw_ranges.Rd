@@ -11,7 +11,8 @@ bw_ranges(bwfile, gr, per.locus.stat = "mean")
 
 \item{gr}{GRanges object file to be summarized.}
 
-\item{per.locus.stat}{Aggregating function (per locus). Mean by default. Choices: min, max, sd, mean. These choices depend on rtracklayer library.}
+\item{per.locus.stat}{Aggregating function (per locus). Mean by default.
+Choices: min, max, sd, mean. These choices depend on rtracklayer library.}
 }
 \value{
 Data frame with columns score and group.col (if provided).

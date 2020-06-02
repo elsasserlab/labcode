@@ -16,7 +16,7 @@
 #' @export
 bw_bins <- function(bwfiles, colnames=NULL, stat='mean', bsize=10000, genome='mm9') {
   if (is.null(colnames)) {
-    colnames <- basename(bw.files)
+    colnames <- basename(bwfiles)
   }
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
@@ -63,7 +63,7 @@ multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
 #' @importFrom rtracklayer import BigWigFile
 bw_bed <- function(bwfiles, bedfile, colnames=NULL, per.locus.stat='mean', aggregate.by=NULL) {
   if (is.null(colnames)) {
-    colnames <- basename(bw.files)
+    colnames <- basename(bwfiles)
   }
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
@@ -149,7 +149,7 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
 #'     function).
 #' @return A DataFrame with the aggregated scores (any numerical column will be
 #'     aggregated).
-#' @importFrom dplyr group_by_ summarise across `%>%`
+#' @importFrom dplyr group_by_at summarise across `%>%`
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   df <- data.frame(mcols(scored.gr))
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
