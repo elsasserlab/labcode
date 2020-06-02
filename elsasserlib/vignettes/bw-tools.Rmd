@@ -90,6 +90,26 @@ in a regular laptop. In my experience, it goes between 30-40 seconds depending
 on the size of the `bigWig` file for bin sizes of `5000`-`10000`. If you want
 higher resolutions, consider precomputing these values beforehand.
 
+`bw_bins` supports multi `bigWig` file, so if you provide several files, you will
+get a `GRanges` object with several columns, one per file.
+
+
+```{r} 
+# Example bw file included in the package.
+# Note: this should be a path for an actual file.
+bw.file <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
+bw.file.2 <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
+
+# Now we bin it
+# The files are actually the same, so we need to provide column names to avoid
+# confusion:
+binned.score <- bw_bins(c(bw.file, bw.file.2), colnames=c('file1', 'file2'), bsize=10000)
+
+
+head(binned.score)
+```
+
+
 ## Locus-based analysis
 
 You can also intersect a `bigWig` file with a set of loci specified in a `BED`

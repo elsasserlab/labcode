@@ -5,13 +5,19 @@
 #' function can be min, max, sd, mean.
 #'
 #' @param bwfile BigWig file to be summarized (or list).
-#' @param colnames List of names to give to the mcols of the returned GRanges object.
-#' @param stat Aggregating function (per locus). Mean by default. Choices: min, max, sd, mean.
+#' @param colnames List of names to give to the mcols of the returned GRanges
+#'     object. If NULL, filenames are used (default).
+#' @param stat Aggregating function (per locus). Mean by default.
+#'     Choices: min, max, sd, mean.
 #' @param bsize Bin size. Default 10000.
 #' @param genome Genome. Available choices are mm9, hg38.
-#' @return A GenomicRanges object with each bwfile as a metadata column named after colnames.
+#' @return A GenomicRanges object with each bwfile as a metadata column named
+#'     after colnames.
 #' @export
-bw_bins <- function(bwfiles, colnames, stat='mean', bsize=10000, genome='mm9') {
+bw_bins <- function(bwfiles, colnames=NULL, stat='mean', bsize=10000, genome='mm9') {
+  if (is.null(colnames)) {
+    colnames <- basename(bw.files)
+  }
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
   }
@@ -21,13 +27,13 @@ bw_bins <- function(bwfiles, colnames, stat='mean', bsize=10000, genome='mm9') {
 
 #' Intersect a list of bw files with a GRanges object
 #'
-#' Build a binned-scored GRanges object from a list of bigWig files. The aggregating
-#' function can be min, max, sd, mean.
+#' Build a binned-scored GRanges object from a list of bigWig files. The
+#' aggregating function per locus can be min, max, sd, mean.
 #'
 #' @param bwfilelist BigWig file to be summarized.
 #' @param col.names Names to be assigned to the columns
 #' @param gr GRanges object to intersect
-#' @param stat Aggregating function per stat
+#' @param per.locus.stat Aggregating function per stat
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
   summaries <- purrr::map(bwfilelist, bw_ranges, gr=gr, per.locus.stat=per.locus.stat)
@@ -46,13 +52,19 @@ multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
 #' The aggregating function (per locus) can be min, max, sd, mean.
 #'
 #' @param bwfiles BigWig file (or list) to be summarized.
-#' @param colnames Column names of the score fields. Must have the same length as bigwig file list.
 #' @param bedfile BED file to intersect with the BigWig file.
+#' @param colnames Column names of the score fields. Must have the same
+#'    length as bigwig file list. If not provided, colnames are the names of
+#'    the files in bwfiles.
 #' @param per.locus.stat Aggregate per locus function.
-#' @param aggregate.by Statistic to aggregate per group. If NULL, values are not aggregated. This is the behavior by default.
+#' @param aggregate.by Statistic to aggregate per group. If NULL, values are
+#'    not aggregated. This is the behavior by default.
 #' @export
 #' @importFrom rtracklayer import BigWigFile
-bw_bed <- function(bwfiles, colnames, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
+bw_bed <- function(bwfiles, bedfile, colnames=NULL, per.locus.stat='mean', aggregate.by=NULL) {
+  if (is.null(colnames)) {
+    colnames <- basename(bw.files)
+  }
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
   }
@@ -117,7 +129,8 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #'
 #' @param bwfile BigWig file to be summarized.
 #' @param gr GRanges object file to be summarized.
-#' @param per.locus.stat Aggregating function (per locus). Mean by default. Choices: min, max, sd, mean. These choices depend on rtracklayer library.
+#' @param per.locus.stat Aggregating function (per locus). Mean by default.
+#'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @importFrom rtracklayer BigWigFile
 #' @return Data frame with columns score and group.col (if provided).
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
@@ -131,15 +144,17 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
 #'
 #' Aggregates scores of a GRanges object on a specific field.
 #' @param scored.gr A GRanges object with numerical metadata columns
-#' @param group.col A column among the mcols that can be seen as a factor (usually name)
-#' @param aggregate.by Function used to aggregate (mean, median, any valid function)
-#' @return A DataFrame with the aggregated scores (any numerical column will be aggregated).
+#' @param group.col A column among the mcols that can be seen as a factor.
+#' @param aggregate.by Function used to aggregate (mean, median, any valid
+#'     function).
+#' @return A DataFrame with the aggregated scores (any numerical column will be
+#'     aggregated).
 #' @importFrom dplyr group_by_ summarise across `%>%`
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   df <- data.frame(mcols(scored.gr))
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
     df <- df %>%
-      group_by_(group.col) %>%
+      group_by_at(group.col) %>%
       summarise(across(where(is.numeric), aggregate.by))
   }
   as.data.frame(df)
