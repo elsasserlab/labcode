@@ -13,6 +13,9 @@
 #' @export
 bw_bins <- function(bwfiles, colnames, stat='mean', bsize=10000, genome='mm9') {
   tiles <- build_bins(bsize=bsize, genome=genome)
+  if (length(bwfiles) != length(colnames)) {
+    stop("BigWig file list and column names must have the same length.")
+  }
   multi_bw_ranges(bwfiles, colnames, tiles, per.locus.stat=stat)
 }
 
@@ -41,15 +44,10 @@ multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
 multi_bw_bed <- function(bwfiles, colnames, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
   bed <- import(bedfile)
   result <- multi_bw_ranges(bwfiles, colnames, gr=bed, per.locus.stat=per.locus.stat)
-  # summaries <- purrr::map(bwfiles, bw_ranges, gr=bed, per.locus.stat=per.locus.stat)
-  # with.names <- purrr::map2(summaries, colnames, rename_score)
-  # result <- Reduce(function(...) merge(..., all=TRUE), with.names)
+  if ( 'name' %in% names(mcols(bed)) ) {
+    result$name <- bed$name
+  }
   if (! is.null(aggregate.by)) {
-    if ( 'name' %in% names(mcols(bed)) ) {
-      result$name <- bed$name
-    }
-    print(colnames)
-    print(result)
     df <- aggregate_scores(result, group.col='name', aggregate.by=aggregate.by)
     result <- df
   }
@@ -116,34 +114,42 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
   unlist(explicit_summary(bw, gr, type=per.locus.stat))
 }
 
-
-#' Build a scored GRanges object from a BED file.
 #'
-#' Build a scored GRanges object from a bigWig file and a BED file.
-#' The aggregating function (per locus) can be min, max, sd, mean.
+#' #' Build a scored GRanges object from a BED file.
+#' #'
+#' #' Build a scored GRanges object from a bigWig file and a BED file.
+#' #' The aggregating function (per locus) can be min, max, sd, mean.
+#' #'
+#' #' @param bwfile BigWig file to be summarized.
+#' #' @param bedfile BED file to intersect with the BigWig file.
+#' #' @param per.locus.stat Aggregate per locus
+#' #' @param aggregate.by Statistic to aggregate per group. If NULL, values are not aggregated. This is the behavior by default.
+#' #' @param keep.name Keep the name of specific locus (adds one mdata col to the GRanges object). True by default.
+#' #' @export
+#' #' @importFrom rtracklayer import BigWigFile
+#' bw_bed <- function(bwfile, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
+#'   bed <- import(bedfile)
+#'   result <- bw_ranges(bwfile, bed, per.locus.stat=per.locus.stat)
+#'   if ( 'name' %in% names(mcols(bed)) ) {
+#'     result$name <- bed$name
+#'   }
+#'   if (! is.null(aggregate.by)) {
+#'     df <- aggregate_scores(result[,c('score','name')], group.col='name', aggregate.by=aggregate.by)
+#'     result <- df
+#'   }
 #'
-#' @param bwfile BigWig file to be summarized.
-#' @param bedfile BED file to intersect with the BigWig file.
-#' @param per.locus.stat Aggregate per locus
-#' @param aggregate.by Statistic to aggregate per group. If NULL, values are not aggregated. This is the behavior by default.
-#' @param keep.name Keep the name of specific locus (adds one mdata col to the GRanges object). True by default.
-#' @export
-#' @importFrom rtracklayer import BigWigFile
-bw_bed <- function(bwfile, bedfile, per.locus.stat='mean', aggregate.by=NULL) {
-  bed <- import(bedfile)
-  result <- bw_ranges(bwfile, bed, per.locus.stat=per.locus.stat)
-  if ( 'name' %in% names(mcols(bed)) ) {
-    result$name <- bed$name
-  }
-  if (! is.null(aggregate.by)) {
-    df <- aggregate_scores(result[,c('score','name')], group.col='name', aggregate.by=aggregate.by)
-    result <- df
-  }
+#'   result
+#' }
 
-  result
-}
-
-
+#'
+#' Aggregate scores of a GRanges object on a specific field
+#'
+#' Aggregates scores of a GRanges object on a specific field.
+#' @param scored.gr A GRanges object with numerical metadata columns
+#' @param group.col A column among the mcols that can be seen as a factor (usually name)
+#' @param aggregate.by Function used to aggregate (mean, median, any valid function)
+#' @return A DataFrame with the aggregated scores (any numerical column will be aggregated).
+#' @importFrom dplyr group_by_ summarise across `%>%`
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   df <- data.frame(mcols(scored.gr))
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
