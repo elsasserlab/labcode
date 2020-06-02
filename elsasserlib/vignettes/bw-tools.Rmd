@@ -37,29 +37,8 @@ a binned analysis of a set of `BigWig` files.
 
 ## Binned analysis
 
-This includes functionality to make bins as `GRanges` objects and intersect
-`BigWig` files with those.
-
-### Making a GRanges object as a binned genome
-
-To do this, you only need to call the function `build_bins`:
-
-```{r} 
-mm9.genome.bins.10000 <- build_bins(bsize=10000, genome="mm9")
-
-head(mm9.genome.bins.10000)
-```
-
-`build_bins` relies on `GenomeInfoDb` package and additional data contained in
-`BSgenome.Mmusculus.UCSC.mm9` and `BSgenome.Hsapiens.UCSC.hg38`, from which it
-takes sequence info necessary to build the bins. I included these because in
-the lab we mostly use these two references. If you want to use another
-genome, you will have to make the tiling yourself. This is pretty easy, really
-(see documentation on `tileGenome` to do this). 
-
-### Making a binned summary of a BigWig file
-
-You can use the function `bw_bins` for this.
+You can use the function `bw_bins` to average a `bigWig` file over a set of 
+fixed-size bins genome-wide.
 
 ```{r} 
 # Example bw file included in the package.
@@ -67,28 +46,43 @@ You can use the function `bw_bins` for this.
 bw.file <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
 
 # Now we bin it
-binned.score <- bw_bins(bw.file, bsize=10000)
+binned.score <- bw_bins(bw.file, colnames=c('score'), bsize=10000)
 
 head(binned.score)
+
+binned.score[10000, ]
 ```
 
-Yes, not very informative, since signal at the first bins is zero. To test that
-this actually worked, we can plot the scores.
-
-```{r, warning=FALSE} 
-# Convert to dataframe
-df <- as.data.frame(binned.score)
-
-ggplot(df, aes(y=score)) + 
-  geom_boxplot() + 
-  ylim(0,20) +
-  theme_elsasserlab_screen()
-```
+Yes, not very informative, since signal at the first bins is zero. 
 
 Note that the `bw_bins` operation is **not immediate**. It will take some seconds to execute
 in a regular laptop. In my experience, it goes between 30-40 seconds depending
 on the size of the `bigWig` file for bin sizes of `5000`-`10000`. If you want
 higher resolutions, consider precomputing these values beforehand.
+
+`bw_bins` supports multi `bigWig` file, so if you provide several files, you will
+get a `GRanges` object with several columns, one per file.
+
+Additional parameters of `bw_bins` function are `per.locus.stat`, that tells
+`bw_bins` which function is used to aggregate the values within a bin or locus.
+
+
+```{r} 
+# Example bw file included in the package.
+# Note: this should be a path for an actual file.
+bw.file <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
+bw.file.2 <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
+
+# Now we bin it
+# The files are actually the same, so we need to provide column names to avoid
+# confusion:
+binned.score <- bw_bins(c(bw.file, bw.file.2),
+                        colnames=c('file1', 'file2'),
+                        bsize=10000)
+
+head(binned.score)
+```
+
 
 ## Locus-based analysis
 
@@ -98,8 +92,8 @@ file using `bw_bed`:
 ```{r} 
 # Example bw file included in the package.
 # Note: this should be a path for an actual file.
-bw.file <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
-bed.file <- system.file("extdata", "ChromHMM7_subsample.bed", package = "elsasserlib")
+bw.file <- system.file("extdata", "example.1000bs.bw", package="elsasserlib")
+bed.file <- system.file("extdata", "ChromHMM7_subsample.bed", package="elsasserlib")
 
 # We intersect these two files
 summary.score <- bw_bed(bw.file, bed.file, per.locus.stat = "mean")
@@ -128,7 +122,11 @@ be done with the same function:
 
 ```{r} 
 # We intersect these two files
-summary.score <- bw_bed(bw.file, bed.file, per.locus.stat = "mean", aggregate.by = mean)
+summary.score <- bw_bed(bw.file,
+                        bed.file,
+                        colnames=c('score'),
+                        per.locus.stat = "mean",
+                        aggregate.by=mean)
 
 # We get a GRanges object which one score per locus
 summary.score
@@ -155,24 +153,51 @@ With this info you could already have an idea of which loci groups have more
 coverage than others:
 
 ```{r} 
-ggplot(summary.score, aes(x=name, y=score, fill=name)) + 
+ggplot(as.data.frame(summary.score), aes(x=name, y=score, fill=name)) + 
   geom_bar(stat='identity') + 
   ylab('Mean coverage') +
   xlab('ChromHMM7 (subsampled)') +
   theme_elsasserlab_screen()
 ```
 
-## Computing binned values on several bigWig files
+
+## Computing values on several bigWig files
 
 Many times you will want to look at several `bigWig` files at the same time.
-For this, you can call `multi_bw_ranges`.
+Both functions `bw_bins` and `bw_bed` accept both single `bigWig` files and
+lists, as shown above.
+
+## Returning type of bigWig functions
+
+The value returned is specified in each function documentation, but, in general,
+a function will return `GRanges` objects when possible, to keep the structure
+of the original `BED` file or bins.
+
+However, there are cases where this is not possible or meaningful, for instance,
+when calling `bw_bed` with an `aggregate.by` parameter, the result is an 
+aggregated score of *loci* labeled with a certain value, so we lose the 
+`locus` information. In these cases, a `DataFrame` is returned.
+
+## Other useful functions
+
+### Making a GRanges object as a binned genome
+
+To do this, you only need to call the function `build_bins`:
+
+```{r} 
+mm9.genome.bins.10000 <- build_bins(bsize=10000, genome="mm9")
+
+head(mm9.genome.bins.10000)
+```
+
+`build_bins` relies on `GenomeInfoDb` package and additional data contained in
+`BSgenome.Mmusculus.UCSC.mm9` and `BSgenome.Hsapiens.UCSC.hg38`, from which it
+takes sequence info necessary to build the bins. I included these because in
+the lab we mostly use these two references. If you want to use another
+genome, you will have to make the tiling yourself. This is pretty easy, really
+(see documentation on `tileGenome` to do this). 
 
 ## More documentation
 Even though this is a mixed-code package, it is documented as any proper R 
 package is, which means when you're programming you can access help
-for functions using `?` operator:
-
-```{r results = "asis"} 
-print(?bw_bins)
-```
-
+for functions using `?` operator: `?bw_bins`.

@@ -4,18 +4,27 @@
 \alias{bw_bed}
 \title{Build a scored GRanges object from a BED file.}
 \usage{
-bw_bed(bwfile, bedfile, per.locus.stat = "mean", aggregate.by = NULL)
+bw_bed(
+  bwfiles,
+  bedfile,
+  colnames = NULL,
+  per.locus.stat = "mean",
+  aggregate.by = NULL
+)
 }
 \arguments{
-\item{bwfile}{BigWig file to be summarized.}
+\item{bwfiles}{BigWig file (or list) to be summarized.}
 
 \item{bedfile}{BED file to intersect with the BigWig file.}
 
-\item{per.locus.stat}{Aggregate per locus}
+\item{colnames}{Column names of the score fields. Must have the same
+length as bigwig file list. If not provided, colnames are the names of
+the files in bwfiles.}
 
-\item{aggregate.by}{Statistic to aggregate per group. If NULL, values are not aggregated. This is the behavior by default.}
+\item{per.locus.stat}{Aggregate per locus function.}
 
-\item{keep.name}{Keep the name of specific locus (adds one mdata col to the GRanges object). True by default.}
+\item{aggregate.by}{Statistic to aggregate per group. If NULL, values are
+not aggregated. This is the behavior by default.}
 }
 \description{
 Build a scored GRanges object from a bigWig file and a BED file.
