@@ -2,18 +2,30 @@ Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
 Version: 0.1.0
-Authors@R: person("Carmen", "Navarro", email = "carmen.navarro@scilifelab.se",
-  role = c("aut", "cre"))
+Authors@R: c( 
+  person("Carmen", "Navarro", 
+         email = "carmen.navarro@scilifelab.se",
+         role = c("aut", "cre")
+         ), 
+  person("Rui", "Shao", 
+         email = "rui.shao@scilifelab.se",
+         role = c("aut")
+         )
+  )
 Maintainer: Carmen Navarro <carmen.navarro@scilifelab.se>
 Description: Set of mixed utilities of use in the context of Simon Elsasser's
     lab at SciLifeLab. This includes genomics-related plots, analyses of outputs
     of experiments and methods developed within the lab.
-License: MIT
-Depends: R (>= 3.6.1)
+License: MIT + file LICENSE
+Depends: R (>= 3.6)
 biocViews:
 Imports:
   rtracklayer,
   dplyr,
+  tidyselect,
+  grDevices,
+  stats,
+  methods,
   ggplot2,
   reshape2,
   GenomeInfoDb,
