@@ -9,11 +9,11 @@ multi_bw_ranges(bwfilelist, colnames, gr, per.locus.stat = "mean")
 \arguments{
 \item{bwfilelist}{BigWig file to be summarized.}
 
+\item{colnames}{Names to be assigned to the columns}
+
 \item{gr}{GRanges object to intersect}
 
 \item{per.locus.stat}{Aggregating function per stat}
-
-\item{col.names}{Names to be assigned to the columns}
 }
 \description{
 Build a binned-scored GRanges object from a list of bigWig files. The

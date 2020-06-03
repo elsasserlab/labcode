@@ -5,6 +5,7 @@
 #'
 #' @param n Number of values to be generated.
 #' @return A list of n colors.
+#' @importFrom grDevices hcl
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
@@ -54,6 +55,7 @@ palette_categorical <- function(n) {
 #' @param base_family Font family.
 #' @param base_line_size Thickness of lines. Default is defined based on base_size.
 #' @importFrom ggplot2 %+replace% theme_minimal theme element_text element_line element_blank rel margin unit
+#' @importFrom grDevices rgb
 #' @export
 theme_elsasserlab_print <- function(base_size = 22,
                                     base_family = "",
@@ -101,6 +103,7 @@ theme_elsasserlab_print <- function(base_size = 22,
 #' @param base_family Font family.
 #' @param base_line_size Thickness of lines. Default is defined based on base_size.
 #' @importFrom ggplot2 %+replace% theme_minimal theme element_text element_line element_blank rel margin unit
+#' @importFrom grDevices rgb
 #' @export
 theme_elsasserlab_screen <- function(base_size = 12,
                                      base_family = "",

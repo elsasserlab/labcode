@@ -4,7 +4,7 @@
 #' Build a binned-scored GRanges object from a bigWig file. The aggregating
 #' function can be min, max, sd, mean.
 #'
-#' @param bwfile BigWig file to be summarized (or list).
+#' @param bwfiles BigWig file to be summarized (or list).
 #' @param colnames List of names to give to the mcols of the returned GRanges
 #'     object. If NULL, filenames are used (default).
 #' @param stat Aggregating function (per locus). Mean by default.
@@ -39,11 +39,11 @@ bw_bins <- function(bwfiles,
 #' aggregating function per locus can be min, max, sd, mean.
 #'
 #' @param bwfilelist BigWig file to be summarized.
-#' @param col.names Names to be assigned to the columns
+#' @param colnames Names to be assigned to the columns
 #' @param gr GRanges object to intersect
 #' @param per.locus.stat Aggregating function per stat
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
-#' @importFrom dplyr arrange
+#' @importFrom dplyr arrange `%>%`
 multi_bw_ranges <- function(bwfilelist,
                             colnames,
                             gr,
@@ -61,7 +61,7 @@ multi_bw_ranges <- function(bwfilelist,
     df.fg <- df.fg %>% arrange(seqnames, start)
   }
 
-  result <- makeGRangesFromDataFrame(df.fg, keep.extra.columns = T)
+  result <- makeGRangesFromDataFrame(df.fg, keep.extra.columns=T)
   result
 }
 
@@ -119,6 +119,7 @@ bw_bed <- function(bwfiles,
 #'
 #' @param gr GRanges object
 #' @param new.name Name to give to the column.
+#' @importFrom rtracklayer mcols mcols<-
 rename_score <- function(gr, new.name) {
   colnames(mcols(gr)) <- replace(colnames(mcols(gr)),
                                  colnames(mcols(gr))=='score',
@@ -138,6 +139,7 @@ rename_score <- function(gr, new.name) {
 #' @importFrom GenomicRanges tileGenome
 #' @importFrom GenomeInfoDb seqinfo
 #' @importFrom BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm9
+#' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
 build_bins <- function(bsize=10000, genome='mm9') {
   seq_lengths <- NULL
 
@@ -168,6 +170,7 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @param per.locus.stat Aggregating function (per locus). Mean by default.
 #'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @importFrom rtracklayer BigWigFile
+#' @importFrom methods getMethod
 #' @return Data frame with columns score and group.col (if provided).
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
   bw <- BigWigFile(bwfile)
@@ -187,6 +190,7 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
 #' @return A DataFrame with the aggregated scores (any numerical column will be
 #'     aggregated).
 #' @importFrom dplyr group_by_at summarise across `%>%`
+#' @importFrom rtracklayer mcols
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   df <- data.frame(mcols(scored.gr))
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
