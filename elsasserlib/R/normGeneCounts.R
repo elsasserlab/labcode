@@ -7,8 +7,7 @@
 #' @param gene.counts Gene count table for normalization
 #' @return Normalised Counts
 #' @export
-quantile_norm <- function(gene.counts)
-{
+quantile_norm <- function(gene.counts) {
   rank_mat <- apply(gene.counts, 2, rank, ties.method = "random")
   means <- rowMeans(gene.counts)
   rank_mean <- rank(means, ties.method = "random")
@@ -24,8 +23,7 @@ quantile_norm <- function(gene.counts)
 #' @param gene.counts Gene count table for normalization
 #' @return Normalised Counts
 #' @export
-size_factor_norm <- function(gene.counts)
-{
+size_factor_norm <- function(gene.counts) {
   geoMeans = apply(gene.counts, 1, function(x) exp(sum(log(x[x > 0]), na.rm=T) / length(x)) )
   sf = apply(sweep(gene.counts, 1, geoMeans,'/'), 2, median)
   return(sweep(gene.counts, 2, sf,'/'))
@@ -39,8 +37,7 @@ size_factor_norm <- function(gene.counts)
 #' @param gene.counts Gene count table for normalization
 #' @return Normalised Counts
 #' @export
-mrn_norm <- function(gene.counts)
-{
+mrn_norm <- function(gene.counts) {
   prenorm_mat <- t(t(gene.counts) / colSums(gene.counts))
   tpm_sf <- colMedians(prenorm_mat / prenorm_mat[, 1])
   norm_mat <- sweep(gene.counts, 2, tpm_sf / exp(mean(log(tpm_sf))), "/")
