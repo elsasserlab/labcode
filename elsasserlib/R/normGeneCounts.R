@@ -37,7 +37,7 @@ size_factor_norm <- function(gene.counts) {
 #' @param gene.counts Gene count table for normalization
 #' @return Normalised Counts
 #' @export
-mrn_norm <- function(gene.counts) {
+mean_ratio_norm <- function(gene.counts) {
   prenorm_mat <- t(t(gene.counts) / colSums(gene.counts))
   tpm_sf <- colMedians(prenorm_mat / prenorm_mat[, 1])
   norm_mat <- sweep(gene.counts, 2, tpm_sf / exp(mean(log(tpm_sf))), "/")
