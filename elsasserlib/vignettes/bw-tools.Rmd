@@ -42,18 +42,17 @@ fixed-size bins genome-wide.
 
 ```{r} 
 # Example bw file included in the package.
-# Note: this should be a path for an actual file.
-bw.file <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
-
+bw.file <- system.file("extdata", "ES_H33_00h_rep1_hoxc.bw", package = "elsasserlib")
+selection <- GRanges(seqnames='chr15', range=c(102691597,102965638))
 # Now we bin it
-binned.score <- bw_bins(bw.file, colnames=c('score'), bsize=10000)
+binned.score <- bw_bins(bw.file,
+                        colnames=c('score'),
+                        bsize=100,
+                        selection=selection)
 
 head(binned.score)
-
-binned.score[10000, ]
 ```
 
-Yes, not very informative, since signal at the first bins is zero. 
 
 Note that the `bw_bins` operation is **not immediate**. It will take some seconds to execute
 in a regular laptop. In my experience, it goes between 30-40 seconds depending
@@ -70,15 +69,17 @@ Additional parameters of `bw_bins` function are `per.locus.stat`, that tells
 ```{r} 
 # Example bw file included in the package.
 # Note: this should be a path for an actual file.
-bw.file <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
-bw.file.2 <- system.file("extdata", "example.1000bs.bw", package = "elsasserlib")
-
+bw.file <- system.file("extdata", "ES_H33_00h_rep1_hoxc.bw", package = "elsasserlib")
+bw.file.2 <- system.file("extdata", "ES_H33_03h_rep1_hoxc.bw", package = "elsasserlib")
+bw.file.3 <- system.file("extdata", "ES_H33_12h_rep1_hoxc.bw", package = "elsasserlib")
+selection <- GRanges(seqnames='chr15', range=c(102691597,102965638))
 # Now we bin it
 # The files are actually the same, so we need to provide column names to avoid
 # confusion:
-binned.score <- bw_bins(c(bw.file, bw.file.2),
-                        colnames=c('file1', 'file2'),
-                        bsize=10000)
+binned.score <- bw_bins(c(bw.file, bw.file.2, bw.file.3),
+                        colnames=c('file1', 'file2', 'file3'),
+                        bsize=100,
+                        selection=selection)
 
 head(binned.score)
 ```
@@ -92,8 +93,8 @@ file using `bw_bed`:
 ```{r} 
 # Example bw file included in the package.
 # Note: this should be a path for an actual file.
-bw.file <- system.file("extdata", "example.1000bs.bw", package="elsasserlib")
-bed.file <- system.file("extdata", "ChromHMM7_subsample.bed", package="elsasserlib")
+bw.file <- system.file("extdata", "ES_H33_00h_rep1_hoxc.bw", package="elsasserlib")
+bed.file <- system.file("extdata", "chromhmm_hoxc.bed", package="elsasserlib")
 
 # We intersect these two files
 summary.score <- bw_bed(bw.file, bed.file, per.locus.stat = "mean")
