@@ -14,15 +14,23 @@
 #' @return A GenomicRanges object with each bwfile as a metadata column named
 #'     after colnames.
 #' @export
-bw_bins <- function(bwfiles, colnames=NULL, stat='mean', bsize=10000, genome='mm9') {
+bw_bins <- function(bwfiles,
+                    colnames=NULL,
+                    stat='mean',
+                    bsize=10000,
+                    genome='mm9') {
+
   if (is.null(colnames)) {
     colnames <- basename(bwfiles)
   }
+
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
   }
+
   tiles <- build_bins(bsize=bsize, genome=genome)
-  multi_bw_ranges(bwfiles, colnames, tiles, per.locus.stat=stat)
+  result <- multi_bw_ranges(bwfiles, colnames, tiles, per.locus.stat=stat)
+  result
 }
 
 #' Intersect a list of bw files with a GRanges object
@@ -35,15 +43,26 @@ bw_bins <- function(bwfiles, colnames=NULL, stat='mean', bsize=10000, genome='mm
 #' @param gr GRanges object to intersect
 #' @param per.locus.stat Aggregating function per stat
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
-multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
-  summaries <- purrr::map(bwfilelist, bw_ranges, gr=gr, per.locus.stat=per.locus.stat)
+#' @importFrom dplyr arrange
+multi_bw_ranges <- function(bwfilelist,
+                            colnames,
+                            gr,
+                            per.locus.stat='mean') {
+
+  summaries <- purrr::map(bwfilelist,
+                          bw_ranges,
+                          gr=gr,
+                          per.locus.stat=per.locus.stat)
+
   with.names <- purrr::map2(summaries, colnames, rename_score)
   df.fg <- Reduce(function(...) merge(..., all=TRUE), with.names)
+
   if (length(bwfilelist) > 1) {
-    df.fg <- df.fg %>% dplyr::arrange(seqnames, start)
+    df.fg <- df.fg %>% arrange(seqnames, start)
   }
 
-  makeGRangesFromDataFrame(df.fg, keep.extra.columns = T)
+  result <- makeGRangesFromDataFrame(df.fg, keep.extra.columns = T)
+  result
 }
 
 #' Build a scored GRanges object from a BED file.
@@ -61,20 +80,35 @@ multi_bw_ranges <- function(bwfilelist, colnames, gr, per.locus.stat='mean') {
 #'    not aggregated. This is the behavior by default.
 #' @export
 #' @importFrom rtracklayer import BigWigFile
-bw_bed <- function(bwfiles, bedfile, colnames=NULL, per.locus.stat='mean', aggregate.by=NULL) {
+bw_bed <- function(bwfiles,
+                   bedfile,
+                   colnames=NULL,
+                   per.locus.stat='mean',
+                   aggregate.by=NULL) {
+
   if (is.null(colnames)) {
     colnames <- basename(bwfiles)
   }
+
   if (length(bwfiles) != length(colnames)) {
     stop("BigWig file list and column names must have the same length.")
   }
+
   bed <- import(bedfile)
-  result <- multi_bw_ranges(bwfiles, colnames, gr=bed, per.locus.stat=per.locus.stat)
+
+  result <- multi_bw_ranges(bwfiles,
+                            colnames,
+                            gr=bed,
+                            per.locus.stat=per.locus.stat)
+
   if ( 'name' %in% names(mcols(bed)) ) {
     result$name <- bed$name
   }
+
   if (! is.null(aggregate.by)) {
-    df <- aggregate_scores(result, group.col='name', aggregate.by=aggregate.by)
+    df <- aggregate_scores(result,
+                           group.col='name',
+                           aggregate.by=aggregate.by)
     result <- df
   }
 
@@ -86,7 +120,9 @@ bw_bed <- function(bwfiles, bedfile, colnames=NULL, per.locus.stat='mean', aggre
 #' @param gr GRanges object
 #' @param new.name Name to give to the column.
 rename_score <- function(gr, new.name) {
-  colnames(mcols(gr)) <- replace(colnames(mcols(gr)), colnames(mcols(gr))=='score', new.name)
+  colnames(mcols(gr)) <- replace(colnames(mcols(gr)),
+                                 colnames(mcols(gr))=='score',
+                                 new.name)
   gr
 }
 
@@ -136,7 +172,8 @@ build_bins <- function(bsize=10000, genome='mm9') {
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
-  unlist(explicit_summary(bw, gr, type=per.locus.stat))
+  result <- unlist(explicit_summary(bw, gr, type=per.locus.stat))
+  result
 }
 
 #'
