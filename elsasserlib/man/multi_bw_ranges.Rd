@@ -4,7 +4,13 @@
 \alias{multi_bw_ranges}
 \title{Intersect a list of bw files with a GRanges object}
 \usage{
-multi_bw_ranges(bwfilelist, colnames, gr, per.locus.stat = "mean")
+multi_bw_ranges(
+  bwfilelist,
+  colnames,
+  gr,
+  per.locus.stat = "mean",
+  selection = NULL
+)
 }
 \arguments{
 \item{bwfilelist}{BigWig file to be summarized.}
@@ -14,6 +20,8 @@ multi_bw_ranges(bwfilelist, colnames, gr, per.locus.stat = "mean")
 \item{gr}{GRanges object to intersect}
 
 \item{per.locus.stat}{Aggregating function per stat}
+
+\item{selection}{A GRanges object to restrict analysis to.}
 }
 \description{
 Build a binned-scored GRanges object from a list of bigWig files. The

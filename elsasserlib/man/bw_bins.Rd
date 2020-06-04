@@ -4,7 +4,14 @@
 \alias{bw_bins}
 \title{Build a binned-scored GRanges object from a bigWig file}
 \usage{
-bw_bins(bwfiles, colnames = NULL, stat = "mean", bsize = 10000, genome = "mm9")
+bw_bins(
+  bwfiles,
+  colnames = NULL,
+  stat = "mean",
+  bsize = 10000,
+  genome = "mm9",
+  selection = NULL
+)
 }
 \arguments{
 \item{bwfiles}{BigWig file to be summarized (or list).}
@@ -18,6 +25,10 @@ Choices: min, max, sd, mean.}
 \item{bsize}{Bin size. Default 10000.}
 
 \item{genome}{Genome. Available choices are mm9, hg38.}
+
+\item{selection}{A GRanges object to restrict binning to a certain set of
+intervals. It is useful for debugging and improving performance of locus
+specific analyses.}
 }
 \value{
 A GenomicRanges object with each bwfile as a metadata column named
