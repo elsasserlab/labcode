@@ -182,7 +182,7 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @param selection A GRanges object to restrict analysis to.
 #' @importFrom rtracklayer BigWigFile
-#' @importFrom GRanges subsetByOverlaps
+#' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
 #' @return Data frame with columns score and group.col (if provided).
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {

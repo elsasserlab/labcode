@@ -4,7 +4,7 @@
 \alias{bw_ranges}
 \title{Score a GRanges object against a BigWig file}
 \usage{
-bw_ranges(bwfile, gr, per.locus.stat = "mean")
+bw_ranges(bwfile, gr, per.locus.stat = "mean", selection = NULL)
 }
 \arguments{
 \item{bwfile}{BigWig file to be summarized.}
@@ -13,6 +13,8 @@ bw_ranges(bwfile, gr, per.locus.stat = "mean")
 
 \item{per.locus.stat}{Aggregating function (per locus). Mean by default.
 Choices: min, max, sd, mean. These choices depend on rtracklayer library.}
+
+\item{selection}{A GRanges object to restrict analysis to.}
 }
 \value{
 Data frame with columns score and group.col (if provided).
