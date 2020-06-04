@@ -11,6 +11,9 @@
 #'     Choices: min, max, sd, mean.
 #' @param bsize Bin size. Default 10000.
 #' @param genome Genome. Available choices are mm9, hg38.
+#' @param selection A GRanges object to restrict binning to a certain set of
+#'     intervals. It is useful for debugging and improving performance of locus
+#'     specific analyses.
 #' @return A GenomicRanges object with each bwfile as a metadata column named
 #'     after colnames.
 #' @export
@@ -18,7 +21,8 @@ bw_bins <- function(bwfiles,
                     colnames=NULL,
                     stat='mean',
                     bsize=10000,
-                    genome='mm9') {
+                    genome='mm9',
+                    selection=NULL) {
 
   if (is.null(colnames)) {
     colnames <- basename(bwfiles)
@@ -29,7 +33,11 @@ bw_bins <- function(bwfiles,
   }
 
   tiles <- build_bins(bsize=bsize, genome=genome)
-  result <- multi_bw_ranges(bwfiles, colnames, tiles, per.locus.stat=stat)
+  result <- multi_bw_ranges(bwfiles,
+                            colnames,
+                            tiles,
+                            per.locus.stat=stat,
+                            selection=selection)
   result
 }
 
@@ -42,17 +50,20 @@ bw_bins <- function(bwfiles,
 #' @param colnames Names to be assigned to the columns
 #' @param gr GRanges object to intersect
 #' @param per.locus.stat Aggregating function per stat
+#' @param selection A GRanges object to restrict analysis to.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom dplyr arrange `%>%`
 multi_bw_ranges <- function(bwfilelist,
                             colnames,
                             gr,
-                            per.locus.stat='mean') {
+                            per.locus.stat='mean',
+                            selection=NULL) {
 
   summaries <- purrr::map(bwfilelist,
                           bw_ranges,
                           gr=gr,
-                          per.locus.stat=per.locus.stat)
+                          per.locus.stat=per.locus.stat,
+                          selection=selection)
 
   with.names <- purrr::map2(summaries, colnames, rename_score)
   df.fg <- Reduce(function(...) merge(..., all=TRUE), with.names)
@@ -119,7 +130,7 @@ bw_bed <- function(bwfiles,
 #'
 #' @param gr GRanges object
 #' @param new.name Name to give to the column.
-#' @importFrom rtracklayer mcols mcols<-
+#' @importFrom rtracklayer mcols
 rename_score <- function(gr, new.name) {
   colnames(mcols(gr)) <- replace(colnames(mcols(gr)),
                                  colnames(mcols(gr))=='score',
@@ -169,12 +180,18 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @param gr GRanges object file to be summarized.
 #' @param per.locus.stat Aggregating function (per locus). Mean by default.
 #'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
+#' @param selection A GRanges object to restrict analysis to.
 #' @importFrom rtracklayer BigWigFile
+#' @importFrom GRanges subsetByOverlaps
 #' @importFrom methods getMethod
 #' @return Data frame with columns score and group.col (if provided).
-bw_ranges <- function (bwfile, gr, per.locus.stat='mean') {
+bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
+
+  if (! is.null(selection)) {
+    gr <- subsetByOverlaps(gr, selection)
+  }
   result <- unlist(explicit_summary(bw, gr, type=per.locus.stat))
   result
 }
