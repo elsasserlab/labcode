@@ -18,8 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-#          - {os: macOS-latest,   r: 'release'}
-#          - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest, r: 'release'}
 
     env:
@@ -42,7 +40,6 @@ jobs:
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
-        working-directory: elsasserlib
 
       - name: Cache R packages
         if: runner.os != 'Windows'
@@ -51,7 +48,7 @@ jobs:
           path: ${{ env.R_LIBS_USER }}
           key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
           restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
-        working-directory: elsasserlib
+
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
@@ -61,7 +58,6 @@ jobs:
           Rscript -e "remotes::install_github('r-hub/sysreqs')"
           sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
           sudo -s eval "$sysreqs"
-        working-directory: elsasserlib
 
       - name: Install dependencies
         run: |
