@@ -1,3 +1,5 @@
+![](https://github.com/elsasserlab/labcode/workflows/R-CMD-check/badge.svg)
+
 ## Installation
 
 `elsasserlib` is a package under development. You will need `remotes` to
