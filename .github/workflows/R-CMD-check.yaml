@@ -65,9 +65,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          print(getwd())
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+        shell: Rscript {0}
+        working-directory: elsasserlib
+
+      - name: Manually install BioConductor dependencies
+        run: |
+          install.packages("BiocManager")
+          BiocManager::install(c("rtracklayer", "GenomeInfoDb", "GenomicRanges", "BSgenome.Mmusculus.UCSC.mm9", "BSgenome.Hsapiens.UCSC.hg38"))
         shell: Rscript {0}
         working-directory: elsasserlib
 

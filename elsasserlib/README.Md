@@ -5,13 +5,24 @@ install it (and `devtools` if you plan to work on it):
 
     install.packages(c('devtools', 'remotes'))
     
+Additionally, there is an issue with installing dependencies that come from 
+`BioConductor` repository. Therefore, I recommend installing manually these
+dependencies before running the installation:
+
+    install.packages(('BiocManager'))
+    BiocManager::install(c('GenomeInfoDbData',
+        'GenomeInfoDb',
+        'GenomicRanges',
+        'rtracklayer',
+        'BSgenome.Mmusculus.UCSC.mm9',
+        'BSgenome.Hsapiens.UCSC.hg38'))
+
 Then you can install directly from this GitHub repository:
 
     library(remotes)
     install_github('elsasserlab/labcode',
         subdir='elsasserlib',
         build_vignettes=TRUE)
-    
 
 ## Getting started
 
@@ -36,15 +47,16 @@ functions that are included in `elsasserlib` as of now:
     Execution halted
     
 **A**: This seems to be a problem that comes from installing `Bioconductor`
-dependencies. A workaround is installing the packages manually: 
+dependencies. A workaround is installing the `BioConductor` packages manually: 
 
-    if (!requireNamespace("BiocManager", quietly = TRUE))
-        install.packages("BiocManager")
+    if (!requireNamespace('BiocManager', quietly = TRUE))
+        install.packages('BiocManager')
 
-    BiocManager::install(c("GenomeInfoDbData",
-        "GenomeInfoDb",
-        "rtracklayer",
-        "BSgenome.Mmusculus.UCSC.mm9",
-        "BSgenome.Hsapiens.UCSC.hg38"))
+    BiocManager::install(c('GenomeInfoDbData',
+        'GenomeInfoDb',
+        'GenomicRanges',
+        'rtracklayer',
+        'BSgenome.Mmusculus.UCSC.mm9',
+        'BSgenome.Hsapiens.UCSC.hg38'))
  
 
