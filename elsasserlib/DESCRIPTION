@@ -33,6 +33,7 @@ Imports:
   GenomicRanges,
   IRanges,
   purrr,
+  prettydoc,
   BSgenome.Mmusculus.UCSC.mm9,
   BSgenome.Hsapiens.UCSC.hg38,
   scales
@@ -43,3 +44,5 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+URL: https://github.com/elsasserlab/labcode
+BugReports: https://github.com/elsasserlab/labcode/issues
