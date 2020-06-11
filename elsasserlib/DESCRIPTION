@@ -33,6 +33,7 @@ Imports:
   GenomicRanges,
   IRanges,
   purrr,
+  prettydoc,
   BSgenome.Mmusculus.UCSC.mm9,
   BSgenome.Hsapiens.UCSC.hg38,
   scales
