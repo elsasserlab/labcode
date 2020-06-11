@@ -1,3 +1,5 @@
+![](https://github.com/elsasserlab/labcode/workflows/R-CMD-check/badge.svg)
+
 # Lab code repository
 The aim of this repository is to have a centralized place to share and develop
 utilities that could be of use to other lab members. In this sense, it is a
