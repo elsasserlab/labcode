@@ -60,16 +60,26 @@ jobs:
         env:
           RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
         run: |
+<<<<<<< HEAD
           sudo apt-get install libcurl4-openssl-dev
+=======
+          sudo apt-get install libcurl-dev
+>>>>>>> 06ef883fb0fd01ac86b101438c08988a892bbc42
           Rscript -e "remotes::install_github('r-hub/sysreqs')"
           sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
           sudo -s eval "$sysreqs"
 
       - name: Manually install BioConductor dependencies
         run: |
+<<<<<<< HEAD
           install.packages("BiocManager")
           BiocManager::install(c("rtracklayer", "GenomeInfoDb", "GenomicRanges", "BSgenome.Mmusculus.UCSC.mm9", "BSgenome.Hsapiens.UCSC.hg38"))
         shell: Rscript {0}
+=======
+          install.packages
+        shell: Rscript {0}("BiocManager")
+          BiocManager::install(c("rtracklayer", "GenomeInfoDb", "GenomicRanges", "BSgenome.Mmusculus.UCSC.mm9", "BSgenome.Hsapiens.UCSC.hg38"))
+>>>>>>> 06ef883fb0fd01ac86b101438c08988a892bbc42
         working-directory: elsasserlib
 
       - name: Install dependencies
