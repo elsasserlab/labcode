@@ -66,14 +66,13 @@ multi_bw_ranges <- function(bwfilelist,
                           selection=selection)
 
   with.names <- purrr::map2(summaries, colnames, rename_score)
-  df.fg <- Reduce(function(...) merge(..., all=TRUE), with.names)
+  result <- Reduce(function(...) merge(..., all=TRUE), with.names)
 
-  if (length(bwfilelist) > 1) {
-    df.fg <- df.fg %>% arrange(seqnames, start)
+  if (is.data.frame(result)) {
+    result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
   }
 
-  result <- makeGRangesFromDataFrame(df.fg, keep.extra.columns=T)
-  result
+  sort(result, ignore.strand=TRUE)
 }
 
 #' Build a scored GRanges object from a BED file.
@@ -113,7 +112,8 @@ bw_bed <- function(bwfiles,
                             per.locus.stat=per.locus.stat)
 
   if ( 'name' %in% names(mcols(bed)) ) {
-    result$name <- bed$name
+    sorted.bed <- sort(bed, ignore.strand=TRUE)
+    result$name <- sorted.bed$name
   }
 
   if (! is.null(aggregate.by)) {
