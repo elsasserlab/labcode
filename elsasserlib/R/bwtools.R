@@ -72,6 +72,7 @@ multi_bw_ranges <- function(bwfilelist,
     result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
   }
 
+  result <- sortSeqlevels(result)
   sort(result, ignore.strand=TRUE)
 }
 
@@ -112,17 +113,16 @@ bw_bed <- function(bwfiles,
                             per.locus.stat=per.locus.stat)
 
   if ( 'name' %in% names(mcols(bed)) ) {
+    bed <- sortSeqlevels(bed)
     sorted.bed <- sort(bed, ignore.strand=TRUE)
     result$name <- sorted.bed$name
   }
-
   if (! is.null(aggregate.by)) {
     df <- aggregate_scores(result,
                            group.col='name',
                            aggregate.by=aggregate.by)
     result <- df
   }
-
   result
 }
 
