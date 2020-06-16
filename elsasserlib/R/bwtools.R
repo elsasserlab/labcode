@@ -197,24 +197,74 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   result
 }
 
+validate_categories <- function(cat.values) {
+  MAX_CATEGORIES <- 50
+  # Test number of values in group.col
+  ncat <- length(levels(as.factor(cat.values)))
+  if (ncat > MAX_CATEGORIES) {
+    warning(paste("Number of values in group column field very large:",
+                  ncat,
+                  "(does BED file have unique IDs instead of categories?)"))
+  }
+}
+
 #'
 #' Aggregate scores of a GRanges object on a specific field
 #'
 #' Aggregates scores of a GRanges object on a specific field.
 #' @param scored.gr A GRanges object with numerical metadata columns
 #' @param group.col A column among the mcols that can be seen as a factor.
-#' @param aggregate.by Function used to aggregate (mean, median, any valid
-#'     function).
+#' @param aggregate.by Function used to aggregate: mean, median, true_mean.
+#'     true_mean: Mean coverage taking all elements in a class as one large bin
+#'     mean: mean-of-distribution approach. The mean of the aggregated value per
+#'       locus is reported.
+#'     median: median-of-distribution. The median of the aggregated value per
+#'       locus is reported
 #' @return A DataFrame with the aggregated scores (any numerical column will be
 #'     aggregated).
 #' @importFrom dplyr group_by_at summarise across `%>%`
 #' @importFrom rtracklayer mcols
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
-  df <- data.frame(mcols(scored.gr))
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
-    df <- df %>%
-      group_by_at(group.col) %>%
-      summarise(across(where(is.numeric), aggregate.by))
+
+    # GRanges objects are 1-based and inclusive [start, end]
+    scored.gr$length <- end(scored.gr) - start(scored.gr) + 1
+
+    df <- data.frame(mcols(scored.gr))
+    validate_categories(df[, group.col])
+
+    if (aggregate.by == 'true_mean') {
+       # Multiply each score by interval length
+       score.cols <- colnames(mcols(scored.gr))
+       score.cols <- score.cols[!score.cols %in% c(group.col)]
+
+       sum.vals <- df[, score.cols]*df$length
+       colnames(sum.vals) <- score.cols
+       sum.vals[, group.col] <- df[, group.col]
+       sum.vals$length <- df$length
+
+       # Summarize SUM only
+       sum.vals <- sum.vals %>%
+         group_by_at(group.col) %>%
+         summarise(across(where(is.numeric), sum))
+
+       # Divide sum(scores) by sum(length) and keep only scores
+       df <- sum.vals[, score.cols]/sum.vals$length
+       df[, group.col] <- sum.vals[, group.col]
+       df <- df[, c(score.cols, group.col)]
+
+    } else if (aggregate.by %in% c('mean', 'median')) {
+      f <- get(aggregate.by)
+      df <- df %>%
+        group_by_at(group.col) %>%
+        summarise(across(where(is.numeric), f))
+
+    } else {
+      stop(paste("Function not implemented as aggregate.by:", aggregate.by))
+    }
+
+    as.data.frame(df)
+  } else {
+    stop("Grouping column not provided or not present in GRanges object.")
   }
-  as.data.frame(df)
 }

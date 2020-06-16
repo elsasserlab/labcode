@@ -18,12 +18,12 @@ toy_example <- function(bw1, bw2, bed_with_names) {
   )
 
   labeled_gr <- GRanges(
-    seqnames = c('chr1', 'chr1', 'chr2', 'chr2'),
-    ranges = IRanges(c(21,  61, 21, 111),
-                     c(40, 100, 40, 130))
+    seqnames = c('chr1', 'chr1', 'chr2', 'chr2', 'chr2'),
+    ranges = IRanges(c(21,  61, 21, 111, 161),
+                     c(40, 100, 40, 130, 180))
   )
 
-  labeled_gr$name <- c('typeA', 'typeB', 'typeA', 'typeB')
+  labeled_gr$name <- c('typeA', 'typeB', 'typeA', 'typeB', 'typeB')
 
   chromsizes <- c(200,200)
 
@@ -34,10 +34,6 @@ toy_example <- function(bw1, bw2, bed_with_names) {
   export(gr, bw1)
   export(gr2, bw2)
   export(labeled_gr, bed_with_names)
-
-  # tiles <- tileGenome(c(chr1=200,chr2=200),
-  #                     tilewidth=20,
-  #                     cut.last.tile.in.chrom=T)
 
 }
 
@@ -178,18 +174,52 @@ test_that("bw_bed crashes on wrong number of colnames for multiple files", {
 
 })
 
-test_that("bw_bed returns correct aggregated values", {
+test_that("bw_bed returns correct mean-of-means aggregated values", {
   values <- bw_bed(bw1,
                    bed_with_names,
                    colnames='bw1',
                    per.locus.stat='mean',
-                   aggregate.by=mean)
+                   aggregate.by='mean')
 
   expect_is(values, 'data.frame')
   expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 10.5)
+  expect_equal(values[values$name=='typeB', 'bw1'], 13.3333333333)
 })
+
+test_that("bw_bed returns correct true_mean aggregated values", {
+  values <- bw_bed(bw1,
+                   bed_with_names,
+                   colnames='bw1',
+                   per.locus.stat='mean',
+                   aggregate.by='true_mean')
+
+  expect_is(values, 'data.frame')
+  expect_equal(values[values$name=='typeA', 'bw1'], 7)
+  expect_equal(values[values$name=='typeB', 'bw1'], 11.125)
+})
+
+test_that("bw_bed returns correct median-of-means aggregated values", {
+  values <- bw_bed(bw1,
+                   bed_with_names,
+                   colnames='bw1',
+                   per.locus.stat='mean',
+                   aggregate.by='median')
+
+  expect_is(values, 'data.frame')
+  expect_equal(values[values$name=='typeA', 'bw1'], 7)
+  expect_equal(values[values$name=='typeB', 'bw1'], 16.5)
+})
+
 
 test_that("build_bins crashes on unknown or not included genome", {
   expect_error(build_bins(bsize=10000, genome='mm10'))
 })
+
+test_that("bw_bed throws error on not implemented aggregate.by", {
+  expect_error(values <- bw_bed(bw1,
+                                bed_with_names,
+                                colnames='bw1',
+                                per.locus.stat='mean',
+                                aggregate.by='max'))
+})
+
