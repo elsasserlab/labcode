@@ -127,7 +127,7 @@ summary.score <- bw_bed(bw.file,
                         bed.file,
                         colnames=c('score'),
                         per.locus.stat = "mean",
-                        aggregate.by=mean)
+                        aggregate.by="mean")
 
 # We get a GRanges object which one score per locus
 summary.score
@@ -144,10 +144,28 @@ those, to avoid influence of outliers:
 median.score <- bw_bed(bw.file,
                        bed.file,
                        per.locus.stat="mean",
-                       aggregate.by=median)
+                       aggregate.by="median")
 
 # We get a GRanges object which one score group of loci
 median.score
+```
+
+Note as well that this `mean` value is a `mean-of-means` or aggregated values
+if `per.locus.stat` is a different value. If you want a pooled mean as if all
+loci corresponding to a category were a single bin, you want to use `true_mean`.
+This behavior is the same as the one obtained with `bwtool` with `-total` 
+parameter on.
+
+```{r} 
+# We intersect these two files
+summary.score <- bw_bed(bw.file,
+                        bed.file,
+                        colnames=c('score'),
+                        per.locus.stat = "mean",
+                        aggregate.by="true_mean")
+
+# We get a GRanges object which one score per locus
+summary.score
 ```
 
 With this info you could already have an idea of which loci groups have more
