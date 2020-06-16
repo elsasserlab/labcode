@@ -197,6 +197,17 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   result
 }
 
+validate_categories <- function(cat.values) {
+  MAX_CATEGORIES <- 50
+  # Test number of values in group.col
+  ncat <- length(levels(as.factor(cat.values)))
+  if (ncat > MAX_CATEGORIES) {
+    warning(paste("Number of values in group column field very large:",
+                  ncat,
+                  "(does BED file have unique IDs instead of categories?)"))
+  }
+}
+
 #'
 #' Aggregate scores of a GRanges object on a specific field
 #'
@@ -215,10 +226,12 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
 #' @importFrom rtracklayer mcols
 aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
+
     # GRanges objects are 1-based and inclusive [start, end]
     scored.gr$length <- end(scored.gr) - start(scored.gr) + 1
 
     df <- data.frame(mcols(scored.gr))
+    validate_categories(df[, group.col])
 
     if (aggregate.by == 'true_mean') {
        # Multiply each score by interval length
