@@ -223,7 +223,6 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
     if (aggregate.by == 'true_mean') {
        # Multiply each score by interval length
        score.cols <- colnames(mcols(scored.gr))
-
        score.cols <- score.cols[!score.cols %in% c(group.col)]
 
        sum.vals <- df[, score.cols]*df$length
@@ -252,5 +251,7 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
     }
 
     as.data.frame(df)
+  } else {
+    stop("Grouping column not provided or not present in GRanges object.")
   }
 }
