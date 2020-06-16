@@ -52,7 +52,7 @@ bw_bins <- function(bwfiles,
 #' @param per.locus.stat Aggregating function per stat
 #' @param selection A GRanges object to restrict analysis to.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
-#' @importFrom dplyr arrange `%>%`
+#' @importFrom GenomeInfoDb sortSeqlevels
 multi_bw_ranges <- function(bwfilelist,
                             colnames,
                             gr,
@@ -91,6 +91,7 @@ multi_bw_ranges <- function(bwfilelist,
 #'    not aggregated. This is the behavior by default.
 #' @export
 #' @importFrom rtracklayer import BigWigFile
+#' @importFrom GenomeInfoDb sortSeqlevels
 bw_bed <- function(bwfiles,
                    bedfile,
                    colnames=NULL,
