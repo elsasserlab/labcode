@@ -159,7 +159,7 @@ natural_sort_by_field <- function(df, col) {
   rownames(df) <- df[, col]
   order <- str_sort(df[,col], numeric=TRUE)
   df[, col] <- NULL
-  df[order, ]
+  df[order, , drop=FALSE]
 }
 
 #' Build a bins GRanges object.
@@ -281,7 +281,10 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
        # Divide sum(scores) by sum(length) and keep only scores
        df <- sum.vals[, score.cols]/sum.vals$length
        df[, group.col] <- sum.vals[, group.col]
-       df <- df[, c(score.cols, group.col)]
+
+       score.cols <- score.cols[! score.cols %in% c('length')]
+       df <- df[, c(score.cols, group.col), drop=FALSE]
+
 
     } else if (aggregate.by %in% c('mean', 'median')) {
       f <- get(aggregate.by)
@@ -293,7 +296,7 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
       stop(paste("Function not implemented as aggregate.by:", aggregate.by))
     }
 
-    as.data.frame(df)
+    data.frame(df)
   } else {
     stop("Grouping column not provided or not present in GRanges object.")
   }
