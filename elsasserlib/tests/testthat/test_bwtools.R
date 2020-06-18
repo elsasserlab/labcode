@@ -2,7 +2,7 @@ context("Tests functions for bw handling")
 library(GenomicRanges)
 library(rtracklayer)
 
-toy_example <- function(bw1, bw2, bed_with_names) {
+toy_example <- function(bw1, bw2, bw_special, bed_with_names) {
   gr <- GRanges(
     seqnames = Rle(c("chr1", "chr2"), c(10, 10)),
     ranges = IRanges(c(seq(1,181, by=20),seq(1,181, by=20)),
@@ -33,6 +33,7 @@ toy_example <- function(bw1, bw2, bed_with_names) {
 
   export(gr, bw1)
   export(gr2, bw2)
+  export(gr2, bw_special)
   export(labeled_gr, bed_with_names)
 
 }
@@ -40,12 +41,14 @@ toy_example <- function(bw1, bw2, bed_with_names) {
 
 bw1 <- tempfile('bigwig', fileext='.bw')
 bw2 <- tempfile('bigwig', fileext='.bw')
+bw_special <- tempfile('big-wig', fileext='.bw')
 bed_with_names <-tempfile('bed', fileext='.bed')
 
-setup(toy_example(bw1, bw2, bed_with_names))
+setup(toy_example(bw1, bw2, bw_special, bed_with_names))
 teardown({
   unlink(bw1)
   unlink(bw2)
+  unlink(bw_special)
   unlink(bed_with_names)
 })
 
@@ -165,6 +168,14 @@ test_that("bw_bed returns correct per locus values on multiple files", {
   expect_equal(values[2]$bw2, 16.5)
 })
 
+test_that("bw_bed handles default names with special characters", {
+  values <- bw_bed(bw_special,
+                   bed_with_names,
+                   aggregate.by='true_mean')
+
+  expect_is(values, 'data.frame')
+})
+
 test_that("bw_bed crashes on wrong number of colnames for multiple files", {
   expect_error({ values <- bw_bed(c(bw1, bw2),
                    bed_with_names,
@@ -182,8 +193,8 @@ test_that("bw_bed returns correct mean-of-means aggregated values", {
                    aggregate.by='mean')
 
   expect_is(values, 'data.frame')
-  expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 13.3333333333)
+  expect_equal(values['typeA', 'bw1'], 7)
+  expect_equal(values['typeB', 'bw1'], 13.3333333333)
 })
 
 test_that("bw_bed returns correct true_mean aggregated values", {
@@ -194,8 +205,8 @@ test_that("bw_bed returns correct true_mean aggregated values", {
                    aggregate.by='true_mean')
 
   expect_is(values, 'data.frame')
-  expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 11.125)
+  expect_equal(values['typeA', 'bw1'], 7)
+  expect_equal(values['typeB', 'bw1'], 11.125)
 })
 
 test_that("bw_bed returns correct median-of-means aggregated values", {
@@ -206,8 +217,8 @@ test_that("bw_bed returns correct median-of-means aggregated values", {
                    aggregate.by='median')
 
   expect_is(values, 'data.frame')
-  expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 16.5)
+  expect_equal(values['typeA', 'bw1'], 7)
+  expect_equal(values['typeB', 'bw1'], 16.5)
 })
 
 

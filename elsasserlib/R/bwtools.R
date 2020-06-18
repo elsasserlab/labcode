@@ -53,6 +53,7 @@ bw_bins <- function(bwfiles,
 #' @param selection A GRanges object to restrict analysis to.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom GenomeInfoDb sortSeqlevels
+#' @return a sorted GRanges object
 multi_bw_ranges <- function(bwfilelist,
                             colnames,
                             gr,
@@ -65,15 +66,35 @@ multi_bw_ranges <- function(bwfilelist,
                           per.locus.stat=per.locus.stat,
                           selection=selection)
 
-  with.names <- purrr::map2(summaries, colnames, rename_score)
-  result <- Reduce(function(...) merge(..., all=TRUE), with.names)
+  # granges_cbind sorts each element so it's safer to merge and no need to
+  # sort after
+  result <- granges_cbind(summaries, colnames)
+  result
+}
 
-  if (is.data.frame(result)) {
-    result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
+#' Performs a cbind operation on a GRanges list, appending scores
+#'
+#' It will sort the GRanges elements in order to ensure the match is proper.
+#'
+#' @param grlist A list of GRanges objects that have all the same fields.
+#' @param colnames Vector of names for the score columns.
+#' @importFrom GenomeInfoDb sortSeqlevels
+granges_cbind <- function(grlist, colnames) {
+  fixed.fields <- c('seqnames', 'start', 'end', 'width', 'strand')
+
+  grlist[[1]] <- sortSeqlevels(grlist[[1]])
+  grlist[[1]] <- sort(grlist[[1]])
+
+  result <- data.frame(grlist[[1]])[, fixed.fields]
+  for (i in seq(1, length(grlist))) {
+    grlist[[i]] <- sortSeqlevels(grlist[[i]])
+    grlist[[i]] <- sort(grlist[[i]])
+
+    result[, colnames[[i]]] <- grlist[[i]]$score
   }
 
-  result <- sortSeqlevels(result)
-  sort(result, ignore.strand=TRUE)
+  result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
+  result
 }
 
 #' Build a scored GRanges object from a BED file.
@@ -107,6 +128,8 @@ bw_bed <- function(bwfiles,
   }
 
   bed <- import(bedfile)
+  bed <- sortSeqlevels(bed)
+  bed <- sort(bed, ignore.strand=FALSE)
 
   result <- multi_bw_ranges(bwfiles,
                             colnames,
@@ -114,29 +137,29 @@ bw_bed <- function(bwfiles,
                             per.locus.stat=per.locus.stat)
 
   if ( 'name' %in% names(mcols(bed)) ) {
-    bed <- sortSeqlevels(bed)
-    sorted.bed <- sort(bed, ignore.strand=TRUE)
-    result$name <- sorted.bed$name
+    result$name <- bed$name
   }
   if (! is.null(aggregate.by)) {
     df <- aggregate_scores(result,
                            group.col='name',
                            aggregate.by=aggregate.by)
-    result <- df
+
+    result <- natural_sort_by_field(df, 'name')
   }
   result
 }
 
-#' Rename score function of a GRanges object
+#' Moves a column of a dataframe to rownames and naturally sorts the rows
 #'
-#' @param gr GRanges object
-#' @param new.name Name to give to the column.
-#' @importFrom rtracklayer mcols
-rename_score <- function(gr, new.name) {
-  colnames(mcols(gr)) <- replace(colnames(mcols(gr)),
-                                 colnames(mcols(gr))=='score',
-                                 new.name)
-  gr
+#' @param df A dataframe
+#' @param col The column (usually name)
+#' @importFrom stringr str_sort
+#' @return A sorted df
+natural_sort_by_field <- function(df, col) {
+  rownames(df) <- df[, col]
+  order <- str_sort(df[,col], numeric=TRUE)
+  df[, col] <- NULL
+  df[order, , drop=FALSE]
 }
 
 #' Build a bins GRanges object.
@@ -185,7 +208,7 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
-#' @return Data frame with columns score and group.col (if provided).
+#' @return GRanges with column score.
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
@@ -197,6 +220,12 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   result
 }
 
+
+#' Checks that the number of categories is reasonable for an aggregation.
+#'
+#' Throws a warning if found more than  50 values.
+#'
+#' @param cat.values An array of values
 validate_categories <- function(cat.values) {
   MAX_CATEGORIES <- 50
   # Test number of values in group.col
@@ -232,12 +261,12 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 
     df <- data.frame(mcols(scored.gr))
     validate_categories(df[, group.col])
+    # Make sure special characters are taken into account
+    score.cols <- colnames(mcols(scored.gr))
+    score.cols <- make.names(score.cols)
+    score.cols <- score.cols[!score.cols %in% c(group.col)]
 
     if (aggregate.by == 'true_mean') {
-       # Multiply each score by interval length
-       score.cols <- colnames(mcols(scored.gr))
-       score.cols <- score.cols[!score.cols %in% c(group.col)]
-
        sum.vals <- df[, score.cols]*df$length
        colnames(sum.vals) <- score.cols
        sum.vals[, group.col] <- df[, group.col]
@@ -251,7 +280,6 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
        # Divide sum(scores) by sum(length) and keep only scores
        df <- sum.vals[, score.cols]/sum.vals$length
        df[, group.col] <- sum.vals[, group.col]
-       df <- df[, c(score.cols, group.col)]
 
     } else if (aggregate.by %in% c('mean', 'median')) {
       f <- get(aggregate.by)
@@ -263,7 +291,10 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
       stop(paste("Function not implemented as aggregate.by:", aggregate.by))
     }
 
-    as.data.frame(df)
+    score.cols <- score.cols[! score.cols %in% c('length')]
+    df <- df[, c(score.cols, group.col), drop=FALSE]
+    data.frame(df)
+
   } else {
     stop("Grouping column not provided or not present in GRanges object.")
   }

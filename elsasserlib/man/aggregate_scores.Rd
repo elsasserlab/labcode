@@ -11,8 +11,12 @@ aggregate_scores(scored.gr, group.col, aggregate.by)
 
 \item{group.col}{A column among the mcols that can be seen as a factor.}
 
-\item{aggregate.by}{Function used to aggregate (mean, median, any valid
-function).}
+\item{aggregate.by}{Function used to aggregate: mean, median, true_mean.
+true_mean: Mean coverage taking all elements in a class as one large bin
+mean: mean-of-distribution approach. The mean of the aggregated value per
+  locus is reported.
+median: median-of-distribution. The median of the aggregated value per
+  locus is reported}
 }
 \value{
 A DataFrame with the aggregated scores (any numerical column will be
