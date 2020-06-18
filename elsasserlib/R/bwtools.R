@@ -261,13 +261,12 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 
     df <- data.frame(mcols(scored.gr))
     validate_categories(df[, group.col])
+    # Make sure special characters are taken into account
+    score.cols <- colnames(mcols(scored.gr))
+    score.cols <- make.names(score.cols)
+    score.cols <- score.cols[!score.cols %in% c(group.col)]
 
     if (aggregate.by == 'true_mean') {
-       # Make sure special characters are taken into account
-       score.cols <- colnames(mcols(scored.gr))
-       score.cols <- make.names(score.cols)
-       score.cols <- score.cols[!score.cols %in% c(group.col)]
-
        sum.vals <- df[, score.cols]*df$length
        colnames(sum.vals) <- score.cols
        sum.vals[, group.col] <- df[, group.col]
@@ -282,10 +281,6 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
        df <- sum.vals[, score.cols]/sum.vals$length
        df[, group.col] <- sum.vals[, group.col]
 
-       score.cols <- score.cols[! score.cols %in% c('length')]
-       df <- df[, c(score.cols, group.col), drop=FALSE]
-
-
     } else if (aggregate.by %in% c('mean', 'median')) {
       f <- get(aggregate.by)
       df <- df %>%
@@ -296,7 +291,10 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
       stop(paste("Function not implemented as aggregate.by:", aggregate.by))
     }
 
+    score.cols <- score.cols[! score.cols %in% c('length')]
+    df <- df[, c(score.cols, group.col), drop=FALSE]
     data.frame(df)
+
   } else {
     stop("Grouping column not provided or not present in GRanges object.")
   }
