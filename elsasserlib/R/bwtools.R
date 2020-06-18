@@ -65,8 +65,12 @@ multi_bw_ranges <- function(bwfilelist,
                           per.locus.stat=per.locus.stat,
                           selection=selection)
 
-  with.names <- purrr::map2(summaries, colnames, rename_score)
-  result <- Reduce(function(...) merge(..., all=TRUE), with.names)
+
+  fixed.fields <- c('seqnames', 'start', 'end', 'width', 'strand')
+  result <- data.frame(summaries[[1]])[, fixed.fields]
+  for (i in seq(1, length(summaries))) {
+    result[, colnames[[i]]] <- summaries[[i]]$score
+  }
 
   if (is.data.frame(result)) {
     result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
@@ -107,6 +111,8 @@ bw_bed <- function(bwfiles,
   }
 
   bed <- import(bedfile)
+  bed <- sortSeqlevels(bed)
+  bed <- sort(bed, ignore.strand=FALSE)
 
   result <- multi_bw_ranges(bwfiles,
                             colnames,
@@ -114,9 +120,7 @@ bw_bed <- function(bwfiles,
                             per.locus.stat=per.locus.stat)
 
   if ( 'name' %in% names(mcols(bed)) ) {
-    bed <- sortSeqlevels(bed)
-    sorted.bed <- sort(bed, ignore.strand=TRUE)
-    result$name <- sorted.bed$name
+    result$name <- bed$name
   }
   if (! is.null(aggregate.by)) {
     df <- aggregate_scores(result,
@@ -125,18 +129,6 @@ bw_bed <- function(bwfiles,
     result <- df
   }
   result
-}
-
-#' Rename score function of a GRanges object
-#'
-#' @param gr GRanges object
-#' @param new.name Name to give to the column.
-#' @importFrom rtracklayer mcols
-rename_score <- function(gr, new.name) {
-  colnames(mcols(gr)) <- replace(colnames(mcols(gr)),
-                                 colnames(mcols(gr))=='score',
-                                 new.name)
-  gr
 }
 
 #' Build a bins GRanges object.
@@ -182,10 +174,10 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @param per.locus.stat Aggregating function (per locus). Mean by default.
 #'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @param selection A GRanges object to restrict analysis to.
-#' @importFrom rtracklayer BigWigFile
+#' @importFrom rtracklayer BigWigFile sortSeqLevels
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
-#' @return Data frame with columns score and group.col (if provided).
+#' @return GRanges with column score.
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
@@ -194,7 +186,8 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
     gr <- subsetByOverlaps(gr, selection)
   }
   result <- unlist(explicit_summary(bw, gr, type=per.locus.stat))
-  result
+  result <- sortSeqlevels(result)
+  sort(result)
 }
 
 validate_categories <- function(cat.values) {
@@ -234,8 +227,9 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
     validate_categories(df[, group.col])
 
     if (aggregate.by == 'true_mean') {
-       # Multiply each score by interval length
+       # Make sure special characters are taken into account
        score.cols <- colnames(mcols(scored.gr))
+       score.cols <- make.names(score.cols)
        score.cols <- score.cols[!score.cols %in% c(group.col)]
 
        sum.vals <- df[, score.cols]*df$length
