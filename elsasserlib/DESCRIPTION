@@ -21,6 +21,7 @@ Depends: R (>= 3.6)
 biocViews:
 Imports:
   rtracklayer,
+  rmarkdown,
   dplyr,
   tidyselect,
   grDevices,
@@ -43,7 +44,6 @@ LazyData: true
 RoxygenNote: 7.1.0
 Suggests: 
     knitr,
-    rmarkdown,
     testthat
 VignetteBuilder: knitr
 URL: https://github.com/elsasserlab/labcode
