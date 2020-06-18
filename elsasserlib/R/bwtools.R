@@ -65,19 +65,35 @@ multi_bw_ranges <- function(bwfilelist,
                           per.locus.stat=per.locus.stat,
                           selection=selection)
 
+  # granges_cbind sorts each element so it's safer to merge and no need to
+  # sort after
+  result <- granges_cbind(summaries, colnames)
+  result
+}
 
+#' Performs a cbind operation on a GRanges list, appending scores
+#'
+#' It will sort the GRanges elements in order to ensure the match is proper.
+#'
+#' @param grlist A list of GRanges objects that have all the same fields.
+#' @param colnames Vector of names for the score columns.
+#' @importFrom GenomicRanges sortSeqlevels
+granges_cbind <- function(grlist, colnames) {
   fixed.fields <- c('seqnames', 'start', 'end', 'width', 'strand')
-  result <- data.frame(summaries[[1]])[, fixed.fields]
-  for (i in seq(1, length(summaries))) {
-    result[, colnames[[i]]] <- summaries[[i]]$score
+
+  grlist[[1]] <- sortSeqlevels(grlist[[1]])
+  grlist[[1]] <- sort(grlist[[1]])
+
+  result <- data.frame(grlist[[1]])[, fixed.fields]
+  for (i in seq(1, length(grlist))) {
+    grlist[[i]] <- sortSeqlevels(grlist[[i]])
+    grlist[[i]] <- sort(grlist[[i]])
+
+    result[, colnames[[i]]] <- grlist[[i]]$score
   }
 
-  if (is.data.frame(result)) {
-    result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
-  }
-
-  result <- sortSeqlevels(result)
-  sort(result, ignore.strand=TRUE)
+  result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
+  result
 }
 
 #' Build a scored GRanges object from a BED file.
@@ -186,8 +202,6 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
     gr <- subsetByOverlaps(gr, selection)
   }
   result <- unlist(explicit_summary(bw, gr, type=per.locus.stat))
-  result <- sortSeqlevels(result)
-  sort(result)
 }
 
 validate_categories <- function(cat.values) {
