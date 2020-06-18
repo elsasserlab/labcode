@@ -23,6 +23,9 @@ multi_bw_ranges(
 
 \item{selection}{A GRanges object to restrict analysis to.}
 }
+\value{
+a sorted GRanges object
+}
 \description{
 Build a binned-scored GRanges object from a list of bigWig files. The
 aggregating function per locus can be min, max, sd, mean.

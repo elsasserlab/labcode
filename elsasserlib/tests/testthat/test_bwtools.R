@@ -193,8 +193,8 @@ test_that("bw_bed returns correct mean-of-means aggregated values", {
                    aggregate.by='mean')
 
   expect_is(values, 'data.frame')
-  expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 13.3333333333)
+  expect_equal(values['typeA', 'bw1'], 7)
+  expect_equal(values['typeB', 'bw1'], 13.3333333333)
 })
 
 test_that("bw_bed returns correct true_mean aggregated values", {
@@ -205,8 +205,8 @@ test_that("bw_bed returns correct true_mean aggregated values", {
                    aggregate.by='true_mean')
 
   expect_is(values, 'data.frame')
-  expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 11.125)
+  expect_equal(values['typeA', 'bw1'], 7)
+  expect_equal(values['typeB', 'bw1'], 11.125)
 })
 
 test_that("bw_bed returns correct median-of-means aggregated values", {
@@ -217,8 +217,8 @@ test_that("bw_bed returns correct median-of-means aggregated values", {
                    aggregate.by='median')
 
   expect_is(values, 'data.frame')
-  expect_equal(values[values$name=='typeA', 'bw1'], 7)
-  expect_equal(values[values$name=='typeB', 'bw1'], 16.5)
+  expect_equal(values['typeA', 'bw1'], 7)
+  expect_equal(values['typeB', 'bw1'], 16.5)
 })
 
 

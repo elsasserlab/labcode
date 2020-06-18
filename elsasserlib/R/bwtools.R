@@ -157,8 +157,8 @@ bw_bed <- function(bwfiles,
 #' @return A sorted df
 natural_sort_by_field <- function(df, col) {
   rownames(df) <- df[, col]
-  df[, col] <- NULL
   order <- str_sort(df[,col], numeric=TRUE)
+  df[, col] <- NULL
   df[order, ]
 }
 
