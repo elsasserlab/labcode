@@ -53,6 +53,7 @@ bw_bins <- function(bwfiles,
 #' @param selection A GRanges object to restrict analysis to.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom GenomeInfoDb sortSeqlevels
+#' @return a sorted GRanges object
 multi_bw_ranges <- function(bwfilelist,
                             colnames,
                             gr,
@@ -77,7 +78,7 @@ multi_bw_ranges <- function(bwfilelist,
 #'
 #' @param grlist A list of GRanges objects that have all the same fields.
 #' @param colnames Vector of names for the score columns.
-#' @importFrom GenomicRanges sortSeqlevels
+#' @importFrom GenomeInfoDb sortSeqlevels
 granges_cbind <- function(grlist, colnames) {
   fixed.fields <- c('seqnames', 'start', 'end', 'width', 'strand')
 
@@ -142,9 +143,23 @@ bw_bed <- function(bwfiles,
     df <- aggregate_scores(result,
                            group.col='name',
                            aggregate.by=aggregate.by)
-    result <- df
+
+    result <- natural_sort_by_field(df, 'name')
   }
   result
+}
+
+#' Moves a column of a dataframe to rownames and naturally sorts the rows
+#'
+#' @param df A dataframe
+#' @param col The column (usually name)
+#' @importFrom stringr str_sort
+#' @return A sorted df
+natural_sort_by_field <- function(df, col) {
+  rownames(df) <- df[, col]
+  df[, col] <- NULL
+  order <- str_sort(df[,col], numeric=TRUE)
+  df[order, ]
 }
 
 #' Build a bins GRanges object.
@@ -190,7 +205,7 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @param per.locus.stat Aggregating function (per locus). Mean by default.
 #'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @param selection A GRanges object to restrict analysis to.
-#' @importFrom rtracklayer BigWigFile sortSeqLevels
+#' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
 #' @return GRanges with column score.
@@ -202,8 +217,15 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
     gr <- subsetByOverlaps(gr, selection)
   }
   result <- unlist(explicit_summary(bw, gr, type=per.locus.stat))
+  result
 }
 
+
+#' Checks that the number of categories is reasonable for an aggregation.
+#'
+#' Throws a warning if found more than  50 values.
+#'
+#' @param cat.values An array of values
 validate_categories <- function(cat.values) {
   MAX_CATEGORIES <- 50
   # Test number of values in group.col

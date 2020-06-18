@@ -27,6 +27,7 @@ Imports:
   stats,
   methods,
   ggplot2,
+  stringr,
   reshape2,
   GenomeInfoDb,
   GenomeInfoDbData,
