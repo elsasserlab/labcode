@@ -257,7 +257,7 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
 
     # GRanges objects are 1-based and inclusive [start, end]
-    scored.gr$length <- end(scored.gr) - start(scored.gr) + 1
+    scored.gr$length <- GenomicRanges::end(scored.gr) - GenomicRanges::start(scored.gr) + 1
 
     df <- data.frame(mcols(scored.gr))
     validate_categories(df[, group.col])
