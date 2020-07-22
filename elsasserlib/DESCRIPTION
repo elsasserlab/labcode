@@ -1,7 +1,7 @@
 Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
-Version: 0.1.1
+Version: 0.2
 Authors@R: c( 
   person("Carmen", "Navarro", 
          email = "carmen.navarro@scilifelab.se",
@@ -16,7 +16,7 @@ Maintainer: Carmen Navarro <carmen.navarro@scilifelab.se>
 Description: Set of mixed utilities of use in the context of Simon Elsasser's
     lab at SciLifeLab. This includes genomics-related plots, analyses of outputs
     of experiments and methods developed within the lab.
-License: MIT + file LICENSE
+License: GPLv3 + file LICENSE
 Depends: R (>= 3.6)
 biocViews:
 Imports:
