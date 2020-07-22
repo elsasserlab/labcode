@@ -24,12 +24,10 @@ bw_bins <- function(bwfiles,
                     genome='mm9',
                     selection=NULL) {
 
+  check_filelist(bwfiles)
+
   if (is.null(colnames)) {
     colnames <- basename(bwfiles)
-  }
-
-  if (length(bwfiles) != length(colnames)) {
-    stop("BigWig file list and column names must have the same length.")
   }
 
   tiles <- build_bins(bsize=bsize, genome=genome)
@@ -59,6 +57,10 @@ multi_bw_ranges <- function(bwfilelist,
                             gr,
                             per.locus.stat='mean',
                             selection=NULL) {
+
+  if (length(bwfilelist) != length(colnames)) {
+    stop("BigWig file list and column names must have the same length.")
+  }
 
   summaries <- purrr::map(bwfilelist,
                           bw_ranges,
@@ -119,12 +121,11 @@ bw_bed <- function(bwfiles,
                    per.locus.stat='mean',
                    aggregate.by=NULL) {
 
+  check_filelist(bwfiles)
+  check_filelist(bedfile)
+
   if (is.null(colnames)) {
     colnames <- basename(bwfiles)
-  }
-
-  if (length(bwfiles) != length(colnames)) {
-    stop("BigWig file list and column names must have the same length.")
   }
 
   bed <- import(bedfile)
@@ -147,6 +148,17 @@ bw_bed <- function(bwfiles,
     result <- natural_sort_by_field(df, 'name')
   }
   result
+}
+
+check_filelist <- function(filelist) {
+  if (length(filelist) == 0) {
+    stop("File list provided is empty.")
+  }
+
+  if (!all(file.exists(filelist))) {
+    msg <- paste("Files not found:", filelist[!file.exists(filelist)])
+    stop(msg)
+  }
 }
 
 #' Moves a column of a dataframe to rownames and naturally sorts the rows
