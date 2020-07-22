@@ -209,6 +209,34 @@ test_that("bw_bed returns correct true_mean aggregated values", {
   expect_equal(values['typeB', 'bw1'], 11.125)
 })
 
+test_that("bw_bed on an empty list throws an error", {
+  expect_error({ values <- bw_bed(c(),
+                   bed_with_names,
+                   per.locus.stat='mean',
+                   aggregate.by='true_mean')},
+               "File list provided is empty."
+  )
+
+})
+
+test_that("bw_bed on non-existing bed file throws an error", {
+  expect_error({ values <- bw_bed(bw1,
+                                  'invalidname.bed',
+                                  per.locus.stat='mean',
+                                  aggregate.by='true_mean')},
+               "Files not found: invalidname.bed"
+  )
+})
+
+test_that("bw_bed errors on non existing files on bwlist", {
+  expect_error({ values <- bw_bed(c(bw1, 'invalidname.bw'),
+                                  bed_with_names,
+                                  per.locus.stat='mean',
+                                  aggregate.by='true_mean')},
+               "Files not found: invalidname.bw"
+  )
+})
+
 test_that("bw_bed returns correct median-of-means aggregated values", {
   values <- bw_bed(bw1,
                    bed_with_names,
