@@ -41,7 +41,7 @@ toy_example <- function(bw1, bw2, bw_special, bed_with_names) {
 
 bw1 <- tempfile('bigwig', fileext='.bw')
 bw2 <- tempfile('bigwig', fileext='.bw')
-bw_special <- tempfile('big-wig', fileext='.bw')
+bw_special <- tempfile('bigwig', fileext='.bw')
 bed_with_names <-tempfile('bed', fileext='.bed')
 
 setup(toy_example(bw1, bw2, bw_special, bed_with_names))
@@ -219,6 +219,15 @@ test_that("bw_bed on an empty list throws an error", {
 
 })
 
+test_that("bw_profile on an empty list throws an error", {
+  expect_error({ values <- bw_profile(c(),
+                                      bed_with_names,
+                                      colnames=NULL)},
+               "File list provided is empty."
+  )
+
+})
+
 test_that("bw_bed on non-existing bed file throws an error", {
   expect_error({ values <- bw_bed(bw1,
                                   'invalidname.bed',
@@ -228,6 +237,15 @@ test_that("bw_bed on non-existing bed file throws an error", {
   )
 })
 
+test_that("bw_profile on non-existing bed file throws an error", {
+  expect_error({ values <- bw_profile(bw1,
+                                  'invalidname.bed',
+                                  colnames=NULL)},
+               "Files not found: invalidname.bed"
+  )
+})
+
+
 test_that("bw_bed errors on non existing files on bwlist", {
   expect_error({ values <- bw_bed(c(bw1, 'invalidname.bw'),
                                   bed_with_names,
@@ -236,6 +254,22 @@ test_that("bw_bed errors on non existing files on bwlist", {
                "Files not found: invalidname.bw"
   )
 })
+
+
+test_that("bw_profile errors on non existing files on bwlist", {
+  expect_error({ values <- bw_profile(c(bw1, 'invalidname.bw'),
+                                      bed_with_names,
+                                      colnames=NULL)},
+               "Files not found: invalidname.bw"
+  )
+})
+
+
+test_that("bw_profile runs quiet on valid parameters", {
+  expect_silent({values <- bw_profile(c(bw1), bed_with_names, colnames=NULL)})
+
+})
+
 
 test_that("bw_bed returns correct median-of-means aggregated values", {
   values <- bw_bed(bw1,
