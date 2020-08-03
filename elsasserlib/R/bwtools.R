@@ -319,8 +319,9 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 #' Adapted from seqplots rtracklayer wrapping functions to compute coverage values:
 #' For more on seqplots: https://www.bioconductor.org/packages/release/bioc/html/seqplots.html
 #'
-#' @param bwfile BigWig file to be summarized.
-#' @param bed BED file file to be summarized.
+#' @param bw BigWig file to be summarized.
+#' @param gr GRanges object
+#' @param label Name to give to the values
 #' @param mode How to handle differences in lengths across loci:
 #'   stretch: Anchor each locus on both sides.
 #'   start: Anchor all loci on start.
@@ -391,6 +392,15 @@ calculate_bw_profile <- function(bw,
 #' @param bwfiles BigWig file list to be summarized.
 #' @param bedfile BED file to summarize
 #' @param colnames Names to be assigned to the columns
+#' @param mode How to handle differences in lengths across loci:
+#'   stretch: Anchor each locus on both sides.
+#'   start: Anchor all loci on start.
+#'   end: Anchor all loci on end.
+#'   center: Center all loci.
+#' @param bin Bin size. Length of bin in base pairs. The lower, the higher the resolution.
+#' @param upstream Number of base pairs to include upstream of loci.
+#' @param downstream Number of base pairs to include downstream of loci.
+#' @param ignore_strand Whether to use strand information in BED file.
 #' @return a data frame in long format
 #' @export
 bw_profile <- function(bwfiles,
