@@ -3,6 +3,7 @@
 export(build_bins)
 export(bw_bed)
 export(bw_bins)
+export(bw_profile)
 export(mean_ratio_norm)
 export(palette_categorical)
 export(quantile_norm)
