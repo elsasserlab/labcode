@@ -17,7 +17,7 @@ Choices: min, max, sd, mean. These choices depend on rtracklayer library.}
 \item{selection}{A GRanges object to restrict analysis to.}
 }
 \value{
-GRanges with column score.
+GRanges with column score.`
 }
 \description{
 Build a scored GRanges object from a GRanges object and a BigWig file.
