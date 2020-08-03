@@ -220,7 +220,7 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
-#' @return GRanges with column score.
+#' @return GRanges with column score.`
 bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
@@ -310,4 +310,153 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
   } else {
     stop("Grouping column not provided or not present in GRanges object.")
   }
+}
+
+
+#'
+#' Mean coverage of a BigWig list of files on a set of loci specified as BED file.
+#'
+#' Adapted from seqplots rtracklayer wrapping functions to compute coverage values:
+#' For more on seqplots: https://www.bioconductor.org/packages/release/bioc/html/seqplots.html
+#'
+#' @param bwfile BigWig file to be summarized.
+#' @param bed BED file file to be summarized.
+#' @param mode How to handle differences in lengths across loci:
+#'   stretch: Anchor each locus on both sides.
+#'   start: Anchor all loci on start.
+#'   end: Anchor all loci on end.
+#'   center: Center all loci.
+#' @param bin Bin size. Length of bin in base pairs. The lower, the higher the resolution.
+#' @param upstream Number of base pairs to include upstream of loci.
+#' @param downstream Number of base pairs to include downstream of loci.
+#' @param ignore_strand Whether to use strand information in BED file.
+#' @importFrom rtracklayer BigWigFile import
+#' @return A DataFrame with the aggregated scores
+calculate_bw_profile <- function(bw,
+                                 gr,
+                                 label=NULL,
+                                 mode='stretch',
+                                 bin=100,
+                                 upstream=2500,
+                                 downstream=2500,
+                                 ignore_strand=F) {
+
+  bwfile <- BigWigFile(path=bw)
+  if (is.null(label)) {
+    label <- basename(bw)
+  }
+
+  if (mode == 'stretch') {
+    left_npoints <- floor(upstream/bin)
+    right_npoints <- floor(downstream/bin)
+    # Stretch to the median value of the GR object
+    middle_npoints <- floor(median(GenomicRanges::width(gr))/bin )
+
+    # So beautiful
+    left <- summary_matrix(bwfile,
+                           GenomicRanges::flank(gr, upstream, start=TRUE),
+                           npoints=left_npoints,
+                           ignore_strand=ignore_strand)
+
+    right <- summary_matrix(bwfile,
+                            GenomicRanges::flank(gr, downstream, start=FALSE),
+                            npoints=right_npoints,
+                            ignore_strand=ignore_strand)
+
+    middle <- summary_matrix(bwfile,
+                             gr,
+                             npoints=middle_npoints,
+                             ignore_strand=ignore_strand)
+
+    full <- cbind(left, middle, right)
+
+  } else {
+    gr <- GenomicRanges::promoters(GenomicRanges::resize(gr, 1, fix=mode),
+                                   upstream,
+                                   downstream)
+
+    npoints <- floor((upstream + downstream) / bin)
+
+    full <- summary_matrix(bwfile, gr, npoints=npoints, ignore_strand=F)
+  }
+
+  make_averages_df(full, label)
+
+}
+
+
+#' Compute a coverage profile on a list of bw files with a given GRanges object.
+#'
+#'
+#' @param bwfiles BigWig file list to be summarized.
+#' @param bedfile BED file to summarize
+#' @param colnames Names to be assigned to the columns
+#' @return a data frame in long format
+#' @export
+bw_profile <- function(bwfiles,
+                       bedfile,
+                       colnames,
+                       mode='stretch',
+                       bin=100,
+                       upstream=2500,
+                       downstream=2500,
+                       ignore_strand=F) {
+
+  check_filelist(bwfiles)
+  check_filelist(bedfile)
+  gr <- rtracklayer::import(bedfile)
+
+  values_list <- purrr::map2(bwfiles,
+                             colnames,
+                             calculate_bw_profile,
+                             gr=gr,
+                             mode=mode,
+                             bin=bin,
+                             upstream=upstream,
+                             downstream=downstream,
+                             ignore_strand=ignore_strand)
+
+  values <- do.call(rbind, values_list)
+  values
+}
+
+
+#' Summarize a BigWig file over loci on a GRanges object.
+#'
+#' @param track BigWigFile object (rtracklayer)
+#' @param gr GRanges object
+#' @param npoints How many points to take
+#' @param ignore_strand Ignore strand information in gr. Default false.
+#' @return A value matrix dimensions len(gr) x npoints
+summary_matrix <- function(track, gr, npoints, ignore_strand=F) {
+  values <- rtracklayer::summary(track,
+                    which=gr,
+                    as='matrix',
+                    size=npoints)
+
+  # Reverse minus strand rows
+  if (!ignore_strand) {
+    values[as.character(GenomicRanges::strand(gr))=='-',] <- values[
+      as.character(GenomicRanges::strand(gr))=='-', ncol(values):1]
+  }
+
+  values
+}
+
+
+#' Compute averages and standard error values for a matrix returned by
+#' summary_matrix.
+#'
+#' @param matrix A matrix returned by summary_matrix
+#' @param label Label for the sample
+#' @return A dataframe with summarized values, sderror and medians, plus a label.
+make_averages_df <- function(matrix, label) {
+  df <- data.frame(mean=colMeans(matrix, na.rm=TRUE),
+                   sderror=apply(matrix, 2,
+                                 function (n) { sd(n, na.rm=TRUE) / sqrt( sum(!is.na(n))) } ),
+                   median=apply(matrix, 2, median, na.rm=TRUE))
+
+  df$index <- as.integer(rownames(df))
+  df$sample <- label
+  df
 }
