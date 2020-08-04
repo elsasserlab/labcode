@@ -2,28 +2,32 @@
 % Please edit documentation in R/bwplot.R
 \name{bw_bins_scatterplot}
 \alias{bw_bins_scatterplot}
-\title{Print a basic scatterplot from two bigwig files and an optional set of BED
+\title{Basic scatterplot from two bigwig files and an optional set of BED
 files as highlighted annotations.}
 \usage{
 bw_bins_scatterplot(
-  xtrack,
-  ytrack,
+  x,
+  y,
+  x_bg = NULL,
+  y_bg = NULL,
   bsize = 10000,
   stat = "mean",
   genome = "mm9",
   highlight = NULL,
   minoverlap = 0L,
   highlight_label = NULL,
-  xlimits = NULL,
-  ylimits = NULL,
-  xlabel = NULL,
-  ylabel = NULL
+  x_func = identity,
+  y_func = identity
 )
 }
 \arguments{
-\item{xtrack}{BigWig file to be used for the x axis}
+\item{x}{BigWig file to be used for the x axis}
 
-\item{ytrack}{BigWig file to be used for the y axis}
+\item{y}{BigWig file to be used for the y axis}
+
+\item{x_bg}{BigWig file to be used for the x axis background (us. input)}
+
+\item{y_bg}{BigWig file to be used for the y axis background (us. input)}
 
 \item{bsize}{Bin size. Default 10000.}
 
@@ -35,21 +39,17 @@ bw_bins_scatterplot(
 
 \item{minoverlap}{Minimum overlap required for a bin to be highlighted}
 
-\item{highlight_label}{Labels for the highlight groups.}
-
-\item{xlimits}{Limits used for x axis}
-
-\item{ylimits}{Limits used for y axis}
-
-\item{xlabel}{Label for x axis}
-
-\item{ylabel}{Label used for y axis
+\item{highlight_label}{Labels for the highlight groups.
 If not provided, filenames are used.}
+
+\item{x_func}{Function to use after x / x_bg}
+
+\item{y_func}{Function to use after y / y_bg}
 }
 \value{
 A ggplot object
 }
 \description{
-Print a basic scatterplot from two bigwig files and an optional set of BED
+Basic scatterplot from two bigwig files and an optional set of BED
 files as highlighted annotations.
 }
