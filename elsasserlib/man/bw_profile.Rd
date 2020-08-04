@@ -7,7 +7,7 @@
 bw_profile(
   bwfiles,
   bedfile,
-  colnames,
+  colnames = NULL,
   mode = "stretch",
   bin = 100,
   upstream = 2500,

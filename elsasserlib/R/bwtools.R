@@ -342,6 +342,7 @@ calculate_bw_profile <- function(bw,
                                  downstream=2500,
                                  ignore_strand=F) {
 
+
   bwfile <- BigWigFile(path=bw)
   if (is.null(label)) {
     label <- basename(bw)
@@ -353,7 +354,6 @@ calculate_bw_profile <- function(bw,
     # Stretch to the median value of the GR object
     middle_npoints <- floor(median(GenomicRanges::width(gr))/bin )
 
-    # So beautiful
     left <- summary_matrix(bwfile,
                            GenomicRanges::flank(gr, upstream, start=TRUE),
                            npoints=left_npoints,
@@ -405,7 +405,7 @@ calculate_bw_profile <- function(bw,
 #' @export
 bw_profile <- function(bwfiles,
                        bedfile,
-                       colnames,
+                       colnames=NULL,
                        mode='stretch',
                        bin=100,
                        upstream=2500,
@@ -415,6 +415,30 @@ bw_profile <- function(bwfiles,
   check_filelist(bwfiles)
   check_filelist(bedfile)
   gr <- rtracklayer::import(bedfile)
+
+  if (bin <= 0) {
+    stop(paste('bin size must be a positive value:', bin))
+  }
+
+  if (upstream <= 0) {
+    stop(paste('upstream size must be a positive value:', upstream))
+  }
+
+  if (downstream <= 0) {
+    stop(paste('downstream size must be a positive value:', downstream))
+  }
+
+  if (bin > upstream || bin > downstream) {
+    stop('bin size must be smaller than flanking regions')
+  }
+
+  if (is.null(colnames)) {
+    colnames <- basename(bwfiles)
+  }
+
+  if (length(bwfiles) != length(colnames)) {
+    stop('colnames and bwfiles must have the same length')
+  }
 
   values_list <- purrr::map2(bwfiles,
                              colnames,

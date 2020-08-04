@@ -266,10 +266,43 @@ test_that("bw_profile errors on non existing files on bwlist", {
 
 
 test_that("bw_profile runs quiet on valid parameters", {
-  expect_silent({values <- bw_profile(c(bw1), bed_with_names, colnames=NULL)})
+  expect_silent({values <- bw_profile(c(bw1, bw2),
+                       bed_with_names,
+                       upstream=1, downstream=1, bin=1)})
 
 })
 
+test_that("bw_profile throws error on flanking region smaller than bin size", {
+  expect_error({values <- bw_profile(c(bw1, bw2),
+                                      bed_with_names,
+                                      upstream=1, downstream=1, bin=10)},
+               "bin size must be smaller than flanking regions")
+
+})
+
+test_that("bw_profile throws error on negative bin size", {
+  expect_error({values <- bw_profile(c(bw1, bw2),
+                                     bed_with_names,
+                                     upstream=1, downstream=1, bin=-10)},
+               "bin size must be a positive value: -10")
+
+})
+
+test_that("bw_profile throws error on negative upstream value", {
+  expect_error({values <- bw_profile(c(bw1, bw2),
+                                     bed_with_names,
+                                     upstream=-10, downstream=10, bin=10)},
+               "upstream size must be a positive value: -10")
+
+})
+
+test_that("bw_profile throws error on negative downstream value", {
+  expect_error({values <- bw_profile(c(bw1, bw2),
+                                     bed_with_names,
+                                     upstream=10, downstream=-10, bin=10)},
+               "downstream size must be a positive value: -10")
+
+})
 
 test_that("bw_bed returns correct median-of-means aggregated values", {
   values <- bw_bed(bw1,
