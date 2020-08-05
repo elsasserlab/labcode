@@ -483,6 +483,7 @@ summary_matrix <- function(track, gr, npoints, ignore_strand=F) {
 #'
 #' @param matrix A matrix returned by summary_matrix
 #' @param label Label for the sample
+#' @importFrom stats median sd
 #' @return A dataframe with summarized values, sderror and medians, plus a label.
 make_averages_df <- function(matrix, label) {
   df <- data.frame(mean=colMeans(matrix, na.rm=TRUE),
