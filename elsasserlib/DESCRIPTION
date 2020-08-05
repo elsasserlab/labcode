@@ -38,7 +38,9 @@ Imports:
   prettydoc,
   BSgenome.Mmusculus.UCSC.mm9,
   BSgenome.Hsapiens.UCSC.hg38,
-  scales
+  scales,
+  RColorBrewer,
+  pheatmap
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

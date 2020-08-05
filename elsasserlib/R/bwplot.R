@@ -176,7 +176,7 @@ bw_bins_violinplot <- function(bw,
     title <- paste(title, 'vs', basename(highlight))
   }
 
-  p <- ggplot(melted_bins, aes(x=variable, y=value)) +
+  p <- ggplot(melted_bins, aes_string(x='variable', y='value')) +
     geom_violin(fill='#cccccc') +
     theme_elsasserlab_screen(base_size = 18) +
     xlab('') +
@@ -202,9 +202,133 @@ bw_bins_violinplot <- function(bw,
     melted_highlight <- melt(overlapping_df_norm[, c(bin_id, bw_label)], id.vars=bin_id)
 
     p <- p + geom_jitter(data=melted_highlight,
-                         aes(x=variable, y=value, color=variable),
+                         aes_string(x='variable', y='value', color='variable'),
                          alpha=0.7)
   }
 
   p
 }
+
+
+
+
+#' Violin plot of bin distribution of a set of bigWig files overlayed with
+#' annotated bins (i.e. bins overlapping a given BED file)
+#'
+#'
+#' @param bw BigWig files
+#' @param bed BED file to use to summarize. It needs to have an adequate `name` field
+#'   (where names correspond to categories that can be grouped).
+#' @param bg_bw BigWig files used as background (us. input)
+#' @param bw_label Labels to use for in the plot for the bw files.
+#' @param aggregate_by Can be true_mean, mean (mean of means), median (median of means).
+#' @param norm_func Function to use on top of dividing bw/bg_bw (usually identity or log2)
+#' @param file_out Output the plot to a file
+#' @return A plot object
+#' @export
+bw_bed_summary_heatmap <- function(bw,
+                                   bed,
+                                   bg_bw=NULL,
+                                   bw_label=NULL,
+                                   aggregate_by='true_mean',
+                                   norm_func=identity,
+                                   file_out=NULL) {
+
+  if (!is.null(bg_bw) && length(bg_bw) != length(bw)) {
+    stop('BigWig file list and background bw file list must have the same length')
+  }
+
+  if (!is.null(bw_label) && length(bw) != length(bw_label)) {
+    stop('colnames and bw lists must have the same length')
+  }
+
+  title <- paste('Coverage per region (', aggregate_by, ')')
+  summary_values <- bw_bed(bw,
+                           bed,
+                           aggregate.by=aggregate_by)
+
+  if (!is.null(bg_bw)) {
+    bg_values <- bw_bed(bg_bw,
+                        bed,
+                        aggregate.by=aggregate_by)
+
+    title <- paste(title, '- Norm to background')
+
+    summary_values <- norm_func(summary_values / bg_values)
+  }
+
+  summary_heatmap(t(summary_values), title=title, file_out=file_out)
+}
+
+
+#' Plot a pretty heatmap using pheatmap library
+#'
+#' This function ignores NA values to calculate min and max values.
+#'
+#' @param values Value matrix
+#' @param title Title of the plot
+#' @param size Size of the square
+#' @param file_out Optionally save directly to a file. This will take care of
+#'   cropping the heatmap to a right size so it fits.
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom pheatmap pheatmap
+#' @importFrom grDevices colorRampPalette
+#' @return Heatmap plot
+summary_heatmap <- function(values, title, size=35, file_out=NULL) {
+  bcolor <- "white"
+
+  breakslist <- compute_breakslist(values)
+  palette <- colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(length(breakslist))
+
+  cellsize_inches <- size / 72
+
+  margin <- 4
+  plot_width_inches <- cellsize_inches*ncol(values) + margin
+  plot_height_inches <- cellsize_inches*nrow(values) + margin
+
+  plot <- pheatmap(values,
+                   main=title,
+                   cellwidth=size,
+                   cluster_rows=F,
+                   cluster_cols=F,
+                   cellheight=size,
+                   border_color=bcolor,
+                   breaks=breakslist,
+                   color=palette,
+                   width=plot_width_inches,
+                   height=plot_height_inches,
+                   display_numbers=TRUE,
+                   filename = file_out)
+
+  plot
+}
+
+#' Given a value matrix, compute breakslist for the summarized heatmap.
+#'
+#' This is done so log scale and norm scale heatmaps have the same color scale
+#' on the positive values, and zero values are shown as white always.
+#'
+#' This function ignores NA values to calculate min and max values.
+#' @param mat Value matrix
+#' @return Sequence of breaks used by heatmap function
+compute_breakslist <- function(mat) {
+  # Compute the largest deviation from zero ignoring NAs
+  maxmat <- mat
+  maxmat[is.na(maxmat)] <- -Inf
+  maxval <- max(maxmat)
+
+  minmat <- mat
+  minmat[is.na(minmat)] <- Inf
+  minval <- min(minmat)
+
+  breaklim <- ceiling(abs(max(abs(c(minval, maxval)))))
+
+  # Compute a reasonable amount of steps
+  nsteps <- 21.0
+  stepsize <- 2*breaklim / nsteps
+
+  breakslist <- seq(-breaklim, +breaklim, by=stepsize)
+  breakslist
+}
+
+
