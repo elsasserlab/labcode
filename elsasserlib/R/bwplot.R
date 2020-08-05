@@ -332,3 +332,118 @@ compute_breakslist <- function(mat) {
 }
 
 
+#' Profile plot of a set of bw files
+#' annotated bins (i.e. bins overlapping a given BED file)
+#'
+#' @param bw BigWig files
+#' @param bed BED file to use to summarize. It needs to have an adequate `name` field
+#'   (where names correspond to categories that can be grouped).
+#' @param bg_bw BigWig files used as background (us. input)
+#' @param mode How to align BED loci: Can be stretch, start, end, center.
+#' @param bsize Bin size.
+#' @param upstream Number of base pairs to include upstream of loci.
+#' @param downstream Number of base pairs to include downstream of loci.
+#' @param ignore_strand Ignore strand information in BED file (default false).
+#' @param show_error Show standard error.
+#' @param norm_func Function to apply after bw / bg (default identity)
+#' @import ggplot2
+#' @return A plot object
+#' @export
+bw_profile_plot <- function(bw,
+                            bed,
+                            bg_bw=NULL,
+                            mode='stretch',
+                            bsize=100,
+                            upstream=2500,
+                            downstream=2500,
+                            ignore_strand=F,
+                            show_error=F,
+                            norm_func=identity) {
+
+  norm_values <- function(df1, df2, norm_func, col) {
+    cols <- colnames(df1)
+    cols <- cols[! cols %in% c(col)]
+    new_col <- norm_func(df1[, col] / df2[, col])
+    df1[, col] <- new_col
+    data.frame(df1)
+  }
+
+  values_list <- lapply(bw,
+                        bw_profile,
+                        bed=bed,
+                        mode=mode,
+                        bin=bsize,
+                        upstream=upstream,
+                        downstream=downstream,
+                        ignore_strand=ignore_strand)
+
+  ylabel <- 'RPGC'
+
+  if (!is.null(bg_bw)) {
+    values_bg <- lapply(bg_bw,
+                        bw_profile,
+                        bed=bed,
+                        mode=mode,
+                        bin=bsize,
+                        upstream=upstream,
+                        downstream=downstream,
+                        ignore_strand=ignore_strand)
+
+    values_norm <- purrr::map2(values_list,
+                               values_bg,
+                               norm_values,
+                               norm_func=norm_func, col='mean')
+
+    values_list <- values_norm
+
+    ylabel <- paste('Enrichment over background')
+  }
+
+  values <- do.call(rbind, values_list)
+
+  left_flank_size <- floor(upstream/bsize)
+  right_flank_size <- floor(downstream/bsize)
+
+  # index value starts at 1
+  axis_breaks <- c(1, left_flank_size, nrow(values_list[[1]]))
+  axis_labels <- c(paste('-', upstream/1000, 'kb', sep=''),
+                   mode,
+                   paste('+', downstream/1000, 'kb', sep=''))
+
+  lines <- axis_breaks[2]
+
+  if (mode == 'stretch') {
+    axis_breaks <- c(1,
+                     left_flank_size,
+                     nrow(values_list[[1]])-right_flank_size,
+                     nrow(values_list[[1]]))
+
+    axis_labels <- c(paste('-', upstream/1000, 'kb', sep=''),
+                     'start',
+                     'end',
+                     paste('+', downstream/1000, 'kb', sep=''))
+
+    lines <- axis_breaks[2:3]
+
+  }
+
+  loci <- length(import(bed, format='BED'))
+  xtitle <- paste(basename(bed), '-', loci, 'loci', sep=' ')
+
+  p <- ggplot(values, aes_string(x='index', y='mean', color='sample', fill='sample')) +
+    geom_line(size=0.8) +
+    geom_vline(xintercept=lines, linetype='dashed', color='#cccccc', alpha=0.8) +
+    scale_x_continuous(breaks=axis_breaks, labels=axis_labels) +
+    xlab(xtitle) +
+    ylab(ylabel) +
+    ggtitle('Profile plot') +
+    theme_elsasserlab_screen(base_size=18) +
+    theme(legend.position=c(0.80,0.90), legend.direction = 'vertical', legend.title = element_blank())
+  if (show_error) {
+    p <- p + geom_ribbon(aes(x=index, ymin=mean-sderror, ymax=mean+sderror), color=NA, alpha=0.3)
+  }
+
+  p
+}
+
+
