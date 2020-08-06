@@ -4,7 +4,7 @@
 \alias{summary_heatmap}
 \title{Plot a pretty heatmap using pheatmap library}
 \usage{
-summary_heatmap(values, title, size = 35, file_out = NULL)
+summary_heatmap(values, title, size = 35, file_out = NA)
 }
 \arguments{
 \item{values}{Value matrix}
