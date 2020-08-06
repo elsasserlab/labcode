@@ -12,24 +12,24 @@ bw_bed_summary_heatmap(
   bw_label = NULL,
   aggregate_by = "true_mean",
   norm_func = identity,
-  file_out = NULL
+  file_out = NA
 )
 }
 \arguments{
-\item{bw}{BigWig files}
+\item{bw}{BigWig files.}
 
 \item{bed}{BED file to use to summarize. It needs to have an adequate `name` field
 (where names correspond to categories that can be grouped).}
 
-\item{bg_bw}{BigWig files used as background (us. input)}
+\item{bg_bw}{BigWig files used as background (us. input).}
 
 \item{bw_label}{Labels to use for in the plot for the bw files.}
 
 \item{aggregate_by}{Can be true_mean, mean (mean of means), median (median of means).}
 
-\item{norm_func}{Function to use on top of dividing bw/bg_bw (usually identity or log2)}
+\item{norm_func}{Function to use on top of dividing bw/bg_bw (usually identity or log2).}
 
-\item{file_out}{Output the plot to a file}
+\item{file_out}{Output the plot to a file.}
 }
 \value{
 A plot object

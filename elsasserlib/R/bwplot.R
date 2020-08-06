@@ -215,15 +215,14 @@ bw_bins_violinplot <- function(bw,
 #' Violin plot of bin distribution of a set of bigWig files overlayed with
 #' annotated bins (i.e. bins overlapping a given BED file)
 #'
-#'
-#' @param bw BigWig files
+#' @param bw BigWig files.
 #' @param bed BED file to use to summarize. It needs to have an adequate `name` field
 #'   (where names correspond to categories that can be grouped).
-#' @param bg_bw BigWig files used as background (us. input)
+#' @param bg_bw BigWig files used as background (us. input).
 #' @param bw_label Labels to use for in the plot for the bw files.
 #' @param aggregate_by Can be true_mean, mean (mean of means), median (median of means).
-#' @param norm_func Function to use on top of dividing bw/bg_bw (usually identity or log2)
-#' @param file_out Output the plot to a file
+#' @param norm_func Function to use on top of dividing bw/bg_bw (usually identity or log2).
+#' @param file_out Output the plot to a file.
 #' @return A plot object
 #' @export
 bw_bed_summary_heatmap <- function(bw,
@@ -232,7 +231,7 @@ bw_bed_summary_heatmap <- function(bw,
                                    bw_label=NULL,
                                    aggregate_by='true_mean',
                                    norm_func=identity,
-                                   file_out=NULL) {
+                                   file_out=NA) {
 
   if (!is.null(bg_bw) && length(bg_bw) != length(bw)) {
     stop('BigWig file list and background bw file list must have the same length')
@@ -274,7 +273,7 @@ bw_bed_summary_heatmap <- function(bw,
 #' @importFrom pheatmap pheatmap
 #' @importFrom grDevices colorRampPalette
 #' @return Heatmap plot
-summary_heatmap <- function(values, title, size=35, file_out=NULL) {
+summary_heatmap <- function(values, title, size=35, file_out=NA) {
   bcolor <- "white"
 
   breakslist <- compute_breakslist(values)
