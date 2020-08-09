@@ -7,9 +7,11 @@
 bw_bed(
   bwfiles,
   bedfile,
+  bg_bwfiles = NULL,
   colnames = NULL,
   per.locus.stat = "mean",
-  aggregate.by = NULL
+  aggregate.by = NULL,
+  norm_func = identity
 )
 }
 \arguments{

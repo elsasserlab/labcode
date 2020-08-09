@@ -6,13 +6,15 @@
 \usage{
 bw_profile(
   bwfiles,
-  bedfile,
+  bg_bwfiles = NULL,
+  bedfile = NULL,
   colnames = NULL,
   mode = "stretch",
   bin = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F
+  ignore_strand = F,
+  norm_func = identity
 )
 }
 \arguments{

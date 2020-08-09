@@ -8,16 +8,16 @@ files as highlighted annotations.}
 bw_bins_scatterplot(
   x,
   y,
-  x_bg = NULL,
-  y_bg = NULL,
+  bg_x = NULL,
+  bg_y = NULL,
   bsize = 10000,
   stat = "mean",
   genome = "mm9",
   highlight = NULL,
   minoverlap = 0L,
   highlight_label = NULL,
-  x_func = identity,
-  y_func = identity
+  norm_func_x = identity,
+  norm_func_y = identity
 )
 }
 \arguments{
@@ -25,9 +25,9 @@ bw_bins_scatterplot(
 
 \item{y}{BigWig file to be used for the y axis}
 
-\item{x_bg}{BigWig file to be used for the x axis background (us. input)}
+\item{bg_x}{BigWig file to be used for the x axis background (us. input)}
 
-\item{y_bg}{BigWig file to be used for the y axis background (us. input)}
+\item{bg_y}{BigWig file to be used for the y axis background (us. input)}
 
 \item{bsize}{Bin size. Default 10000.}
 
@@ -42,9 +42,9 @@ bw_bins_scatterplot(
 \item{highlight_label}{Labels for the highlight groups.
 If not provided, filenames are used.}
 
-\item{x_func}{Function to use after x / x_bg}
+\item{norm_func_x}{Function to use after x / x_bg}
 
-\item{y_func}{Function to use after y / y_bg}
+\item{norm_func_y}{Function to use after y / y_bg}
 }
 \value{
 A ggplot object

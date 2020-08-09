@@ -6,15 +6,19 @@
 \usage{
 bw_bins(
   bwfiles,
+  bg_bwfiles = NULL,
   colnames = NULL,
   stat = "mean",
   bsize = 10000,
   genome = "mm9",
-  selection = NULL
+  selection = NULL,
+  norm_func = identity
 )
 }
 \arguments{
-\item{bwfiles}{BigWig file to be summarized (or list).}
+\item{bwfiles}{BigWig files to be summarized.}
+
+\item{bg_bwfiles}{BigWig files to be used as background-}
 
 \item{colnames}{List of names to give to the mcols of the returned GRanges
 object. If NULL, filenames are used (default).}
@@ -29,10 +33,12 @@ Choices: min, max, sd, mean.}
 \item{selection}{A GRanges object to restrict binning to a certain set of
 intervals. It is useful for debugging and improving performance of locus
 specific analyses.}
+
+\item{norm_func}{Function to apply to normalized data f(bw / bw_bg).}
 }
 \value{
-A GenomicRanges object with each bwfile as a metadata column named
-    after colnames.
+A GRanges object with each bwfile as a metadata column named
+    after colnames, if provided, or after filenames otherwise.
 }
 \description{
 Build a binned-scored GRanges object from a bigWig file. The aggregating

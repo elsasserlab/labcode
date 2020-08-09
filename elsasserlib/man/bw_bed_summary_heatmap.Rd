@@ -12,7 +12,7 @@ bw_bed_summary_heatmap(
   bw_label = NULL,
   aggregate_by = "true_mean",
   norm_func = identity,
-  file_out = NULL
+  file_out = NA
 )
 }
 \arguments{

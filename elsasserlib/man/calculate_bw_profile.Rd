@@ -7,18 +7,22 @@
 calculate_bw_profile(
   bw,
   gr,
+  bg_bw = NULL,
   label = NULL,
   mode = "stretch",
   bin = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F
+  ignore_strand = F,
+  norm_func = identity
 )
 }
 \arguments{
 \item{bw}{BigWig file to be summarized.}
 
 \item{gr}{GRanges object}
+
+\item{bg_bw}{BigWig file to be used as background}
 
 \item{label}{Name to give to the values}
 

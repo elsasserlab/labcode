@@ -1,26 +1,11 @@
-#' Normalize a column of a dataframe, replacing it.
-#'
-#' @param df Data frame to be used.
-#' @param fg_col Column that corresponds to main signal.
-#' @param bg_col Column that corresponds to background.
-#' @param norm_func Function to apply after dividing.
-norm_col <- function(df, fg_col, bg_col, norm_func) {
-  cols <- colnames(df)
-  cols <- cols[! cols %in% c(fg_col)]
-  new_col <- norm_func(df[, fg_col] / df[, bg_col])
-  df[, fg_col] <- new_col
-  data.frame(df)
-}
-
-
 #' Basic scatterplot from two bigwig files and an optional set of BED
 #' files as highlighted annotations.
 #'
 #'
 #' @param x BigWig file to be used for the x axis
 #' @param y BigWig file to be used for the y axis
-#' @param x_bg BigWig file to be used for the x axis background (us. input)
-#' @param y_bg BigWig file to be used for the y axis background (us. input)
+#' @param bg_x BigWig file to be used for the x axis background (us. input)
+#' @param bg_y BigWig file to be used for the y axis background (us. input)
 #' @param bsize Bin size. Default 10000.
 #' @param stat Statistics used in the calculation of bins.
 #' @param genome Genome. Available choices are mm9, hg38.
@@ -28,75 +13,60 @@ norm_col <- function(df, fg_col, bg_col, norm_func) {
 #' @param minoverlap Minimum overlap required for a bin to be highlighted
 #' @param highlight_label Labels for the highlight groups.
 #'  If not provided, filenames are used.
-#' @param x_func Function to use after x / x_bg
-#' @param y_func Function to use after y / y_bg
+#' @param norm_func_x Function to use after x / x_bg
+#' @param norm_func_y Function to use after y / y_bg
 #' @return A ggplot object
 #' @import ggplot2
 #' @export
 bw_bins_scatterplot <- function(x,
                                 y,
-                                x_bg=NULL,
-                                y_bg=NULL,
+                                bg_x=NULL,
+                                bg_y=NULL,
                                 bsize=10000,
                                 stat='mean',
                                 genome='mm9',
                                 highlight=NULL,
                                 minoverlap=0L,
                                 highlight_label=NULL,
-                                x_func=identity,
-                                y_func=identity) {
+                                norm_func_x=identity,
+                                norm_func_y=identity) {
 
   label_df <- function(df, name) {
     data.frame(df, group=name)
   }
 
-  names <- make.names(basename(c(x, y, x_bg, y_bg)))
-  bins_values <- bw_bins(c(x, y, x_bg, y_bg),
-                         bsize=bsize,
-                         genome=genome,
-                         stat=stat)
+  bins_values_x <- bw_bins(x,
+                      bg_bwfiles=bg_x,
+                      bsize=bsize,
+                      genome=genome,
+                      stat=stat,
+                      norm_func=norm_func_x,
+                      colnames='x')
 
-  xcol <- names[[1]]
-  ycol <- names[[2]]
+  bins_values_y <- bw_bins(y,
+                      bg_bwfiles=bg_y,
+                      bsize=bsize,
+                      genome=genome,
+                      stat=stat,
+                      norm_func=norm_func_y,
+                      colnames='y')
 
-  bins_df <- data.frame(bins_values)
 
-  if (!is.null(x_bg)) {
-    x_bgcol <- make.names(basename(x_bg))
-    bins_df <- norm_col(bins_df, xcol, x_bgcol, x_func)
-  }
+  bins_df <- cbind(data.frame(bins_values_x), data.frame(bins_values_y)[,'y'])
+  colnames(bins_df) <- c(colnames(bins_df)[1:ncol(bins_df)-1], 'y')
+  bins_values <- makeGRangesFromDataFrame(bins_df, keep.extra.columns = T)
 
-  if (!is.null(y_bg)) {
-    y_bgcol <- make.names(basename(y_bg))
-    bins_df <- norm_col(bins_df, ycol, y_bgcol, y_func)
-  }
-
-  p <- ggplot(bins_df, aes_string(x=xcol, y=ycol)) +
-    geom_point(color='#cccccc', alpha=0.8) +
-        theme_elsasserlab_screen(base_size = 18) +
-    xlab(xcol) +
-    ylab(ycol) +
-    ggtitle(paste('Bin coverage (bsize = ', bsize, ')', sep=''))
+  extra_plot <- NULL
 
   if (!is.null(highlight)) {
     gr_list <- lapply(highlight, rtracklayer::import, format='BED')
 
-    subset_bins <- purrr::partial(IRanges::subsetByOverlaps,
+    subset_func <- purrr::partial(IRanges::subsetByOverlaps,
                                   x=bins_values,
                                   minoverlap=minoverlap)
 
-    subset_values <- lapply(gr_list, subset_bins)
-    subset_df <- lapply(subset_values, data.frame)
-
-    if (!is.null(x_bg)) {
-      x_bgcol <- make.names(basename(x_bg))
-      subset_df <- lapply(subset_df, norm_col, fg_col=xcol, bg_col=x_bgcol, norm_func=x_func)
-    }
-
-    if (!is.null(y_bg)) {
-      y_bgcol <- make.names(basename(y_bg))
-      subset_df <- lapply(subset_df, norm_col, fg_col=ycol, bg_col=y_bgcol, norm_func=y_func)
-    }
+    bins_subset <- lapply(gr_list, subset_func)
+    subset_df <- lapply(bins_subset, data.frame)
 
     if (is.null(highlight_label)) {
       highlight_label <- basename(highlight)
@@ -104,11 +74,19 @@ bw_bins_scatterplot <- function(x,
 
     df_values_labeled <- purrr::map2(subset_df, highlight_label, label_df)
     highlight_values <- do.call(rbind, df_values_labeled)
-    p <- p + geom_point(data=highlight_values, aes_string(x=xcol,
-                                                          y=ycol,
-                                                          color='group'), alpha=0.8)
 
+    extra_plot <- geom_point(data=highlight_values,
+                             aes_string(x='x', y='y', color='group'),
+                             alpha=0.8)
   }
+
+  p <- ggplot(bins_df, aes_string(x='x', y='y')) +
+    geom_point(color='#cccccc', alpha=0.8) +
+    theme_elsasserlab_screen(base_size = 18) +
+    xlab(make.names(basename(x))) +
+    ylab(make.names(basename(y))) +
+    ggtitle(paste('Bin coverage (bsize = ', bsize, ')', sep='')) +
+    extra_plot
 
   p
 }
@@ -141,50 +119,23 @@ bw_bins_violinplot <- function(bw,
                                minoverlap=0L,
                                norm_func=identity) {
 
-  if (!is.null(bg_bw) && length(bg_bw) != length(bw)) {
-    stop('BigWig file list and background bw file list must have the same length')
-  }
-
-  if (!is.null(bw_label) && length(bw) != length(bw_label)) {
-    stop('colnames and bw lists must have the same length')
-  }
-
-  bins_values <- bw_bins(c(bw, bg_bw),
+  bins_values <- bw_bins(bw,
+                         bg_bwfiles=bg_bw,
+                         colnames=bw_label,
                          bsize=bsize,
                          genome=genome,
                          stat=stat)
 
   bins_df <- data.frame(bins_values)
-  bwnames <- make.names(basename(bw))
-
-  if (!is.null(bg_bw)) {
-    bgnames <- make.names(basename(bg_bw))
-    bins_df[, bwnames] <- norm_func(bins_df[, bwnames] / bins_df[, bgnames])
-  }
-
+  bwnames <- colnames(mcols(bins_values))
   bin_id <- c('seqnames', 'start', 'end')
-  bins_df <- bins_df[, c(bin_id, bwnames)]
 
-  if (!is.null(bw_label)) {
-    colnames(bins_df) <- c(bin_id, bw_label)
-  }
-
-  melted_bins <- melt(bins_df, id.vars=bin_id)
-
+  melted_bins <- melt(bins_df[, c(bin_id, bwnames)], id.vars=bin_id)
   title <- paste('Global bin distribution (binsize=', bsize, ')', sep='')
+  extra_plot <- NULL
+
   if (!is.null(highlight)) {
     title <- paste(title, 'vs', basename(highlight))
-  }
-
-  p <- ggplot(melted_bins, aes_string(x='variable', y='value')) +
-    geom_violin(fill='#cccccc') +
-    theme_elsasserlab_screen(base_size = 18) +
-    xlab('') +
-    ylab('Mean coverage') +
-    ggtitle(title) +
-    theme(legend.position='none', axis.text.x=element_text(angle=45, hjust=1))
-
-  if (!is.null(highlight)) {
     gr_highlight <- rtracklayer::import(highlight, format='BED')
 
     overlapping_values <- IRanges::subsetByOverlaps(bins_values,
@@ -192,24 +143,23 @@ bw_bins_violinplot <- function(bw,
                                                     minoverlap=minoverlap)
 
     overlapping_df <- data.frame(overlapping_values)
-    overlapping_df_norm <- cbind(overlapping_df[, bin_id],
-                                 norm_func(overlapping_df[, bwnames] / overlapping_df[, bgnames]))
 
-    if (!is.null(bw_label)) {
-      colnames(overlapping_df_norm) <- c(bin_id, bw_label)
-    }
+    melted_highlight <- melt(overlapping_df[, c(bin_id, bwnames)], id.vars=bin_id)
 
-    melted_highlight <- melt(overlapping_df_norm[, c(bin_id, bw_label)], id.vars=bin_id)
-
-    p <- p + geom_jitter(data=melted_highlight,
-                         aes_string(x='variable', y='value', color='variable'),
-                         alpha=0.7)
+    extra_plot <- geom_jitter(data=melted_highlight,
+                                  aes_string(x='variable', y='value', color='variable'),
+                                  alpha=0.7)
   }
 
-  p
+  ggplot(melted_bins, aes_string(x='variable', y='value')) +
+    geom_violin(fill='#cccccc') +
+    theme_elsasserlab_screen(base_size = 18) +
+    xlab('') +
+    ylab('Mean coverage') +
+    ggtitle(title) +
+    theme(legend.position='none', axis.text.x=element_text(angle=45, hjust=1)) +
+    extra_plot
 }
-
-
 
 
 #' Violin plot of bin distribution of a set of bigWig files overlayed with
@@ -232,31 +182,19 @@ bw_bed_summary_heatmap <- function(bw,
                                    bw_label=NULL,
                                    aggregate_by='true_mean',
                                    norm_func=identity,
-                                   file_out=NULL) {
-
-  if (!is.null(bg_bw) && length(bg_bw) != length(bw)) {
-    stop('BigWig file list and background bw file list must have the same length')
-  }
-
-  if (!is.null(bw_label) && length(bw) != length(bw_label)) {
-    stop('colnames and bw lists must have the same length')
-  }
+                                   file_out=NA) {
 
   title <- paste('Coverage per region (', aggregate_by, ')')
   summary_values <- bw_bed(bw,
                            bed,
-                           aggregate.by=aggregate_by)
+                           bg_bwfiles = bg_bw,
+                           aggregate.by=aggregate_by,
+                           norm_func=norm_func)
 
   if (!is.null(bg_bw)) {
-    bg_values <- bw_bed(bg_bw,
-                        bed,
-                        aggregate.by=aggregate_by)
-
     title <- paste(title, '- Norm to background')
-
-    summary_values <- norm_func(summary_values / bg_values)
   }
-
+  print(summary_values)
   summary_heatmap(t(summary_values), title=title, file_out=file_out)
 }
 
@@ -360,52 +298,29 @@ bw_profile_plot <- function(bw,
                             show_error=F,
                             norm_func=identity) {
 
-  norm_values <- function(df1, df2, norm_func, col) {
-    cols <- colnames(df1)
-    cols <- cols[! cols %in% c(col)]
-    new_col <- norm_func(df1[, col] / df2[, col])
-    df1[, col] <- new_col
-    data.frame(df1)
-  }
-
-  values_list <- lapply(bw,
-                        bw_profile,
-                        bed=bed,
-                        mode=mode,
-                        bin=bsize,
-                        upstream=upstream,
-                        downstream=downstream,
-                        ignore_strand=ignore_strand)
+  values <- bw_profile(bw,
+                       bed,
+                       bg_bw=bg_bw,
+                       mode=mode,
+                       bin=bsize,
+                       upstream=upstream,
+                       downstream=downstream,
+                       ignore_strand=ignore_strand,
+                       norm_func=identity)
 
   ylabel <- 'RPGC'
 
   if (!is.null(bg_bw)) {
-    values_bg <- lapply(bg_bw,
-                        bw_profile,
-                        bed=bed,
-                        mode=mode,
-                        bin=bsize,
-                        upstream=upstream,
-                        downstream=downstream,
-                        ignore_strand=ignore_strand)
-
-    values_norm <- purrr::map2(values_list,
-                               values_bg,
-                               norm_values,
-                               norm_func=norm_func, col='mean')
-
-    values_list <- values_norm
-
     ylabel <- paste('Enrichment over background')
   }
 
-  values <- do.call(rbind, values_list)
-
+  nrows <- max(values$index)
   left_flank_size <- floor(upstream/bsize)
   right_flank_size <- floor(downstream/bsize)
 
   # index value starts at 1
-  axis_breaks <- c(1, left_flank_size, nrow(values_list[[1]]))
+  axis_breaks <- c(1, left_flank_size, nrows)
+
   axis_labels <- c(paste('-', upstream/1000, 'kb', sep=''),
                    mode,
                    paste('+', downstream/1000, 'kb', sep=''))
@@ -415,8 +330,8 @@ bw_profile_plot <- function(bw,
   if (mode == 'stretch') {
     axis_breaks <- c(1,
                      left_flank_size,
-                     nrow(values_list[[1]])-right_flank_size,
-                     nrow(values_list[[1]]))
+                     nrows-right_flank_size,
+                     nrows)
 
     axis_labels <- c(paste('-', upstream/1000, 'kb', sep=''),
                      'start',
