@@ -20,6 +20,8 @@ bw_profile(
 \arguments{
 \item{bwfiles}{BigWig file list to be summarized.}
 
+\item{bg_bwfiles}{BigWig file list to be used as background to normalize to.}
+
 \item{bedfile}{BED file to summarize}
 
 \item{colnames}{Names to be assigned to the columns}
@@ -37,6 +39,8 @@ center: Center all loci.}
 \item{downstream}{Number of base pairs to include downstream of loci.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
+
+\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
 }
 \value{
 a data frame in long format

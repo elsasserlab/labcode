@@ -2,7 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{compute_stretch_matrix}
 \alias{compute_stretch_matrix}
-\title{Title}
+\title{Calculate matrix for stretch mode}
 \usage{
 compute_stretch_matrix(
   bw,
@@ -30,5 +30,5 @@ compute_stretch_matrix(
 Summary matrix
 }
 \description{
-Title
+Calculate matrix for stretch mode
 }

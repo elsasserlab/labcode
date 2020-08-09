@@ -300,7 +300,7 @@ bw_profile_plot <- function(bw,
 
   values <- bw_profile(bw,
                        bed,
-                       bg_bw=bg_bw,
+                       bg_bwfiles=bg_bw,
                        mode=mode,
                        bin=bsize,
                        upstream=upstream,

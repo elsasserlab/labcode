@@ -39,6 +39,8 @@ center: Center all loci.}
 \item{downstream}{Number of base pairs to include downstream of loci.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
+
+\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
 }
 \value{
 A DataFrame with the aggregated scores

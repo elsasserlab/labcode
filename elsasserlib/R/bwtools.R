@@ -165,12 +165,14 @@ granges_cbind <- function(grlist, colnames) {
 #'
 #' @param bwfiles BigWig file (or list) to be summarized.
 #' @param bedfile BED file to intersect with the BigWig file.
+#' @param bg_bwfiles BigWig file (or list) to be used as background to normalize to.
 #' @param colnames Column names of the score fields. Must have the same
 #'    length as bigwig file list. If not provided, colnames are the names of
 #'    the files in bwfiles.
 #' @param per.locus.stat Aggregate per locus function.
 #' @param aggregate.by Statistic to aggregate per group. If NULL, values are
 #'    not aggregated. This is the behavior by default.
+#' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
 #' @export
 #' @importFrom rtracklayer import BigWigFile
 #' @importFrom GenomeInfoDb sortSeqlevels
@@ -421,6 +423,7 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
 #' @param ignore_strand Whether to use strand information in BED file.
+#' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
 #' @importFrom rtracklayer BigWigFile import
 #' @return A DataFrame with the aggregated scores
 calculate_bw_profile <- function(bw,
@@ -471,13 +474,20 @@ calculate_bw_profile <- function(bw,
 
     npoints <- floor((upstream + downstream) / bin)
 
-    full <- summary_matrix(bwfile, gr, bg_bw=bg_bw, npoints=npoints, ignore_strand=F)
+    full <- summary_matrix(bwfile, gr, npoints=npoints, ignore_strand=F)
+
+    if (!is.null(bg_bw)) {
+      bg_bwfile <- BigWigFile(path=bg_bw)
+      bg <- summary_matrix(bg_bwfile, gr, npoints=npoints, ignore_strand=F)
+
+      full <- norm_func(full/bg)
+    }
   }
 
   result_df <- make_averages_df(full, label)
 }
 
-#' Title
+#' Calculate matrix for stretch mode
 #'
 #' @param bw BigWigFile object
 #' @param gr GRanges object
@@ -522,6 +532,7 @@ compute_stretch_matrix <- function(bw,
 #'
 #'
 #' @param bwfiles BigWig file list to be summarized.
+#' @param bg_bwfiles BigWig file list to be used as background to normalize to.
 #' @param bedfile BED file to summarize
 #' @param colnames Names to be assigned to the columns
 #' @param mode How to handle differences in lengths across loci:
@@ -533,6 +544,7 @@ compute_stretch_matrix <- function(bw,
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
 #' @param ignore_strand Whether to use strand information in BED file.
+#' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
 #' @return a data frame in long format
 #' @export
 bw_profile <- function(bwfiles,
