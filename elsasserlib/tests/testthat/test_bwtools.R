@@ -259,7 +259,6 @@ test_that("bw_bed returns correct per locus values on multiple files", {
   expect_equal(values[2]$bw2, 16.5)
 })
 
-# TODO: Fix this
 test_that("bw_bed returns correct per locus values on multiple files, with bg", {
   values <- bw_bed(c(bw1, bw2),
                    bg_bwfiles = c(bg1, bg2),
@@ -268,12 +267,9 @@ test_that("bw_bed returns correct per locus values on multiple files, with bg", 
                    per_locus_stat='mean')
 
   expect_is(values, 'GRanges')
-  expect_equal(values[1]$bw1, 2)
-  expect_equal(values[2]$bw1, 4.5)
 
-  # TODO: This needs to be implemented
-  # expect_equal(values[1]$bw2, 9.5)
-  # expect_equal(values[2]$bw2, 8.25)
+  expect_equal(values[1]$bw2, 9.5)
+  expect_equal(values[2]$bw2, 8.25)
 })
 
 
