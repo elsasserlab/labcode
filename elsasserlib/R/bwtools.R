@@ -43,6 +43,7 @@ bw_bins <- function(bwfiles,
                               per_locus_stat=per_locus_stat,
                               selection=selection)
   } else {
+    # FIXME: mcols of result may end up being <matrix> instead of <numeric>.
     result <- multi_bw_ranges_norm(bwfiles,
                                    bg_bwfiles,
                                    labels,

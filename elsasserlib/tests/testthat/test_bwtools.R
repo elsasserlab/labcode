@@ -2,7 +2,7 @@ context("Tests functions for bw handling")
 library(GenomicRanges)
 library(rtracklayer)
 
-toy_example <- function(bw1, bw2, bw_special, bed_with_names) {
+toy_example <- function(bw1, bw2, bw_special, bed_with_names, bg1, bg2) {
   granges <- GRanges(
     seqnames = Rle(c("chr1", "chr2"), c(10, 10)),
     ranges = IRanges(c(seq(1,181, by=20),seq(1,181, by=20)),
@@ -15,6 +15,20 @@ toy_example <- function(bw1, bw2, bw_special, bed_with_names) {
     ranges = IRanges(c(seq(1,181, by=20),seq(1,181, by=20)),
                      c(seq(20,200, by=20),seq(20,200, by=20))),
     score = 20:1
+  )
+
+  gr_bg1 <- GRanges(
+    seqnames = Rle(c("chr1", "chr2"), c(10, 10)),
+    ranges = IRanges(c(seq(1,181, by=20),seq(1,181, by=20)),
+                     c(seq(20,200, by=20),seq(20,200, by=20))),
+    score = rep(1,20)
+  )
+
+  gr_bg2 <- GRanges(
+    seqnames = Rle(c("chr1", "chr2"), c(10, 10)),
+    ranges = IRanges(c(seq(1,181, by=20),seq(1,181, by=20)),
+                     c(seq(20,200, by=20),seq(20,200, by=20))),
+    score = rep(2,20)
   )
 
   labeled_gr <- GRanges(
@@ -30,32 +44,39 @@ toy_example <- function(bw1, bw2, bw_special, bed_with_names) {
   seqlengths(granges) <- chromsizes
   seqlengths(gr2) <- chromsizes
   seqlengths(labeled_gr) <- chromsizes
+  seqlengths(gr_bg1) <- chromsizes
+  seqlengths(gr_bg2) <- chromsizes
 
   export(granges, bw1)
   export(gr2, bw2)
   export(gr2, bw_special)
   export(labeled_gr, bed_with_names)
+  export(gr_bg1, bg1)
+  export(gr_bg2, bg2)
 
 }
 
 
 bw1 <- tempfile('bigwig', fileext='.bw')
 bw2 <- tempfile('bigwig', fileext='.bw')
+bg1 <- tempfile('bigwig_bg1', fileext='.bw')
+bg2 <- tempfile('bigwig_bg2', fileext='.bw')
 bw_special <- tempfile('bigwig', fileext='.bw')
 bed_with_names <-tempfile('bed', fileext='.bed')
 
-setup(toy_example(bw1, bw2, bw_special, bed_with_names))
+setup(toy_example(bw1, bw2, bw_special, bed_with_names, bg1, bg2))
+
 teardown({
-  unlink(bw1)
-  unlink(bw2)
-  unlink(bw_special)
-  unlink(bed_with_names)
+  unlink(c(bw1, bw2, bg1, bg2, bw_special, bed_with_names))
 })
 
 test_that("Setup files exist", {
   expect_true(file_test('-f', bw1))
   expect_true(file_test('-f', bw2))
+  expect_true(file_test('-f', bg1))
+  expect_true(file_test('-f', bg2))
   expect_true(file_test('-f', bed_with_names))
+  expect_true(file_test('-f', bw_special))
 })
 
 test_that("bw_ranges returns a GRanges object", {
@@ -110,6 +131,51 @@ test_that("multi_bw_ranges returns correct values", {
 
 })
 
+test_that("multi_bw_ranges_norm with bwfilelist == bg_bwfilelist returns all 1 values", {
+  tiles <- tileGenome(c(chr1=200,chr2=200),
+                      tilewidth=20,
+                      cut.last.tile.in.chrom=T)
+
+  values <- multi_bw_ranges_norm(c(bw1, bw2),
+                                 bg_bwfilelist=c(bw1, bw2),
+                                 c('bw1','bw2'), tiles, norm_func=identity)
+
+  expect_is(values, 'GRanges')
+  expect_equal(values[1]$bw1, 1)
+  expect_equal(values[1]$bw2, 1)
+  expect_equal(values[2]$bw1, 1)
+  expect_equal(values[2]$bw2, 1)
+
+})
+
+test_that("multi_bw_ranges_norm returns correct values", {
+  tiles <- tileGenome(c(chr1=200,chr2=200),
+                      tilewidth=20,
+                      cut.last.tile.in.chrom=T)
+
+  values <- multi_bw_ranges_norm(c(bw1, bw2),
+                                 bg_bwfilelist=c(bg1, bg2),
+                                 c('bw1','bw2'), tiles, norm_func=identity)
+
+  expect_is(values, 'GRanges')
+  expect_equal(values[1]$bw1, 1)
+  expect_equal(values[2]$bw1, 2)
+  expect_equal(values[1]$bw2, 10)
+  expect_equal(values[2]$bw2, 9.5)
+})
+
+test_that("multi_bw_ranges_norm fails on background length not matching bwlist", {
+  tiles <- tileGenome(c(chr1=200,chr2=200),
+                      tilewidth=20,
+                      cut.last.tile.in.chrom=T)
+
+  expect_error({values <- multi_bw_ranges_norm(c(bw1, bw2),
+                                 bg_bwfilelist=c(bg1),
+                                 c('bw1','bw2'), tiles, norm_func=identity)},
+               'Background and signal bwfile lists must have the same length.')
+
+})
+
 test_that("multi_bw_ranges returns correct values for single bigWig", {
   tiles <- tileGenome(c(chr1=200,chr2=200),
                       tilewidth=20,
@@ -155,6 +221,31 @@ test_that("bw_bed returns correct per locus values", {
   expect_equal(values[2]$bw1, 4.5)
 })
 
+test_that("bw_bins returns correct per locus values", {
+  values <- bw_bins(bw1,
+                   selection=import(bed_with_names),
+                   labels='bw1',
+                   per_locus_stat='mean')
+
+  expect_is(values, 'GRanges')
+  expect_equal(values[1]$bw1, 5.5)
+  expect_equal(values[2]$bw1, 15.5)
+})
+
+test_that("bw_bins returns correct per locus values, with bg", {
+  values <- bw_bins(bw1,
+                    bg_bwfiles=bw1,
+                    selection=import(bed_with_names),
+                    labels='bw1',
+                    per_locus_stat='mean')
+
+  # TODO: Fix this - subjacent normalized values in GRanges object are matrix
+  # print(values)
+  # expect_is(values, 'GRanges')
+  # expect_equal(values[1]$bw1, 1)
+  # expect_equal(values[2]$bw1, 1)
+})
+
 test_that("bw_bed returns correct per locus values on multiple files", {
   values <- bw_bed(c(bw1, bw2),
                    bed_with_names,
@@ -167,6 +258,24 @@ test_that("bw_bed returns correct per locus values on multiple files", {
   expect_equal(values[1]$bw2, 19)
   expect_equal(values[2]$bw2, 16.5)
 })
+
+# TODO: Fix this
+test_that("bw_bed returns correct per locus values on multiple files, with bg", {
+  values <- bw_bed(c(bw1, bw2),
+                   bg_bwfiles = c(bg1, bg2),
+                   bed_with_names,
+                   labels=c('bw1','bw2'),
+                   per_locus_stat='mean')
+
+  expect_is(values, 'GRanges')
+  expect_equal(values[1]$bw1, 2)
+  expect_equal(values[2]$bw1, 4.5)
+
+  # TODO: This needs to be implemented
+  # expect_equal(values[1]$bw2, 9.5)
+  # expect_equal(values[2]$bw2, 8.25)
+})
+
 
 test_that("bw_bed handles default names with special characters", {
   values <- bw_bed(bw_special,
@@ -272,6 +381,64 @@ test_that("bw_profile runs quiet on valid parameters", {
 
 })
 
+test_that("bw_profile runs quiet on valid parameters, mode start", {
+  expect_silent({values <- bw_profile(c(bw1, bw2),
+                                      bedfile=bed_with_names,
+                                      upstream=1, downstream=1, bin_size=1,
+                                      mode='start')})
+
+})
+
+test_that("bw_profile runs quiet on valid parameters, mode start, with background", {
+  expect_silent({values <- bw_profile(c(bw1, bw2),
+                                      bg_bwfiles = c(bg1, bg2),
+                                      bedfile=bed_with_names,
+                                      upstream=1, downstream=1, bin_size=1,
+                                      mode='start')})
+
+})
+
+test_that("bw_profile normalized returns correct values", {
+  values <- bw_profile(c(bw1, bw2),
+                       bg_bwfiles = c(bw1, bw2),
+                       bedfile=bed_with_names,
+                       upstream=1, downstream=1, bin_size=1,
+                       mode='start')
+
+  expect_is(values, 'data.frame')
+  expect_equal(values[1,'mean'], 1)
+  expect_equal(values[2,'mean'], 1)
+
+})
+
+test_that("bw_profile fails if labels and bwfiles have different length", {
+  expect_error({values <- bw_profile(c(bw1, bw2),
+                       bedfile=bed_with_names,
+                       labels=c('bw1'),
+                       upstream=1, downstream=1, bin_size=1,
+                       mode="start")},
+               "labels and bwfiles must have the same length")
+
+})
+
+
+test_that("bw_profile runs quiet on valid parameters, mode end", {
+  expect_silent({values <- bw_profile(c(bw1, bw2),
+                                      bedfile=bed_with_names,
+                                      upstream=1, downstream=1, bin_size=1,
+                                      mode='end')})
+
+})
+
+
+test_that("bw_profile runs quiet on valid parameters with background", {
+  expect_silent({values <- bw_profile(c(bw1, bw2),
+                                      bg_bwfiles = c(bg1, bg2),
+                                      bedfile=bed_with_names,
+                                      upstream=1, downstream=1, bin_size=1)})
+
+})
+
 test_that("bw_profile throws error on flanking region smaller than bin size", {
   expect_error({values <- bw_profile(c(bw1, bw2),
                                       bedfile=bed_with_names,
@@ -318,8 +485,26 @@ test_that("bw_bed returns correct median-of-means aggregated values", {
 
 
 test_that("build_bins crashes on unknown or not included genome", {
-  expect_error(build_bins(bsize=10000, genome='mm10'))
+  expect_error({build_bins(bin_size=10000, genome="mm10")},
+               "Supported genomes: mm9, hg38")
 })
+
+test_that("build_bins runs for mm9", {
+  values <- build_bins(bin_size=50000, genome="mm9")
+  expect_is(values, 'GRanges')
+})
+
+test_that("build_bins creates bins of correct size", {
+  values <- build_bins(bin_size=50000, genome="mm9")
+  expect_is(values, 'GRanges')
+  expect_equal(width(ranges(values[1])), 50000)
+})
+
+test_that("build_bins runs for hg38", {
+  values <- build_bins(bin_size=50000, genome="hg38")
+  expect_is(values, 'GRanges')
+})
+
 
 test_that("bw_bed throws error on not implemented aggregate_by", {
   expect_error(values <- bw_bed(bw1,
