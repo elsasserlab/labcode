@@ -7,15 +7,19 @@
 bw_bed(
   bwfiles,
   bedfile,
+  bg_bwfiles = NULL,
   colnames = NULL,
   per.locus.stat = "mean",
-  aggregate.by = NULL
+  aggregate.by = NULL,
+  norm_func = identity
 )
 }
 \arguments{
 \item{bwfiles}{BigWig file (or list) to be summarized.}
 
 \item{bedfile}{BED file to intersect with the BigWig file.}
+
+\item{bg_bwfiles}{BigWig file (or list) to be used as background to normalize to.}
 
 \item{colnames}{Column names of the score fields. Must have the same
 length as bigwig file list. If not provided, colnames are the names of
@@ -25,6 +29,8 @@ the files in bwfiles.}
 
 \item{aggregate.by}{Statistic to aggregate per group. If NULL, values are
 not aggregated. This is the behavior by default.}
+
+\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
 }
 \description{
 Build a scored GRanges object from a bigWig file and a BED file.

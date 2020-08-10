@@ -6,17 +6,21 @@
 \usage{
 bw_profile(
   bwfiles,
-  bedfile,
+  bg_bwfiles = NULL,
+  bedfile = NULL,
   colnames = NULL,
   mode = "stretch",
   bin = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F
+  ignore_strand = F,
+  norm_func = identity
 )
 }
 \arguments{
 \item{bwfiles}{BigWig file list to be summarized.}
+
+\item{bg_bwfiles}{BigWig file list to be used as background to normalize to.}
 
 \item{bedfile}{BED file to summarize}
 
@@ -35,6 +39,8 @@ center: Center all loci.}
 \item{downstream}{Number of base pairs to include downstream of loci.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
+
+\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
 }
 \value{
 a data frame in long format

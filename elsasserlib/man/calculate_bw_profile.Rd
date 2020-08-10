@@ -7,18 +7,22 @@
 calculate_bw_profile(
   bw,
   gr,
+  bg_bw = NULL,
   label = NULL,
   mode = "stretch",
   bin = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F
+  ignore_strand = F,
+  norm_func = identity
 )
 }
 \arguments{
 \item{bw}{BigWig file to be summarized.}
 
 \item{gr}{GRanges object}
+
+\item{bg_bw}{BigWig file to be used as background}
 
 \item{label}{Name to give to the values}
 
@@ -35,6 +39,8 @@ center: Center all loci.}
 \item{downstream}{Number of base pairs to include downstream of loci.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
+
+\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
 }
 \value{
 A DataFrame with the aggregated scores
