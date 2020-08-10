@@ -1,7 +1,6 @@
 #' Basic scatterplot from two bigwig files and an optional set of BED
 #' files as highlighted annotations.
 #'
-#'
 #' @param x BigWig file to be used for the x axis
 #' @param y BigWig file to be used for the y axis
 #' @param bg_x BigWig file to be used for the x axis background (us. input)
@@ -80,11 +79,14 @@ bw_bins_scatterplot <- function(x,
                              alpha=0.8)
   }
 
+  x_label <- paste(make.names(basename(x)), '-', make_norm_label(substitute(norm_func_x), bg_x))
+  y_label <- paste(make.names(basename(y)), '-', make_norm_label(substitute(norm_func_y), bg_y))
+
   p <- ggplot(bins_df, aes_string(x='x', y='y')) +
     geom_point(color='#cccccc', alpha=0.8) +
     theme_elsasserlab_screen(base_size = 18) +
-    xlab(make.names(basename(x))) +
-    ylab(make.names(basename(y))) +
+    xlab(x_label) +
+    ylab(y_label) +
     ggtitle(paste('Bin coverage (bsize = ', bsize, ')', sep='')) +
     extra_plot
 
@@ -124,7 +126,8 @@ bw_bins_violinplot <- function(bw,
                          colnames=bw_label,
                          bsize=bsize,
                          genome=genome,
-                         stat=stat)
+                         stat=stat,
+                         norm_func=norm_func)
 
   bins_df <- data.frame(bins_values)
   bwnames <- colnames(mcols(bins_values))
@@ -151,16 +154,35 @@ bw_bins_violinplot <- function(bw,
                                   alpha=0.7)
   }
 
+  y_label <- make_norm_label(substitute(norm_func), bg_bw)
+
   ggplot(melted_bins, aes_string(x='variable', y='value')) +
     geom_violin(fill='#cccccc') +
     theme_elsasserlab_screen(base_size = 18) +
     xlab('') +
-    ylab('Mean coverage') +
+    ylab(y_label) +
     ggtitle(title) +
     theme(legend.position='none', axis.text.x=element_text(angle=45, hjust=1)) +
     extra_plot
 }
 
+#' Construct a string that represents the normalization function.
+#'
+#' @param f Function name used to norm
+#' @param bg Background
+#'
+#' @return A string with the corresponding label
+make_norm_label <- function(f, bg) {
+  label <- 'RPGC'
+  if (!is.null(bg)) {
+    if (f != 'identity') {
+      label <- paste(f, '(', label, ' / background)', sep='')
+    } else {
+      label <- paste(label, '/ background', sep='')
+    }
+  }
+  label
+}
 
 #' Violin plot of bin distribution of a set of bigWig files overlayed with
 #' annotated bins (i.e. bins overlapping a given BED file)
@@ -183,17 +205,17 @@ bw_bed_summary_heatmap <- function(bw,
                                    norm_func=identity,
                                    file_out=NA) {
 
-  title <- paste('Coverage per region (', aggregate_by, ')')
   summary_values <- bw_bed(bw,
                            bed,
                            bg_bwfiles = bg_bw,
                            aggregate.by=aggregate_by,
                            norm_func=norm_func)
-
-  if (!is.null(bg_bw)) {
-    title <- paste(title, '- Norm to background')
+  if(sum(summary_values) == 0) {
+    warning('All zero values matrix. Using same background as bw input?')
   }
-  print(summary_values)
+
+  title <- paste('Coverage per region (', aggregate_by, ')')
+  title <- paste(title, '-', make_norm_label(substitute(norm_func), bg_bw))
   summary_heatmap(t(summary_values), title=title, file_out=file_out)
 }
 
@@ -305,13 +327,9 @@ bw_profile_plot <- function(bw,
                        upstream=upstream,
                        downstream=downstream,
                        ignore_strand=ignore_strand,
-                       norm_func=identity)
+                       norm_func=norm_func)
 
-  ylabel <- 'RPGC'
-
-  if (!is.null(bg_bw)) {
-    ylabel <- paste('Enrichment over background')
-  }
+  y_label <- make_norm_label(substitute(norm_func), bg_bw)
 
   nrows <- max(values$index)
   left_flank_size <- floor(upstream/bsize)
@@ -342,17 +360,18 @@ bw_profile_plot <- function(bw,
   }
 
   loci <- length(import(bed, format='BED'))
-  xtitle <- paste(basename(bed), '-', loci, 'loci', sep=' ')
+  x_title <- paste(basename(bed), '-', loci, 'loci', sep=' ')
 
   p <- ggplot(values, aes_string(x='index', y='mean', color='sample', fill='sample')) +
     geom_line(size=0.8) +
     geom_vline(xintercept=lines, linetype='dashed', color='#cccccc', alpha=0.8) +
     scale_x_continuous(breaks=axis_breaks, labels=axis_labels) +
-    xlab(xtitle) +
-    ylab(ylabel) +
+    xlab(x_title) +
+    ylab(y_label) +
     ggtitle('Profile plot') +
     theme_elsasserlab_screen(base_size=18) +
     theme(legend.position=c(0.80,0.90), legend.direction = 'vertical', legend.title = element_blank())
+
   if (show_error) {
     p <- p + geom_ribbon(aes(x=index, ymin=mean-sderror, ymax=mean+sderror), color=NA, alpha=0.3)
   }

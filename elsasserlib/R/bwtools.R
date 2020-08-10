@@ -462,8 +462,6 @@ calculate_bw_profile <- function(bw,
                                    downstream=downstream,
                                    ignore_strand=ignore_strand)
 
-
-
       full <- norm_func(full/bg)
     }
 
@@ -592,7 +590,8 @@ bw_profile <- function(bwfiles,
                                                bin=bin,
                                                upstream=upstream,
                                                downstream=downstream,
-                                               ignore_strand=ignore_strand)
+                                               ignore_strand=ignore_strand,
+                                               norm_func=norm_func)
   if (is.null(bg_bwfiles)) {
     values_list <- purrr::map2(bwfiles,
                                colnames,
@@ -641,6 +640,13 @@ summary_matrix <- function(track, gr, npoints, ignore_strand=F) {
 make_averages_df <- function(matrix, label) {
   # Ignore Inf and NaN in the computation of means/SD
   matrix[is.infinite(matrix)] <- NA
+
+  omitted_vals <- sum(is.na(matrix))
+  if(omitted_vals > 100) {
+    mean_per_locus <- omitted_vals / nrow(matrix)
+    warning(paste('Profile plot:', omitted_vals, 'generated (', mean_per_locus,'per locus)'))
+  }
+
 
   df <- data.frame(mean=colMeans(matrix, na.rm=TRUE),
                    sderror=apply(matrix, 2,
