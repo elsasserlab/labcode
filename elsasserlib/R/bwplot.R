@@ -5,8 +5,8 @@
 #' @param y BigWig file to be used for the y axis
 #' @param bg_x BigWig file to be used for the x axis background (us. input)
 #' @param bg_y BigWig file to be used for the y axis background (us. input)
-#' @param bsize Bin size. Default 10000.
-#' @param stat Statistics used in the calculation of bins.
+#' @param bin_size Bin size. Default 10000.
+#' @param per_locus_stat Statistics used in the calculation of bins.
 #' @param genome Genome. Available choices are mm9, hg38.
 #' @param highlight List of bed files to use as highlight for subgroups.
 #' @param minoverlap Minimum overlap required for a bin to be highlighted
@@ -17,12 +17,12 @@
 #' @return A ggplot object
 #' @import ggplot2
 #' @export
-bw_bins_scatterplot <- function(x,
+plot_bw_bins_scatter <- function(x,
                                 y,
                                 bg_x=NULL,
                                 bg_y=NULL,
-                                bsize=10000,
-                                stat='mean',
+                                bin_size=10000,
+                                per_locus_stat='mean',
                                 genome='mm9',
                                 highlight=NULL,
                                 minoverlap=0L,
@@ -36,19 +36,19 @@ bw_bins_scatterplot <- function(x,
 
   bins_values_x <- bw_bins(x,
                       bg_bwfiles=bg_x,
-                      bsize=bsize,
+                      bin_size=bin_size,
                       genome=genome,
-                      stat=stat,
+                      per_locus_stat=per_locus_stat,
                       norm_func=norm_func_x,
-                      colnames='x')
+                      labels='x')
 
   bins_values_y <- bw_bins(y,
                       bg_bwfiles=bg_y,
-                      bsize=bsize,
+                      bin_size=bin_size,
                       genome=genome,
-                      stat=stat,
+                      per_locus_stat=per_locus_stat,
                       norm_func=norm_func_y,
-                      colnames='y')
+                      labels='y')
 
 
   bins_df <- cbind(data.frame(bins_values_x), data.frame(bins_values_y)[,'y'])
@@ -87,7 +87,7 @@ bw_bins_scatterplot <- function(x,
     theme_elsasserlab_screen(base_size = 18) +
     xlab(x_label) +
     ylab(y_label) +
-    ggtitle(paste('Bin coverage (bsize = ', bsize, ')', sep='')) +
+    ggtitle(paste('Bin coverage (bin_size = ', bin_size, ')', sep='')) +
     extra_plot
 
   p
@@ -98,11 +98,11 @@ bw_bins_scatterplot <- function(x,
 #' annotated bins (i.e. bins overlapping a given BED file)
 #'
 #'
-#' @param bw BigWig files
-#' @param bg_bw BigWig files used as background (us. input)
+#' @param bwfiles BigWig files
+#' @param bg_bwfiles BigWig files used as background (us. input)
 #' @param bw_label Labels to use for in the plot for the bw files.
-#' @param bsize Bin size. Default 10000.
-#' @param stat Statistics used in the calculation of bins.
+#' @param bin_size Bin size. Default 10000.
+#' @param per_locus_stat Statistics used in the calculation of bins.
 #' @param genome Genome. Available choices are mm9, hg38.
 #' @param highlight Bed file to use as highlight for subgroups.
 #' @param minoverlap Minimum overlap required for a bin to be highlighted
@@ -111,22 +111,22 @@ bw_bins_scatterplot <- function(x,
 #' @import ggplot2
 #' @importFrom reshape2 melt
 #' @export
-bw_bins_violinplot <- function(bw,
-                               bg_bw=NULL,
+plot_bw_bins_violin <- function(bwfiles,
+                               bg_bwfiles=NULL,
                                bw_label=NULL,
-                               bsize=10000,
-                               stat='mean',
+                               bin_size=10000,
+                               per_locus_stat='mean',
                                genome='mm9',
                                highlight=NULL,
                                minoverlap=0L,
                                norm_func=identity) {
 
-  bins_values <- bw_bins(bw,
-                         bg_bwfiles=bg_bw,
-                         colnames=bw_label,
-                         bsize=bsize,
+  bins_values <- bw_bins(bwfiles,
+                         bg_bwfiles=bg_bwfiles,
+                         labels=bw_label,
+                         bin_size=bin_size,
                          genome=genome,
-                         stat=stat,
+                         per_locus_stat=per_locus_stat,
                          norm_func=norm_func)
 
   bins_df <- data.frame(bins_values)
@@ -134,7 +134,7 @@ bw_bins_violinplot <- function(bw,
   bin_id <- c('seqnames', 'start', 'end')
 
   melted_bins <- melt(bins_df[, c(bin_id, bwnames)], id.vars=bin_id)
-  title <- paste('Global bin distribution (binsize=', bsize, ')', sep='')
+  title <- paste('Global bin distribution (binsize=', bin_size, ')', sep='')
   extra_plot <- NULL
 
   if (!is.null(highlight)) {
@@ -154,7 +154,7 @@ bw_bins_violinplot <- function(bw,
                                   alpha=0.7)
   }
 
-  y_label <- make_norm_label(substitute(norm_func), bg_bw)
+  y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)
 
   ggplot(melted_bins, aes_string(x='variable', y='value')) +
     geom_violin(fill='#cccccc') +
@@ -187,35 +187,35 @@ make_norm_label <- function(f, bg) {
 #' Violin plot of bin distribution of a set of bigWig files overlayed with
 #' annotated bins (i.e. bins overlapping a given BED file)
 #'
-#' @param bw BigWig files.
-#' @param bed BED file to use to summarize. It needs to have an adequate `name` field
+#' @param bwfiles BigWig files.
+#' @param bedfile BED file to use to summarize. It needs to have an adequate `name` field
 #'   (where names correspond to categories that can be grouped).
-#' @param bg_bw BigWig files used as background (us. input).
-#' @param bw_label Labels to use for in the plot for the bw files.
+#' @param bg_bwfiles BigWig files used as background (us. input).
+#' @param labels Labels to use for in the plot for the bw files.
 #' @param aggregate_by Can be true_mean, mean (mean of means), median (median of means).
 #' @param norm_func Function to use on top of dividing bw/bg_bw (usually identity or log2).
 #' @param file_out Output the plot to a file.
 #' @return A plot object
 #' @export
-bw_bed_summary_heatmap <- function(bw,
-                                   bed,
-                                   bg_bw=NULL,
-                                   bw_label=NULL,
+plot_bw_bed_summary_heatmap <- function(bwfiles,
+                                   bedfile,
+                                   bg_bwfiles=NULL,
+                                   labels=NULL,
                                    aggregate_by='true_mean',
                                    norm_func=identity,
                                    file_out=NA) {
 
-  summary_values <- bw_bed(bw,
-                           bed,
-                           bg_bwfiles = bg_bw,
-                           aggregate.by=aggregate_by,
+  summary_values <- bw_bed(bwfiles,
+                           bedfile,
+                           bg_bwfiles = bg_bwfiles,
+                           aggregate_by=aggregate_by,
                            norm_func=norm_func)
   if(sum(summary_values) == 0) {
     warning('All zero values matrix. Using same background as bw input?')
   }
 
   title <- paste('Coverage per region (', aggregate_by, ')')
-  title <- paste(title, '-', make_norm_label(substitute(norm_func), bg_bw))
+  title <- paste(title, '-', make_norm_label(substitute(norm_func), bg_bwfiles))
   summary_heatmap(t(summary_values), title=title, file_out=file_out)
 }
 
@@ -236,7 +236,7 @@ bw_bed_summary_heatmap <- function(bw,
 summary_heatmap <- function(values, title, size=35, file_out=NA) {
   bcolor <- "white"
 
-  breakslist <- compute_breakslist(values)
+  breakslist <- calculate_breakslist(values)
   palette <- colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(length(breakslist))
 
   cellsize_inches <- size / 72
@@ -262,7 +262,7 @@ summary_heatmap <- function(values, title, size=35, file_out=NA) {
   plot
 }
 
-#' Given a value matrix, compute breakslist for the summarized heatmap.
+#' Given a value matrix, calculate breakslist for the summarized heatmap.
 #'
 #' This is done so log scale and norm scale heatmaps have the same color scale
 #' on the positive values, and zero values are shown as white always.
@@ -270,7 +270,7 @@ summary_heatmap <- function(values, title, size=35, file_out=NA) {
 #' This function ignores NA values to calculate min and max values.
 #' @param mat Value matrix
 #' @return Sequence of breaks used by heatmap function
-compute_breakslist <- function(mat) {
+calculate_breakslist <- function(mat) {
   # Compute the largest deviation from zero ignoring NAs
   maxmat <- mat
   maxmat[is.na(maxmat)] <- -Inf
@@ -294,12 +294,12 @@ compute_breakslist <- function(mat) {
 #' Profile plot of a set of bw files
 #' annotated bins (i.e. bins overlapping a given BED file)
 #'
-#' @param bw BigWig files
-#' @param bed BED file to use to summarize. It needs to have an adequate `name` field
+#' @param bwfiles BigWig files
+#' @param bedfile BED file to use to summarize. It needs to have an adequate `name` field
 #'   (where names correspond to categories that can be grouped).
-#' @param bg_bw BigWig files used as background (us. input)
+#' @param bg_bwfiles BigWig files used as background (us. input)
 #' @param mode How to align BED loci: Can be stretch, start, end, center.
-#' @param bsize Bin size.
+#' @param bin_size Bin size.
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
 #' @param ignore_strand Ignore strand information in BED file (default false).
@@ -308,32 +308,32 @@ compute_breakslist <- function(mat) {
 #' @import ggplot2
 #' @return A plot object
 #' @export
-bw_profile_plot <- function(bw,
-                            bed,
-                            bg_bw=NULL,
+plot_bw_profile <- function(bwfiles,
+                            bedfile,
+                            bg_bwfiles=NULL,
                             mode='stretch',
-                            bsize=100,
+                            bin_size=100,
                             upstream=2500,
                             downstream=2500,
                             ignore_strand=F,
                             show_error=F,
                             norm_func=identity) {
 
-  values <- bw_profile(bw,
-                       bed,
-                       bg_bwfiles=bg_bw,
+  values <- bw_profile(bwfiles,
+                       bedfile,
+                       bg_bwfiles=bg_bwfiles,
                        mode=mode,
-                       bin=bsize,
+                       bin_size=bin_size,
                        upstream=upstream,
                        downstream=downstream,
                        ignore_strand=ignore_strand,
                        norm_func=norm_func)
 
-  y_label <- make_norm_label(substitute(norm_func), bg_bw)
+  y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)
 
   nrows <- max(values$index)
-  left_flank_size <- floor(upstream/bsize)
-  right_flank_size <- floor(downstream/bsize)
+  left_flank_size <- floor(upstream/bin_size)
+  right_flank_size <- floor(downstream/bin_size)
 
   # index value starts at 1
   axis_breaks <- c(1, left_flank_size, nrows)
@@ -359,8 +359,8 @@ bw_profile_plot <- function(bw,
 
   }
 
-  loci <- length(import(bed, format='BED'))
-  x_title <- paste(basename(bed), '-', loci, 'loci', sep=' ')
+  loci <- length(import(bedfile, format='BED'))
+  x_title <- paste(basename(bedfile), '-', loci, 'loci', sep=' ')
 
   p <- ggplot(values, aes_string(x='index', y='mean', color='sample', fill='sample')) +
     geom_line(size=0.8) +

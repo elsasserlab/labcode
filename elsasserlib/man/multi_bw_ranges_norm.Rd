@@ -9,9 +9,9 @@ of background bwfiles.
 multi_bw_ranges_norm(
   bwfilelist,
   bg_bwfilelist,
-  colnames,
-  gr,
-  per.locus.stat = "mean",
+  labels,
+  granges,
+  per_locus_stat = "mean",
   selection = NULL,
   norm_func = identity
 )
@@ -21,11 +21,11 @@ multi_bw_ranges_norm(
 
 \item{bg_bwfilelist}{Background BigWig files.}
 
-\item{colnames}{Names to be assigned to the columns}
+\item{labels}{Names to be assigned to the columns}
 
-\item{gr}{GRanges object to intersect}
+\item{granges}{GRanges object to intersect}
 
-\item{per.locus.stat}{Aggregating function per stat}
+\item{per_locus_stat}{Aggregating function per stat}
 
 \item{selection}{A GRanges object to restrict analysis to.}
 

@@ -6,48 +6,48 @@
 #'
 #' @param bwfiles BigWig files to be summarized.
 #' @param bg_bwfiles BigWig files to be used as background-
-#' @param colnames List of names to give to the mcols of the returned GRanges
+#' @param labels List of names to give to the mcols of the returned GRanges
 #'     object. If NULL, filenames are used (default).
-#' @param stat Aggregating function (per locus). Mean by default.
+#' @param per_locus_stat Aggregating function (per locus). Mean by default.
 #'     Choices: min, max, sd, mean.
-#' @param bsize Bin size. Default 10000.
+#' @param bin_size Bin size. Default 10000.
 #' @param genome Genome. Available choices are mm9, hg38.
 #' @param selection A GRanges object to restrict binning to a certain set of
 #'     intervals. It is useful for debugging and improving performance of locus
 #'     specific analyses.
 #' @param norm_func Function to apply to normalized data f(bw / bw_bg).
 #' @return A GRanges object with each bwfile as a metadata column named
-#'     after colnames, if provided, or after filenames otherwise.
+#'     after labels, if provided, or after filenames otherwise.
 #' @export
 bw_bins <- function(bwfiles,
                     bg_bwfiles=NULL,
-                    colnames=NULL,
-                    stat='mean',
-                    bsize=10000,
+                    labels=NULL,
+                    per_locus_stat='mean',
+                    bin_size=10000,
                     genome='mm9',
                     selection=NULL,
                     norm_func=identity) {
 
-  check_filelist(bwfiles)
+  validate_filelist(bwfiles)
 
-  if (is.null(colnames)) {
-    colnames <- make.names(basename(bwfiles))
+  if (is.null(labels)) {
+    labels <- make.names(basename(bwfiles))
   }
 
-  tiles <- build_bins(bsize=bsize, genome=genome)
+  tiles <- build_bins(bin_size=bin_size, genome=genome)
 
   if (is.null(bg_bwfiles)) {
     result <- multi_bw_ranges(bwfiles,
-                              colnames,
+                              labels,
                               tiles,
-                              per.locus.stat=stat,
+                              per_locus_stat=per_locus_stat,
                               selection=selection)
   } else {
     result <- multi_bw_ranges_norm(bwfiles,
                                    bg_bwfiles,
-                                   colnames,
+                                   labels,
                                    tiles,
-                                   per.locus.stat=stat,
+                                   per_locus_stat=per_locus_stat,
                                    selection=selection,
                                    norm_func=norm_func)
   }
@@ -60,33 +60,33 @@ bw_bins <- function(bwfiles,
 #' Build a binned-scored GRanges object from a list of bigWig files. The
 #' aggregating function per locus can be min, max, sd, mean.
 #'
-#' @param bwfilelist BigWig file list to be summarized.
-#' @param colnames Names to be assigned to the columns
-#' @param gr GRanges object to intersect
-#' @param per.locus.stat Aggregating function per stat
+#' @param bwfiles BigWig file list to be summarized.
+#' @param labels Names to be assigned to the columns
+#' @param granges GRanges object to intersect
+#' @param per_locus_stat Aggregating function per stat
 #' @param selection A GRanges object to restrict analysis to.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom GenomeInfoDb sortSeqlevels
 #' @return a sorted GRanges object
-multi_bw_ranges <- function(bwfilelist,
-                            colnames,
-                            gr,
-                            per.locus.stat='mean',
+multi_bw_ranges <- function(bwfiles,
+                            labels,
+                            granges,
+                            per_locus_stat='mean',
                             selection=NULL) {
 
-  if (length(bwfilelist) != length(colnames)) {
+  if (length(bwfiles) != length(labels)) {
     stop("BigWig file list and column names must have the same length.")
   }
 
-  summaries <- purrr::map(bwfilelist,
+  summaries <- purrr::map(bwfiles,
                           bw_ranges,
-                          gr=gr,
-                          per.locus.stat=per.locus.stat,
+                          granges=granges,
+                          per_locus_stat=per_locus_stat,
                           selection=selection)
 
   # granges_cbind sorts each element so it's safer to merge and no need to
   # sort after
-  result <- granges_cbind(summaries, colnames)
+  result <- granges_cbind(summaries, labels)
   result
 }
 
@@ -96,18 +96,18 @@ multi_bw_ranges <- function(bwfilelist,
 #'#'
 #' @param bwfilelist BigWig file list to be summarized.
 #' @param bg_bwfilelist Background BigWig files.
-#' @param colnames Names to be assigned to the columns
-#' @param gr GRanges object to intersect
-#' @param per.locus.stat Aggregating function per stat
+#' @param labels Names to be assigned to the columns
+#' @param granges GRanges object to intersect
+#' @param per_locus_stat Aggregating function per stat
 #' @param selection A GRanges object to restrict analysis to.
 #' @param norm_func Function to apply after bw/bg_bw.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @return a sorted GRanges object
 multi_bw_ranges_norm <- function(bwfilelist,
                                  bg_bwfilelist,
-                                 colnames,
-                                 gr,
-                                 per.locus.stat='mean',
+                                 labels,
+                                 granges,
+                                 per_locus_stat='mean',
                                  selection=NULL,
                                  norm_func=identity) {
 
@@ -116,19 +116,19 @@ multi_bw_ranges_norm <- function(bwfilelist,
   }
 
   result <- multi_bw_ranges(bwfilelist,
-                            colnames,
-                            gr,
-                            per.locus.stat=per.locus.stat,
+                            labels,
+                            granges,
+                            per_locus_stat=per_locus_stat,
                             selection=selection)
 
   bg <- multi_bw_ranges(bg_bwfilelist,
-                        colnames,
-                        gr,
-                        per.locus.stat=per.locus.stat,
+                        labels,
+                        granges,
+                        per_locus_stat=per_locus_stat,
                         selection=selection)
 
   result_df <- data.frame(result)
-  result_df[, colnames] <- norm_func(as.matrix(mcols(result)) / as.matrix(mcols(bg)))
+  result_df[, labels] <- norm_func(as.matrix(mcols(result)) / as.matrix(mcols(bg)))
 
   makeGRangesFromDataFrame(result_df, keep.extra.columns = T)
 }
@@ -138,9 +138,9 @@ multi_bw_ranges_norm <- function(bwfilelist,
 #' It will sort the GRanges elements in order to ensure the match is proper.
 #'
 #' @param grlist A list of GRanges objects that have all the same fields.
-#' @param colnames Vector of names for the score columns.
+#' @param labels Vector of names for the score columns.
 #' @importFrom GenomeInfoDb sortSeqlevels
-granges_cbind <- function(grlist, colnames) {
+granges_cbind <- function(grlist, labels) {
   fixed.fields <- c('seqnames', 'start', 'end', 'width', 'strand')
 
   grlist[[1]] <- sortSeqlevels(grlist[[1]])
@@ -151,7 +151,7 @@ granges_cbind <- function(grlist, colnames) {
     grlist[[i]] <- sortSeqlevels(grlist[[i]])
     grlist[[i]] <- sort(grlist[[i]])
 
-    result[, colnames[[i]]] <- grlist[[i]]$score
+    result[, labels[[i]]] <- grlist[[i]]$score
   }
 
   result <- makeGRangesFromDataFrame(result, keep.extra.columns=T)
@@ -166,11 +166,14 @@ granges_cbind <- function(grlist, colnames) {
 #' @param bwfiles BigWig file (or list) to be summarized.
 #' @param bedfile BED file to intersect with the BigWig file.
 #' @param bg_bwfiles BigWig file (or list) to be used as background to normalize to.
-#' @param colnames Column names of the score fields. Must have the same
-#'    length as bigwig file list. If not provided, colnames are the names of
+#'    When aggregate_by is not NULL, the normalization to background happens
+#'    AFTER aggregating the values. For the opposite result, it is possible
+#'    to run bw_bed with aggregate_by = NULL and summarize manually after.
+#' @param labels Column names of the score fields. Must have the same
+#'    length as bigwig file list. If not provided, labels are the names of
 #'    the files in bwfiles.
-#' @param per.locus.stat Aggregate per locus function.
-#' @param aggregate.by Statistic to aggregate per group. If NULL, values are
+#' @param per_locus_stat Aggregate per locus function.
+#' @param aggregate_by Statistic to aggregate per group. If NULL, values are
 #'    not aggregated. This is the behavior by default.
 #' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
 #' @export
@@ -179,16 +182,16 @@ granges_cbind <- function(grlist, colnames) {
 bw_bed <- function(bwfiles,
                    bedfile,
                    bg_bwfiles=NULL,
-                   colnames=NULL,
-                   per.locus.stat='mean',
-                   aggregate.by=NULL,
+                   labels=NULL,
+                   per_locus_stat='mean',
+                   aggregate_by=NULL,
                    norm_func=identity) {
 
-  check_filelist(bwfiles)
-  check_filelist(bedfile)
+  validate_filelist(bwfiles)
+  validate_filelist(bedfile)
 
-  if (is.null(colnames)) {
-    colnames <- basename(bwfiles)
+  if (is.null(labels)) {
+    labels <- basename(bwfiles)
   }
 
   bed <- import(bedfile)
@@ -196,9 +199,9 @@ bw_bed <- function(bwfiles,
   bed <- sort(bed, ignore.strand=FALSE)
 
   result <- multi_bw_ranges(bwfiles,
-                            colnames,
-                            gr=bed,
-                            per.locus.stat=per.locus.stat)
+                            labels,
+                            granges=bed,
+                            per_locus_stat=per_locus_stat)
 
   if ( 'name' %in% names(mcols(bed)) ) {
     result$name <- bed$name
@@ -206,42 +209,50 @@ bw_bed <- function(bwfiles,
 
   if (is.null(bg_bwfiles)) {
 
-    if (! is.null(aggregate.by)) {
+    if (! is.null(aggregate_by)) {
       df <- aggregate_scores(result,
-                             group.col='name',
-                             aggregate.by=aggregate.by)
+                             group_col='name',
+                             aggregate_by=aggregate_by)
 
       result <- natural_sort_by_field(df, 'name')
     }
 
   } else {
     bg <- multi_bw_ranges(bg_bwfiles,
-                          colnames,
-                          gr=bed,
-                          per.locus.stat=per.locus.stat)
+                          labels,
+                          granges=bed,
+                          per_locus_stat=per_locus_stat)
 
     if ( 'name' %in% names(mcols(bed)) ) {
       bg$name <- bed$name
     }
 
-    if (! is.null(aggregate.by)) {
+    if (! is.null(aggregate_by)) {
       df <- aggregate_scores(result,
-                             group.col='name',
-                             aggregate.by=aggregate.by)
+                             group_col='name',
+                             aggregate_by=aggregate_by)
 
       bg_df <- aggregate_scores(bg,
-                             group.col='name',
-                             aggregate.by=aggregate.by)
+                             group_col='name',
+                             aggregate_by=aggregate_by)
 
-      values <- cbind(norm_func(df[, colnames]/ bg_df[, colnames]), df$name)
-      colnames(values) <- c(colnames, 'name')
+      values <- cbind(norm_func(df[, labels]/ bg_df[, labels]), df$name)
+      colnames(values) <- c(labels, 'name')
       result <- natural_sort_by_field(values, 'name')
     }
+    # TODO: This else is missing but belongs to a different PR
   }
   result
 }
 
-check_filelist <- function(filelist) {
+
+#' Check that a list of files is valid: not empty and contents exist.
+#' Crashes if this is not the case.
+#'
+#' @param filelist An array of files
+#'
+#' @return NULL
+validate_filelist <- function(filelist) {
   if (length(filelist) == 0) {
     stop("File list provided is empty.")
   }
@@ -270,7 +281,7 @@ natural_sort_by_field <- function(df, col) {
 #' Build a GRanges of bins of a given size, for a specific genome. Supported
 #' genomes (required for the package): mm9, hg38.
 #'
-#' @param bsize Bin size. 10000 by default.
+#' @param bin_size Bin size. 10000 by default.
 #' @param genome Genome used. mm9 by default. Valid values: mm9, hg38
 #' @return A GRanges object
 #' @export
@@ -278,7 +289,7 @@ natural_sort_by_field <- function(df, col) {
 #' @importFrom GenomeInfoDb seqinfo
 #' @importFrom BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm9
 #' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
-build_bins <- function(bsize=10000, genome='mm9') {
+build_bins <- function(bin_size=10000, genome='mm9') {
   seq_lengths <- NULL
 
   if (genome == 'mm9') {
@@ -292,7 +303,7 @@ build_bins <- function(bsize=10000, genome='mm9') {
   }
 
   bins <- tileGenome(seq_lengths,
-                     tilewidth=bsize,
+                     tilewidth=bin_size,
                      cut.last.tile.in.chrom=T)
 
   bins
@@ -304,22 +315,22 @@ build_bins <- function(bsize=10000, genome='mm9') {
 #' The aggregating function can be min, max, sd, mean.
 #'
 #' @param bwfile BigWig file to be summarized.
-#' @param gr GRanges object file to be summarized.
-#' @param per.locus.stat Aggregating function (per locus). Mean by default.
+#' @param granges GRanges object file to be summarized.
+#' @param per_locus_stat Aggregating function (per locus). Mean by default.
 #'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
 #' @param selection A GRanges object to restrict analysis to.
 #' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
 #' @return GRanges with column score.`
-bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
+bw_ranges <- function (bwfile, granges, per_locus_stat='mean', selection=NULL) {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
 
   if (! is.null(selection)) {
-    gr <- subsetByOverlaps(gr, selection)
+    granges <- subsetByOverlaps(granges, selection)
   }
-  result <- unlist(explicit_summary(bw, gr, type=per.locus.stat))
+  result <- unlist(explicit_summary(bw, granges, type=per_locus_stat))
   result
 }
 
@@ -328,11 +339,11 @@ bw_ranges <- function (bwfile, gr, per.locus.stat='mean', selection=NULL) {
 #'
 #' Throws a warning if found more than  50 values.
 #'
-#' @param cat.values An array of values
-validate_categories <- function(cat.values) {
+#' @param cat_values An array of values
+validate_categories <- function(cat_values) {
   MAX_CATEGORIES <- 50
-  # Test number of values in group.col
-  ncat <- length(levels(as.factor(cat.values)))
+  # Test number of values in group_col
+  ncat <- length(levels(as.factor(cat_values)))
   if (ncat > MAX_CATEGORIES) {
     warning(paste("Number of values in group column field very large:",
                   ncat,
@@ -344,9 +355,9 @@ validate_categories <- function(cat.values) {
 #' Aggregate scores of a GRanges object on a specific field
 #'
 #' Aggregates scores of a GRanges object on a specific field.
-#' @param scored.gr A GRanges object with numerical metadata columns
-#' @param group.col A column among the mcols that can be seen as a factor.
-#' @param aggregate.by Function used to aggregate: mean, median, true_mean.
+#' @param scored_granges A GRanges object with numerical metadata columns
+#' @param group_col A column among the mcols that can be seen as a factor.
+#' @param aggregate_by Function used to aggregate: mean, median, true_mean.
 #'     true_mean: Mean coverage taking all elements in a class as one large bin
 #'     mean: mean-of-distribution approach. The mean of the aggregated value per
 #'       locus is reported.
@@ -356,46 +367,46 @@ validate_categories <- function(cat.values) {
 #'     aggregated).
 #' @importFrom dplyr group_by_at summarise across `%>%`
 #' @importFrom rtracklayer mcols
-aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
-  if ( !is.null(group.col) && group.col %in% names(mcols(scored.gr))) {
+aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
+  if ( !is.null(group_col) && group_col %in% names(mcols(scored_granges))) {
 
     # GRanges objects are 1-based and inclusive [start, end]
-    scored.gr$length <- GenomicRanges::end(scored.gr) - GenomicRanges::start(scored.gr) + 1
+    scored_granges$length <- GenomicRanges::end(scored_granges) - GenomicRanges::start(scored_granges) + 1
 
-    df <- data.frame(mcols(scored.gr))
-    validate_categories(df[, group.col])
+    df <- data.frame(mcols(scored_granges))
+    validate_categories(df[, group_col])
     # Make sure special characters are taken into account
-    score.cols <- colnames(mcols(scored.gr))
-    score.cols <- make.names(score.cols)
-    score.cols <- score.cols[!score.cols %in% c(group.col)]
+    score_cols <- colnames(mcols(scored_granges))
+    score_cols <- make.names(score_cols)
+    score_cols <- score_cols[!score_cols %in% c(group_col)]
 
-    if (aggregate.by == 'true_mean') {
-       sum.vals <- df[, score.cols]*df$length
-       colnames(sum.vals) <- score.cols
-       sum.vals[, group.col] <- df[, group.col]
-       sum.vals$length <- df$length
+    if (aggregate_by == 'true_mean') {
+       sum_vals <- df[, score_cols]*df$length
+       colnames(sum_vals) <- score_cols
+       sum_vals[, group_col] <- df[, group_col]
+       sum_vals$length <- df$length
 
        # Summarize SUM only
-       sum.vals <- sum.vals %>%
-         group_by_at(group.col) %>%
+       sum_vals <- sum_vals %>%
+         group_by_at(group_col) %>%
          summarise(across(where(is.numeric), sum))
 
        # Divide sum(scores) by sum(length) and keep only scores
-       df <- sum.vals[, score.cols]/sum.vals$length
-       df[, group.col] <- sum.vals[, group.col]
+       df <- sum_vals[, score_cols]/sum_vals$length
+       df[, group_col] <- sum_vals[, group_col]
 
-    } else if (aggregate.by %in% c('mean', 'median')) {
-      f <- get(aggregate.by)
+    } else if (aggregate_by %in% c('mean', 'median')) {
+      f <- get(aggregate_by)
       df <- df %>%
-        group_by_at(group.col) %>%
+        group_by_at(group_col) %>%
         summarise(across(where(is.numeric), f))
 
     } else {
-      stop(paste("Function not implemented as aggregate.by:", aggregate.by))
+      stop(paste("Function not implemented as aggregate_by:", aggregate_by))
     }
 
-    score.cols <- score.cols[! score.cols %in% c('length')]
-    df <- df[, c(score.cols, group.col), drop=FALSE]
+    score_cols <- score_cols[! score_cols %in% c('length')]
+    df <- df[, c(score_cols, group_col), drop=FALSE]
     data.frame(df)
 
   } else {
@@ -411,7 +422,7 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 #' For more on seqplots: https://www.bioconductor.org/packages/release/bioc/html/seqplots.html
 #'
 #' @param bw BigWig file to be summarized.
-#' @param gr GRanges object
+#' @param granges GRanges object
 #' @param bg_bw BigWig file to be used as background
 #' @param label Name to give to the values
 #' @param mode How to handle differences in lengths across loci:
@@ -419,7 +430,7 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 #'   start: Anchor all loci on start.
 #'   end: Anchor all loci on end.
 #'   center: Center all loci.
-#' @param bin Bin size. Length of bin in base pairs. The lower, the higher the resolution.
+#' @param bin_size Bin size. Length of bin in base pairs. The lower, the higher the resolution.
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
 #' @param ignore_strand Whether to use strand information in BED file.
@@ -427,11 +438,11 @@ aggregate_scores <- function(scored.gr, group.col, aggregate.by) {
 #' @importFrom rtracklayer BigWigFile import
 #' @return A DataFrame with the aggregated scores
 calculate_bw_profile <- function(bw,
-                                 gr,
+                                 granges,
                                  bg_bw=NULL,
                                  label=NULL,
                                  mode='stretch',
-                                 bin=100,
+                                 bin_size=100,
                                  upstream=2500,
                                  downstream=2500,
                                  ignore_strand=F,
@@ -446,18 +457,18 @@ calculate_bw_profile <- function(bw,
 
   if (mode == 'stretch') {
 
-    full <- compute_stretch_matrix(bwfile,
-                                   gr,
-                                   bin=bin,
-                                   upstream=upstream,
-                                   downstream=downstream,
-                                   ignore_strand=ignore_strand)
+    full <- calculate_stretch_matrix(bwfile,
+                                     granges,
+                                     bin_size=bin_size,
+                                     upstream=upstream,
+                                     downstream=downstream,
+                                     ignore_strand=ignore_strand)
 
     if (!is.null(bg_bw)) {
       bg_bwfile <- BigWigFile(path=bg_bw)
-      bg <- compute_stretch_matrix(bg_bwfile,
-                                   gr,
-                                   bin=bin,
+      bg <- calculate_stretch_matrix(bg_bwfile,
+                                   granges,
+                                   bin_size=bin_size,
                                    upstream=upstream,
                                    downstream=downstream,
                                    ignore_strand=ignore_strand)
@@ -466,59 +477,59 @@ calculate_bw_profile <- function(bw,
     }
 
   } else {
-    gr <- GenomicRanges::promoters(GenomicRanges::resize(gr, 1, fix=mode),
+    granges <- GenomicRanges::promoters(GenomicRanges::resize(granges, 1, fix=mode),
                                    upstream,
                                    downstream)
 
-    npoints <- floor((upstream + downstream) / bin)
+    npoints <- floor((upstream + downstream) / bin_size)
 
-    full <- summary_matrix(bwfile, gr, npoints=npoints, ignore_strand=F)
+    full <- intersect_bw_and_granges(bwfile, granges, npoints=npoints, ignore_strand=F)
 
     if (!is.null(bg_bw)) {
       bg_bwfile <- BigWigFile(path=bg_bw)
-      bg <- summary_matrix(bg_bwfile, gr, npoints=npoints, ignore_strand=F)
+      bg <- intersect_bw_and_granges(bg_bwfile, granges, npoints=npoints, ignore_strand=F)
 
       full <- norm_func(full/bg)
     }
   }
 
-  result_df <- make_averages_df(full, label)
+  result_df <- summarize_matrix(full, label)
 }
 
 #' Calculate matrix for stretch mode
 #'
 #' @param bw BigWigFile object
-#' @param gr GRanges object
-#' @param bin Bin size
+#' @param granges GRanges object
+#' @param bin_size Bin size
 #' @param upstream Number of basepairs upstream
 #' @param downstream Number of basepairs downstream
 #' @param ignore_strand Ignore strand (bool)
 #'
 #' @return Summary matrix
-compute_stretch_matrix <- function(bw,
-                                   gr,
-                                   bin=100,
+calculate_stretch_matrix <- function(bw,
+                                   granges,
+                                   bin_size=100,
                                    upstream=2500,
                                    downstream=2500,
                                    ignore_strand=F) {
 
-  left_npoints <- floor(upstream/bin)
-  right_npoints <- floor(downstream/bin)
+  left_npoints <- floor(upstream/bin_size)
+  right_npoints <- floor(downstream/bin_size)
   # Stretch to the median value of the GR object
-  middle_npoints <- floor(median(GenomicRanges::width(gr))/bin )
+  middle_npoints <- floor(median(GenomicRanges::width(granges))/bin_size )
 
-  left <- summary_matrix(bw,
-                         GenomicRanges::flank(gr, upstream, start=TRUE),
+  left <- intersect_bw_and_granges(bw,
+                         GenomicRanges::flank(granges, upstream, start=TRUE),
                          npoints=left_npoints,
                          ignore_strand=ignore_strand)
 
-  right <- summary_matrix(bw,
-                          GenomicRanges::flank(gr, downstream, start=FALSE),
+  right <- intersect_bw_and_granges(bw,
+                          GenomicRanges::flank(granges, downstream, start=FALSE),
                           npoints=right_npoints,
                           ignore_strand=ignore_strand)
 
-  middle <- summary_matrix(bw,
-                           gr,
+  middle <- intersect_bw_and_granges(bw,
+                           granges,
                            npoints=middle_npoints,
                            ignore_strand=ignore_strand)
 
@@ -532,13 +543,13 @@ compute_stretch_matrix <- function(bw,
 #' @param bwfiles BigWig file list to be summarized.
 #' @param bg_bwfiles BigWig file list to be used as background to normalize to.
 #' @param bedfile BED file to summarize
-#' @param colnames Names to be assigned to the columns
+#' @param labels Names to be assigned to the columns
 #' @param mode How to handle differences in lengths across loci:
 #'   stretch: Anchor each locus on both sides.
 #'   start: Anchor all loci on start.
 #'   end: Anchor all loci on end.
 #'   center: Center all loci.
-#' @param bin Bin size. Length of bin in base pairs. The lower, the higher the resolution.
+#' @param bin_size Bin size. Length of bin in base pairs. The lower, the higher the resolution.
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
 #' @param ignore_strand Whether to use strand information in BED file.
@@ -548,20 +559,20 @@ compute_stretch_matrix <- function(bw,
 bw_profile <- function(bwfiles,
                        bg_bwfiles=NULL,
                        bedfile=NULL,
-                       colnames=NULL,
+                       labels=NULL,
                        mode='stretch',
-                       bin=100,
+                       bin_size=100,
                        upstream=2500,
                        downstream=2500,
                        ignore_strand=F,
                        norm_func=identity) {
 
-  check_filelist(bwfiles)
-  check_filelist(bedfile)
-  gr <- rtracklayer::import(bedfile)
+  validate_filelist(bwfiles)
+  validate_filelist(bedfile)
+  granges <- rtracklayer::import(bedfile)
 
-  if (bin <= 0) {
-    stop(paste('bin size must be a positive value:', bin))
+  if (bin_size <= 0) {
+    stop(paste('bin size must be a positive value:', bin_size))
   }
 
   if (upstream <= 0) {
@@ -572,33 +583,33 @@ bw_profile <- function(bwfiles,
     stop(paste('downstream size must be a positive value:', downstream))
   }
 
-  if (bin > upstream || bin > downstream) {
+  if (bin_size > upstream || bin_size > downstream) {
     stop('bin size must be smaller than flanking regions')
   }
 
-  if (is.null(colnames)) {
-    colnames <- basename(bwfiles)
+  if (is.null(labels)) {
+    labels <- basename(bwfiles)
   }
 
-  if (length(bwfiles) != length(colnames)) {
-    stop('colnames and bwfiles must have the same length')
+  if (length(bwfiles) != length(labels)) {
+    stop('labels and bwfiles must have the same length')
   }
 
   calculate_bw_profile_fixed <- purrr::partial(calculate_bw_profile,
-                                               gr=gr,
+                                               granges=granges,
                                                mode=mode,
-                                               bin=bin,
+                                               bin_size=bin_size,
                                                upstream=upstream,
                                                downstream=downstream,
                                                ignore_strand=ignore_strand,
                                                norm_func=norm_func)
   if (is.null(bg_bwfiles)) {
     values_list <- purrr::map2(bwfiles,
-                               colnames,
+                               labels,
                                calculate_bw_profile_fixed,
                                bg_bw=NULL)
   } else {
-    values_list <- purrr::pmap(list(bwfiles, bg_bwfiles, colnames),
+    values_list <- purrr::pmap(list(bwfiles, bg_bwfiles, labels),
                                calculate_bw_profile_fixed)
   }
 
@@ -607,23 +618,24 @@ bw_profile <- function(bwfiles,
 }
 
 
-#' Summarize a BigWig file over loci on a GRanges object.
+#' Intersect a BigWig file over loci on a GRanges object, taking npoints points
+#' per locus.
 #'
-#' @param track BigWigFile object (rtracklayer)
-#' @param gr GRanges object
+#' @param bw BigWigFile object (rtracklayer)
+#' @param granges GRanges object
 #' @param npoints How many points to take
-#' @param ignore_strand Ignore strand information in gr. Default false.
-#' @return A value matrix dimensions len(gr) x npoints
-summary_matrix <- function(track, gr, npoints, ignore_strand=F) {
-  values <- rtracklayer::summary(track,
-                    which=gr,
+#' @param ignore_strand Ignore strand information in granges. Default false.
+#' @return A value matrix dimensions len(granges) x npoints
+intersect_bw_and_granges <- function(bw, granges, npoints, ignore_strand=F) {
+  values <- rtracklayer::summary(bw,
+                    which=granges,
                     as='matrix',
                     size=npoints)
 
   # Reverse minus strand rows
   if (!ignore_strand) {
-    values[as.character(GenomicRanges::strand(gr))=='-',] <- values[
-      as.character(GenomicRanges::strand(gr))=='-', ncol(values):1]
+    values[as.character(GenomicRanges::strand(granges))=='-',] <- values[
+      as.character(GenomicRanges::strand(granges))=='-', ncol(values):1]
   }
 
   values
@@ -631,13 +643,13 @@ summary_matrix <- function(track, gr, npoints, ignore_strand=F) {
 
 
 #' Compute averages and standard error values for a matrix returned by
-#' summary_matrix.
+#' intersect_bw_and_granges.
 #'
-#' @param matrix A matrix returned by summary_matrix
+#' @param matrix A matrix returned by intersect_bw_and_granges
 #' @param label Label for the sample
 #' @importFrom stats median sd
 #' @return A dataframe with summarized values, sderror and medians, plus a label.
-make_averages_df <- function(matrix, label) {
+summarize_matrix <- function(matrix, label) {
   # Ignore Inf and NaN in the computation of means/SD
   matrix[is.infinite(matrix)] <- NA
 

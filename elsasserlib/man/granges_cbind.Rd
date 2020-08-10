@@ -4,12 +4,12 @@
 \alias{granges_cbind}
 \title{Performs a cbind operation on a GRanges list, appending scores}
 \usage{
-granges_cbind(grlist, colnames)
+granges_cbind(grlist, labels)
 }
 \arguments{
 \item{grlist}{A list of GRanges objects that have all the same fields.}
 
-\item{colnames}{Vector of names for the score columns.}
+\item{labels}{Vector of names for the score columns.}
 }
 \description{
 It will sort the GRanges elements in order to ensure the match is proper.

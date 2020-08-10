@@ -8,9 +8,9 @@ bw_profile(
   bwfiles,
   bg_bwfiles = NULL,
   bedfile = NULL,
-  colnames = NULL,
+  labels = NULL,
   mode = "stretch",
-  bin = 100,
+  bin_size = 100,
   upstream = 2500,
   downstream = 2500,
   ignore_strand = F,
@@ -24,7 +24,7 @@ bw_profile(
 
 \item{bedfile}{BED file to summarize}
 
-\item{colnames}{Names to be assigned to the columns}
+\item{labels}{Names to be assigned to the columns}
 
 \item{mode}{How to handle differences in lengths across loci:
 stretch: Anchor each locus on both sides.
@@ -32,7 +32,7 @@ start: Anchor all loci on start.
 end: Anchor all loci on end.
 center: Center all loci.}
 
-\item{bin}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 

@@ -8,9 +8,9 @@ bw_bed(
   bwfiles,
   bedfile,
   bg_bwfiles = NULL,
-  colnames = NULL,
-  per.locus.stat = "mean",
-  aggregate.by = NULL,
+  labels = NULL,
+  per_locus_stat = "mean",
+  aggregate_by = NULL,
   norm_func = identity
 )
 }
@@ -19,15 +19,18 @@ bw_bed(
 
 \item{bedfile}{BED file to intersect with the BigWig file.}
 
-\item{bg_bwfiles}{BigWig file (or list) to be used as background to normalize to.}
+\item{bg_bwfiles}{BigWig file (or list) to be used as background to normalize to.
+When aggregate_by is not NULL, the normalization to background happens
+AFTER aggregating the values. For the opposite result, it is possible
+to run bw_bed with aggregate_by = NULL and summarize manually after.}
 
-\item{colnames}{Column names of the score fields. Must have the same
-length as bigwig file list. If not provided, colnames are the names of
+\item{labels}{Column names of the score fields. Must have the same
+length as bigwig file list. If not provided, labels are the names of
 the files in bwfiles.}
 
-\item{per.locus.stat}{Aggregate per locus function.}
+\item{per_locus_stat}{Aggregate per locus function.}
 
-\item{aggregate.by}{Statistic to aggregate per group. If NULL, values are
+\item{aggregate_by}{Statistic to aggregate per group. If NULL, values are
 not aggregated. This is the behavior by default.}
 
 \item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}

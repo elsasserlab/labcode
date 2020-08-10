@@ -5,21 +5,21 @@
 \title{Intersect a list of bw files with a GRanges object}
 \usage{
 multi_bw_ranges(
-  bwfilelist,
-  colnames,
-  gr,
-  per.locus.stat = "mean",
+  bwfiles,
+  labels,
+  granges,
+  per_locus_stat = "mean",
   selection = NULL
 )
 }
 \arguments{
-\item{bwfilelist}{BigWig file list to be summarized.}
+\item{bwfiles}{BigWig file list to be summarized.}
 
-\item{colnames}{Names to be assigned to the columns}
+\item{labels}{Names to be assigned to the columns}
 
-\item{gr}{GRanges object to intersect}
+\item{granges}{GRanges object to intersect}
 
-\item{per.locus.stat}{Aggregating function per stat}
+\item{per_locus_stat}{Aggregating function per stat}
 
 \item{selection}{A GRanges object to restrict analysis to.}
 }

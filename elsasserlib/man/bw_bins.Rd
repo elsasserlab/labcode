@@ -7,9 +7,9 @@
 bw_bins(
   bwfiles,
   bg_bwfiles = NULL,
-  colnames = NULL,
-  stat = "mean",
-  bsize = 10000,
+  labels = NULL,
+  per_locus_stat = "mean",
+  bin_size = 10000,
   genome = "mm9",
   selection = NULL,
   norm_func = identity
@@ -20,13 +20,13 @@ bw_bins(
 
 \item{bg_bwfiles}{BigWig files to be used as background-}
 
-\item{colnames}{List of names to give to the mcols of the returned GRanges
+\item{labels}{List of names to give to the mcols of the returned GRanges
 object. If NULL, filenames are used (default).}
 
-\item{stat}{Aggregating function (per locus). Mean by default.
+\item{per_locus_stat}{Aggregating function (per locus). Mean by default.
 Choices: min, max, sd, mean.}
 
-\item{bsize}{Bin size. Default 10000.}
+\item{bin_size}{Bin size. Default 10000.}
 
 \item{genome}{Genome. Available choices are mm9, hg38.}
 
@@ -38,7 +38,7 @@ specific analyses.}
 }
 \value{
 A GRanges object with each bwfile as a metadata column named
-    after colnames, if provided, or after filenames otherwise.
+    after labels, if provided, or after filenames otherwise.
 }
 \description{
 Build a binned-scored GRanges object from a bigWig file. The aggregating
