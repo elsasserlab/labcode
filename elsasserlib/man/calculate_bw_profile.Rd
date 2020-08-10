@@ -6,11 +6,11 @@
 \usage{
 calculate_bw_profile(
   bw,
-  gr,
+  granges,
   bg_bw = NULL,
   label = NULL,
   mode = "stretch",
-  bin = 100,
+  bin_size = 100,
   upstream = 2500,
   downstream = 2500,
   ignore_strand = F,
@@ -20,7 +20,7 @@ calculate_bw_profile(
 \arguments{
 \item{bw}{BigWig file to be summarized.}
 
-\item{gr}{GRanges object}
+\item{granges}{GRanges object}
 
 \item{bg_bw}{BigWig file to be used as background}
 
@@ -32,7 +32,7 @@ start: Anchor all loci on start.
 end: Anchor all loci on end.
 center: Center all loci.}
 
-\item{bin}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 

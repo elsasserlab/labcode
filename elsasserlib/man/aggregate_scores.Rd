@@ -4,14 +4,14 @@
 \alias{aggregate_scores}
 \title{Aggregate scores of a GRanges object on a specific field}
 \usage{
-aggregate_scores(scored.gr, group.col, aggregate.by)
+aggregate_scores(scored_granges, group_col, aggregate_by)
 }
 \arguments{
-\item{scored.gr}{A GRanges object with numerical metadata columns}
+\item{scored_granges}{A GRanges object with numerical metadata columns}
 
-\item{group.col}{A column among the mcols that can be seen as a factor.}
+\item{group_col}{A column among the mcols that can be seen as a factor.}
 
-\item{aggregate.by}{Function used to aggregate: mean, median, true_mean.
+\item{aggregate_by}{Function used to aggregate: mean, median, true_mean.
 true_mean: Mean coverage taking all elements in a class as one large bin
 mean: mean-of-distribution approach. The mean of the aggregated value per
   locus is reported.

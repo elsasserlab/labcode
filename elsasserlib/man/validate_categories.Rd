@@ -4,10 +4,10 @@
 \alias{validate_categories}
 \title{Checks that the number of categories is reasonable for an aggregation.}
 \usage{
-validate_categories(cat.values)
+validate_categories(cat_values)
 }
 \arguments{
-\item{cat.values}{An array of values}
+\item{cat_values}{An array of values}
 }
 \description{
 Throws a warning if found more than  50 values.
