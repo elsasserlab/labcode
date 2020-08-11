@@ -1,37 +1,28 @@
-context("Tests functions for bigWig plots")
+context("Test functions for bigWig plots")
 library(GenomicRanges)
 library(testthat)
 library(mockery)
 
-bw1 <- system.file("extdata",
-                   "ES_H33_00h_rep1_hoxc.bw",
-                   package = "elsasserlib")
+get_file_path <- function(filename) {
+  system.file("extdata", filename, package = "elsasserlib")
+}
 
-bw2 <- system.file("extdata",
-                   "ES_H33_03h_rep1_hoxc.bw",
-                   package = "elsasserlib")
-
-bg_bw <- system.file("extdata",
-                     "ES_H33_inp_rep1_hoxc.bw",
-                     package = "elsasserlib")
-
-bed <- system.file("extdata",
-                   "chromhmm_hoxc.bed",
-                   package = "elsasserlib")
+bw1 <- get_file_path("ES_H33_00h_rep1_hoxc.bw")
+bw2 <- get_file_path("ES_H33_03h_rep1_hoxc.bw")
+bg_bw <- get_file_path("ES_H33_inp_rep1_hoxc.bw")
+bed <- get_file_path("chromhmm_hoxc.bed")
 
 bw_limits <- GRanges(seqnames = c("chr15"),
                      ranges = IRanges(c(102723600, 102959000)))
 
-reduced_bins <- bw_bins(bw1, selection = bw_limits, labels = 'x')
-reduced_bins_2 <- bw_bins(bw2, selection = bw_limits, labels = 'y')
-
-summary_values <- bw_bed(
-  c(bw1, bw2),
-  bed,
-  aggregate_by = "mean"
-)
-
-profile_values <- bw_profile(bw1, bedfile=bed, upstream=1000, downstream=1000)
+reduced_bins <- bw_bins(bw1, selection = bw_limits, labels = "x")
+reduced_bins_2 <- bw_bins(bw2, selection = bw_limits, labels = "y")
+summary_values <- bw_bed(c(bw1, bw2), bed, aggregate_by = "mean")
+profile_values <- bw_profile(bw1,
+                    bedfile = bed,
+                    upstream = 1000,
+                    downstream = 1000
+                  )
 
 test_that("Setup files exist", {
   expect_true(file_test("-f", bw1))
@@ -51,7 +42,7 @@ test_that("plot_bw_bins_scatter with defaults returns a plot", {
 test_that("plot_bw_bins_scatter with highlight set returns a plot", {
   m <- mock(reduced_bins, reduced_bins_2)
   with_mock(bw_bins = m, {
-    p <- plot_bw_bins_scatter(bw1, bw2, highlight=bed)
+    p <- plot_bw_bins_scatter(bw1, bw2, highlight = bed)
     expect_is(p, "ggplot")
   })
 })
@@ -106,8 +97,7 @@ test_that("plot_bw_bins_violin with defaults returns a plot", {
 test_that("plot_bw_bins_violin with bg files passes on parameters", {
   m <- mock(reduced_bins, reduced_bins_2)
   with_mock(bw_bins = m, {
-    p <- plot_bw_bins_violin(
-      c(bw1, bw2),
+    p <- plot_bw_bins_violin(c(bw1, bw2),
       bg_bwfiles = c(bg_bw, bg_bw),
       bw_label = c("A", "B"),
       bin_size = 5000,
@@ -117,8 +107,7 @@ test_that("plot_bw_bins_violin with bg files passes on parameters", {
   })
 
   expect_call(m, 1,
-    bw_bins(
-      bwfiles,
+    bw_bins(bwfiles,
       bg_bwfiles = bg_bwfiles,
       labels = bw_label,
       bin_size = bin_size,
@@ -143,8 +132,7 @@ test_that("plot_bw_bins_violin with bg files passes on parameters", {
 test_that("plot_bw_bins_violin with highlight returns a plot with jitter", {
     m <- mock(reduced_bins, reduced_bins_2)
     with_mock(bw_bins = m, {
-      p <- plot_bw_bins_violin(
-        c(bw1, bw2),
+      p <- plot_bw_bins_violin(c(bw1, bw2),
         bg_bwfiles = c(bg_bw, bg_bw),
         bw_label = c("A", "B"),
         highlight = bed,
@@ -155,8 +143,7 @@ test_that("plot_bw_bins_violin with highlight returns a plot with jitter", {
     })
 
     expect_call(m, 1,
-      bw_bins(
-        bwfiles,
+      bw_bins(bwfiles,
         bg_bwfiles = bg_bwfiles,
         labels = bw_label,
         bin_size = bin_size,
@@ -182,7 +169,7 @@ test_that(
   "plot_bw_bed_summary_heatmap with defaults returns a pheatmap object", {
   m <- mock(summary_values)
   with_mock(bw_bed = m, {
-    p <- plot_bw_bed_summary_heatmap(c(bw1, bw2), bedfile=bed)
+    p <- plot_bw_bed_summary_heatmap(c(bw1, bw2), bedfile = bed)
     expect_is(p, "pheatmap")
   })
 })
@@ -191,18 +178,16 @@ test_that(
   "plot_bw_bed_summary_heatmap passes parameters on", {
     m <- mock(summary_values)
     with_mock(bw_bed = m, {
-      p <- plot_bw_bed_summary_heatmap(
-            c(bw1, bw2),
+      p <- plot_bw_bed_summary_heatmap(c(bw1, bw2),
             bedfile = bed,
             bg_bwfiles <- c(bg_bw, bg_bw),
-            aggregate_by="median",
-            norm_func=log2
+            aggregate_by = "median",
+            norm_func = log2
         )
     })
 
     expect_call(m, 1,
-      bw_bed(
-        bwfiles,
+      bw_bed(bwfiles,
         bedfile,
         bg_bwfiles = bg_bwfiles,
         aggregate_by = aggregate_by,
@@ -223,7 +208,7 @@ test_that(
   "plot_bw_profile with defaults returns a ggplot object", {
     m <- mock(profile_values)
     with_mock(bw_profile = m, {
-      p <- plot_bw_profile(c(bw1, bw2), bedfile=bed)
+      p <- plot_bw_profile(c(bw1, bw2), bedfile = bed)
       expect_is(p, "ggplot")
     })
 })
@@ -232,9 +217,8 @@ test_that(
   "plot_bw_profile passes on parameters to bw_profile call", {
     m <- mock(profile_values)
     with_mock(bw_profile = m, {
-      p <- plot_bw_profile(
-             c(bw1, bw2),
-             bedfile=bed,
+      p <- plot_bw_profile(c(bw1, bw2),
+             bedfile = bed,
              bg_bwfiles = c(bg_bw, bg_bw),
              mode = "start",
              bin_size = 1000,
@@ -246,9 +230,7 @@ test_that(
     })
 
     expect_call(m, 1,
-      bw_profile(
-        bwfiles,
-        bedfile,
+      bw_profile(bwfiles, bedfile,
         bg_bwfiles = bg_bwfiles,
         mode = mode,
         bin_size = bin_size,
@@ -270,4 +252,4 @@ test_that(
       ignore_strand = TRUE,
       norm_func = log2
     )
-  })
+})
