@@ -46,7 +46,8 @@ LazyData: true
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,
-    testthat
+    testthat,
+    mockery
 VignetteBuilder: knitr
 URL: https://github.com/elsasserlab/labcode
 BugReports: https://github.com/elsasserlab/labcode/issues
