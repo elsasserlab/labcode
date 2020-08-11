@@ -2,8 +2,7 @@
 % Please edit documentation in R/bwplot.R
 \name{plot_bw_bed_summary_heatmap}
 \alias{plot_bw_bed_summary_heatmap}
-\title{Violin plot of bin distribution of a set of bigWig files overlayed with
-annotated bins (i.e. bins overlapping a given BED file)}
+\title{Summary heatmap of a categorized BED file}
 \usage{
 plot_bw_bed_summary_heatmap(
   bwfiles,
@@ -16,25 +15,28 @@ plot_bw_bed_summary_heatmap(
 )
 }
 \arguments{
-\item{bwfiles}{BigWig files.}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
-\item{bedfile}{BED file to use to summarize. It needs to have an adequate `name` field
-(where names correspond to categories that can be grouped).}
+\item{bedfile}{BED file to intersect with the BigWig file.}
 
-\item{bg_bwfiles}{BigWig files used as background (us. input).}
+\item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
+background.}
 
 \item{labels}{Labels to use for in the plot for the bw files.}
 
-\item{aggregate_by}{Can be true_mean, mean (mean of means), median (median of means).}
+\item{aggregate_by}{Statistic to aggregate per group. If NULL, values are
+not aggregated. This is the behavior by default.}
 
-\item{norm_func}{Function to use on top of dividing bw/bg_bw (usually identity or log2).}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 
 \item{file_out}{Output the plot to a file.}
 }
 \value{
-A plot object
+A pheatmap object
 }
 \description{
-Violin plot of bin distribution of a set of bigWig files overlayed with
-annotated bins (i.e. bins overlapping a given BED file)
+Make a summary heatmap where each cell contains an aggregated value of a
+bigWig file from bwfiles and a category of a BED file (bedfile). The
+provided BED file must have a name field that is valid (i.e. can be grouped,
+representing some type of category, not a per-locus unique ID).
 }

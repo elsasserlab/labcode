@@ -2,7 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{bw_bed}
 \alias{bw_bed}
-\title{Build a scored GRanges object from a BED file.}
+\title{Build a bed-scored GRanges object from a bigWig file list and a BED file.}
 \usage{
 bw_bed(
   bwfiles,
@@ -15,27 +15,37 @@ bw_bed(
 )
 }
 \arguments{
-\item{bwfiles}{BigWig file (or list) to be summarized.}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
 \item{bedfile}{BED file to intersect with the BigWig file.}
 
-\item{bg_bwfiles}{BigWig file (or list) to be used as background to normalize to.
-When aggregate_by is not NULL, the normalization to background happens
-AFTER aggregating the values. For the opposite result, it is possible
-to run bw_bed with aggregate_by = NULL and summarize manually after.}
+\item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
+background.}
 
-\item{labels}{Column names of the score fields. Must have the same
-length as bigwig file list. If not provided, labels are the names of
-the files in bwfiles.}
+\item{labels}{List of names to give to the mcols of the returned GRanges
+object. If NULL, file names are used.}
 
-\item{per_locus_stat}{Aggregate per locus function.}
+\item{per_locus_stat}{Aggregating function (per locus). Mean by default.
+Choices: min, max, sd, mean.}
 
 \item{aggregate_by}{Statistic to aggregate per group. If NULL, values are
 not aggregated. This is the behavior by default.}
 
-\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }
 \description{
-Build a scored GRanges object from a bigWig file and a BED file.
+Build a scored GRanges object from a bigWig file list and a BED file.
 The aggregating function (per locus) can be min, max, sd, mean.
+}
+\details{
+bwfiles and bg_bwfiles must have the same length. If you are using same
+background for several files, then file paths must be repeated accordingly.
+
+Values can be normalized using background bigWig files (usually input
+files). By default, the value obtained will be bigwig / bg_bigwig per bin,
+per bigWig.
+
+If norm_func is specified, this can be changed to any given function, for
+instance, if norm_func = log2, values will represent log2(bigwig / bg_bigwig)
+per bin.
 }

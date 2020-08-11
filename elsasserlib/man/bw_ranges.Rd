@@ -7,19 +7,21 @@
 bw_ranges(bwfile, granges, per_locus_stat = "mean", selection = NULL)
 }
 \arguments{
-\item{bwfile}{BigWig file to be summarized.}
+\item{bwfile}{Path to a single BigWig file to be summarized.}
 
 \item{granges}{GRanges object file to be summarized.}
 
 \item{per_locus_stat}{Aggregating function (per locus). Mean by default.
-Choices: min, max, sd, mean. These choices depend on rtracklayer library.}
+Choices: min, max, sd, mean.}
 
-\item{selection}{A GRanges object to restrict analysis to.}
+\item{selection}{A GRanges object to restrict binning to a certain set of
+intervals. This is useful for debugging and improving performance of locus
+specific analyses.}
 }
 \value{
-GRanges with column score.`
+GRanges with column score.
 }
 \description{
-Build a scored GRanges object from a GRanges object and a BigWig file.
+Build a scored GRanges object from a GRanges object and a single BigWig file.
 The aggregating function can be min, max, sd, mean.
 }

@@ -2,8 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{validate_filelist}
 \alias{validate_filelist}
-\title{Check that a list of files is valid: not empty and contents exist.
-Crashes if this is not the case.}
+\title{Validate an array of paths}
 \usage{
 validate_filelist(filelist)
 }
@@ -12,5 +11,4 @@ validate_filelist(filelist)
 }
 \description{
 Check that a list of files is valid: not empty and contents exist.
-Crashes if this is not the case.
 }

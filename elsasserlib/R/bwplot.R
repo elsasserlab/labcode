@@ -1,21 +1,34 @@
-#' Basic scatterplot from two bigwig files and an optional set of BED
-#' files as highlighted annotations.
+#' Bin-based scatterplot of a pair of bigWig files
 #'
-#' @param x BigWig file to be used for the x axis
-#' @param y BigWig file to be used for the y axis
-#' @param bg_x BigWig file to be used for the x axis background (us. input)
-#' @param bg_y BigWig file to be used for the y axis background (us. input)
-#' @param bin_size Bin size. Default 10000.
-#' @param per_locus_stat Statistics used in the calculation of bins.
-#' @param genome Genome. Available choices are mm9, hg38.
+#' Plots a scatter plot from two given bigWig files and an optional set of BED
+#' files as highlighted annotations. Bins are highlighted if there is at least
+#' minoverlap base pairs overlap with any loci in BED file.
+#'
+#' If specifying minoverlap, you must take into account the bin_size parameter
+#' and the size of the loci you are providing as BED file.
+#'
+#' Values in x and y axis can be normalized using background bigWig files
+#' (usually input files). By default, the value shown will be x / bg_x per bin.
+#' If norm_func_x or norm_func_y are provided, this can be changed to any given
+#' function, for instance, if norm_func_x = log2, values on the x axis will
+#' represent log2(x / bg_x) for each bin.
+#'
+#' Values that are invalid (NaN, Inf, -Inf) in doing such normalization will
+#' be ignored and shown as warnings, as this is ggplot default behavior.
+#'
+#' @param x BigWig file corresponding to the x axis.
+#' @param y BigWig file corresponding to the y axis.
+#' @param bg_x BigWig file to be used as x axis background (us. input).
+#' @param bg_y BigWig file to be used as y axis background (us. input).
 #' @param highlight List of bed files to use as highlight for subgroups.
 #' @param minoverlap Minimum overlap required for a bin to be highlighted
 #' @param highlight_label Labels for the highlight groups.
 #'  If not provided, filenames are used.
-#' @param norm_func_x Function to use after x / x_bg
-#' @param norm_func_y Function to use after y / y_bg
-#' @return A ggplot object
+#' @param norm_func_x Function to use after x / x_bg.
+#' @param norm_func_y Function to use after y / y_bg.
 #' @import ggplot2
+#' @inheritParams bw_bins
+#' @return A ggplot object.
 #' @export
 plot_bw_bins_scatter <- function(x,
                                 y,
@@ -94,22 +107,19 @@ plot_bw_bins_scatter <- function(x,
 }
 
 
-#' Violin plot of bin distribution of a set of bigWig files overlayed with
-#' annotated bins (i.e. bins overlapping a given BED file)
+#' Bin-based violin plot of a set of bigWig files
 #'
+#' Plots a violin plot of bin distribution of a set of bigWig files optionally
+#' overlaid with annotated bins. Bins overlapping loci of the provided BED
+#' file will be shown as a jitter plot on top of the violin plot.
 #'
-#' @param bwfiles BigWig files
-#' @param bg_bwfiles BigWig files used as background (us. input)
-#' @param bw_label Labels to use for in the plot for the bw files.
-#' @param bin_size Bin size. Default 10000.
-#' @param per_locus_stat Statistics used in the calculation of bins.
-#' @param genome Genome. Available choices are mm9, hg38.
-#' @param highlight Bed file to use as highlight for subgroups.
-#' @param minoverlap Minimum overlap required for a bin to be highlighted
-#' @param norm_func Function to use on top of dividing bw/bg_bw (usually identity or log2)
-#' @return A ggplot object
+#' @param bw_label Labels for the bw files. If omitted, file names will be used.
+#' @param highlight BED file to use as highlight for subgroups.
+#' @param minoverlap Minimum overlap required for a bin to be highlighted.
+#' @inheritParams bw_bins
 #' @import ggplot2
 #' @importFrom reshape2 melt
+#' @return A ggplot object.
 #' @export
 plot_bw_bins_violin <- function(bwfiles,
                                bg_bwfiles=NULL,
@@ -166,12 +176,12 @@ plot_bw_bins_violin <- function(bwfiles,
     extra_plot
 }
 
-#' Construct a string that represents the normalization function.
+#' Generate a human-readable normalization function string
 #'
-#' @param f Function name used to norm
-#' @param bg Background
+#' @param f String representing normalization function.
+#' @param bg Background file.
 #'
-#' @return A string with the corresponding label
+#' @return A string describing normalization.
 make_norm_label <- function(f, bg) {
   label <- "RPGC"
   if (!is.null(bg)) {
@@ -184,18 +194,17 @@ make_norm_label <- function(f, bg) {
   label
 }
 
-#' Violin plot of bin distribution of a set of bigWig files overlayed with
-#' annotated bins (i.e. bins overlapping a given BED file)
+#' Summary heatmap of a categorized BED file
 #'
-#' @param bwfiles BigWig files.
-#' @param bedfile BED file to use to summarize. It needs to have an adequate `name` field
-#'   (where names correspond to categories that can be grouped).
-#' @param bg_bwfiles BigWig files used as background (us. input).
+#' Make a summary heatmap where each cell contains an aggregated value of a
+#' bigWig file from bwfiles and a category of a BED file (bedfile). The
+#' provided BED file must have a name field that is valid (i.e. can be grouped,
+#' representing some type of category, not a per-locus unique ID).
+#'
 #' @param labels Labels to use for in the plot for the bw files.
-#' @param aggregate_by Can be true_mean, mean (mean of means), median (median of means).
-#' @param norm_func Function to use on top of dividing bw/bg_bw (usually identity or log2).
 #' @param file_out Output the plot to a file.
-#' @return A plot object
+#' @inheritParams bw_bed
+#' @return A pheatmap object
 #' @export
 plot_bw_bed_summary_heatmap <- function(bwfiles,
                                    bedfile,
@@ -224,15 +233,14 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
 #'
 #' This function ignores NA values to calculate min and max values.
 #'
-#' @param values Value matrix
-#' @param title Title of the plot
-#' @param size Size of the square
-#' @param file_out Optionally save directly to a file. This will take care of
-#'   cropping the heatmap to a right size so it fits.
+#' @param values Value matrix.
+#' @param title Plot title.
+#' @param size Square size in points.
+#' @param file_out Optional file output.
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom pheatmap pheatmap
 #' @importFrom grDevices colorRampPalette
-#' @return Heatmap plot
+#' @return pheatmap object
 summary_heatmap <- function(values, title, size=35, file_out=NA) {
   bcolor <- "white"
 
@@ -262,13 +270,15 @@ summary_heatmap <- function(values, title, size=35, file_out=NA) {
   plot
 }
 
-#' Given a value matrix, calculate breakslist for the summarized heatmap.
+#' Calculate breaks list for the values in a matrix
 #'
-#' This is done so log scale and norm scale heatmaps have the same color scale
-#' on the positive values, and zero values are shown as white always.
+#' Given a numerical matrix, calculate breakslist to use in the summarized
+#' heatmap plot. This is done in order to unify color scale regardless of
+#' normalization used (mostly log vs linear), keeping white as the zero value.
 #'
 #' This function ignores NA values to calculate min and max values.
-#' @param mat Value matrix
+#'
+#' @param mat Value matrix.
 #' @return Sequence of breaks used by heatmap function
 calculate_breakslist <- function(mat) {
   # Compute the largest deviation from zero ignoring NAs
@@ -291,22 +301,14 @@ calculate_breakslist <- function(mat) {
 }
 
 
-#' Profile plot of a set of bw files
-#' annotated bins (i.e. bins overlapping a given BED file)
+#' Profile plot of a set of bigWig files
 #'
-#' @param bwfiles BigWig files
-#' @param bedfile BED file to use to summarize. It needs to have an adequate `name` field
-#'   (where names correspond to categories that can be grouped).
-#' @param bg_bwfiles BigWig files used as background (us. input)
-#' @param mode How to align BED loci: Can be stretch, start, end, center.
-#' @param bin_size Bin size.
-#' @param upstream Number of base pairs to include upstream of loci.
-#' @param downstream Number of base pairs to include downstream of loci.
-#' @param ignore_strand Ignore strand information in BED file (default false).
+#' Plots a profile of a set of bigWig files over a set of loci in a BED file.
+#'
 #' @param show_error Show standard error.
-#' @param norm_func Function to apply after bw / bg (default identity)
+#' @inheritParams bw_profile
 #' @import ggplot2
-#' @return A plot object
+#' @return A ggplot object.
 #' @export
 plot_bw_profile <- function(bwfiles,
                             bedfile,

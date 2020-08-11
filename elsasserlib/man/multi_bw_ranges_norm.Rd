@@ -2,9 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{multi_bw_ranges_norm}
 \alias{multi_bw_ranges_norm}
-\title{Intersect a list of bw files with a GRanges object and normalize to a set
-of background bwfiles.
-#'}
+\title{Intersect a list of bigWig files with a GRanges object (with background)}
 \usage{
 multi_bw_ranges_norm(
   bwfilelist,
@@ -21,11 +19,13 @@ multi_bw_ranges_norm(
 
 \item{bg_bwfilelist}{Background BigWig files.}
 
-\item{labels}{Names to be assigned to the columns}
+\item{labels}{List of names to give to the mcols of the returned GRanges
+object. If NULL, file names are used.}
 
 \item{granges}{GRanges object to intersect}
 
-\item{per_locus_stat}{Aggregating function per stat}
+\item{per_locus_stat}{Aggregating function (per locus). Mean by default.
+Choices: min, max, sd, mean.}
 
 \item{selection}{A GRanges object to restrict analysis to.}
 
@@ -35,7 +35,6 @@ multi_bw_ranges_norm(
 a sorted GRanges object
 }
 \description{
-Intersect a list of bw files with a GRanges object and normalize to a set
-of background bwfiles.
-#'
+Intersect a list of bigWig files with a GRanges object and normalize values
+with a set of background bigWig files.
 }

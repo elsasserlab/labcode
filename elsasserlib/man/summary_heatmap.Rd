@@ -7,17 +7,16 @@
 summary_heatmap(values, title, size = 35, file_out = NA)
 }
 \arguments{
-\item{values}{Value matrix}
+\item{values}{Value matrix.}
 
-\item{title}{Title of the plot}
+\item{title}{Plot title.}
 
-\item{size}{Size of the square}
+\item{size}{Square size in points.}
 
-\item{file_out}{Optionally save directly to a file. This will take care of
-cropping the heatmap to a right size so it fits.}
+\item{file_out}{Optional file output.}
 }
 \value{
-Heatmap plot
+pheatmap object
 }
 \description{
 This function ignores NA values to calculate min and max values.

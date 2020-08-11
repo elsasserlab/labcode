@@ -1,21 +1,32 @@
-
 #' Build a binned-scored GRanges object from a bigWig file
 #'
 #' Build a binned-scored GRanges object from a bigWig file. The aggregating
-#' function can be min, max, sd, mean.
+#' function per bin can be min, max, sd, mean.
 #'
-#' @param bwfiles BigWig files to be summarized.
-#' @param bg_bwfiles BigWig files to be used as background-
+#' bwfiles and bg_bwfiles must have the same length. If you are using same
+#' background for several files, then file paths must be repeated accordingly.
+#'
+#' Values can be normalized using background bigWig files (usually input
+#' files). By default, the value obtained will be bigwig / bg_bigwig per bin,
+#' per bigWig.
+#'
+#' If norm_func is specified, this can be changed to any given function, for
+#' instance, if norm_func = log2, values will represent log2(bigwig / bg_bigwig)
+#' per bin.
+#'
+#' @param bwfiles Path or array of paths to the bigWig files to be summarized.
+#' @param bg_bwfiles Path or array of paths to the bigWig files to be used as
+#'   background.
 #' @param labels List of names to give to the mcols of the returned GRanges
-#'     object. If NULL, filenames are used (default).
+#'     object. If NULL, file names are used.
 #' @param per_locus_stat Aggregating function (per locus). Mean by default.
 #'     Choices: min, max, sd, mean.
-#' @param bin_size Bin size. Default 10000.
+#' @param bin_size Bin size.
 #' @param genome Genome. Available choices are mm9, hg38.
 #' @param selection A GRanges object to restrict binning to a certain set of
-#'     intervals. It is useful for debugging and improving performance of locus
+#'     intervals. This is useful for debugging and improving performance of locus
 #'     specific analyses.
-#' @param norm_func Function to apply to normalized data f(bw / bw_bg).
+#' @param norm_func Function to apply to normalize bin values f(bw / bw_bg).
 #' @return A GRanges object with each bwfile as a metadata column named
 #'     after labels, if provided, or after filenames otherwise.
 #' @export
@@ -56,19 +67,16 @@ bw_bins <- function(bwfiles,
   result
 }
 
-#' Intersect a list of bw files with a GRanges object
+#' Intersect a list of bigWig files with a GRanges object
 #'
 #' Build a binned-scored GRanges object from a list of bigWig files. The
 #' aggregating function per locus can be min, max, sd, mean.
 #'
-#' @param bwfiles BigWig file list to be summarized.
-#' @param labels Names to be assigned to the columns
 #' @param granges GRanges object to intersect
-#' @param per_locus_stat Aggregating function per stat
-#' @param selection A GRanges object to restrict analysis to.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
 #' @importFrom GenomeInfoDb sortSeqlevels
-#' @return a sorted GRanges object
+#' @inheritParams bw_bins
+#' @return A sorted GRanges object.
 multi_bw_ranges <- function(bwfiles,
                             labels,
                             granges,
@@ -92,17 +100,18 @@ multi_bw_ranges <- function(bwfiles,
 }
 
 
-#' Intersect a list of bw files with a GRanges object and normalize to a set
-#' of background bwfiles.
+#' Intersect a list of bigWig files with a GRanges object (with background)
+#'
+#' Intersect a list of bigWig files with a GRanges object and normalize values
+#' with a set of background bigWig files.
 #'
 #' @param bwfilelist BigWig file list to be summarized.
 #' @param bg_bwfilelist Background BigWig files.
-#' @param labels Names to be assigned to the columns
 #' @param granges GRanges object to intersect
-#' @param per_locus_stat Aggregating function per stat
 #' @param selection A GRanges object to restrict analysis to.
 #' @param norm_func Function to apply after bw/bg_bw.
 #' @importFrom GenomicRanges makeGRangesFromDataFrame
+#' @inheritParams bw_bins
 #' @return a sorted GRanges object
 multi_bw_ranges_norm <- function(bwfilelist,
                                  bg_bwfilelist,
@@ -134,20 +143,24 @@ multi_bw_ranges_norm <- function(bwfilelist,
   makeGRangesFromDataFrame(result_df, keep.extra.columns = T)
 }
 
-#' Performs a cbind operation on a GRanges list, appending scores
+#' GRanges cbind-like operation
 #'
+#' Perform a cbind operation on a GRanges list, appending scores to mcols.
 #' It will sort the GRanges elements in order to ensure the match is proper.
+#'
+#' This assumes that you are trying to cbind things that match (bins generated
+#' from the same parameters, BED intersections from the same BED.)
 #'
 #' @param grlist A list of GRanges objects that have all the same fields.
 #' @param labels Vector of names for the score columns.
 #' @importFrom GenomeInfoDb sortSeqlevels
 granges_cbind <- function(grlist, labels) {
-  fixed.fields <- c("seqnames", "start", "end", "width", "strand")
+  fixed_fields <- c("seqnames", "start", "end", "width", "strand")
 
   grlist[[1]] <- sortSeqlevels(grlist[[1]])
   grlist[[1]] <- sort(grlist[[1]])
 
-  result <- data.frame(grlist[[1]])[, fixed.fields]
+  result <- data.frame(grlist[[1]])[, fixed_fields]
   for (i in seq(1, length(grlist))) {
     grlist[[i]] <- sortSeqlevels(grlist[[i]])
     grlist[[i]] <- sort(grlist[[i]])
@@ -159,25 +172,27 @@ granges_cbind <- function(grlist, labels) {
   result
 }
 
-#' Build a scored GRanges object from a BED file.
+#' Build a bed-scored GRanges object from a bigWig file list and a BED file.
 #'
-#' Build a scored GRanges object from a bigWig file and a BED file.
+#' Build a scored GRanges object from a bigWig file list and a BED file.
 #' The aggregating function (per locus) can be min, max, sd, mean.
 #'
-#' @param bwfiles BigWig file (or list) to be summarized.
+#' bwfiles and bg_bwfiles must have the same length. If you are using same
+#' background for several files, then file paths must be repeated accordingly.
+#'
+#' Values can be normalized using background bigWig files (usually input
+#' files). By default, the value obtained will be bigwig / bg_bigwig per bin,
+#' per bigWig.
+#'
+#' If norm_func is specified, this can be changed to any given function, for
+#' instance, if norm_func = log2, values will represent log2(bigwig / bg_bigwig)
+#' per bin.
+#'
 #' @param bedfile BED file to intersect with the BigWig file.
-#' @param bg_bwfiles BigWig file (or list) to be used as background to normalize to.
-#'    When aggregate_by is not NULL, the normalization to background happens
-#'    AFTER aggregating the values. For the opposite result, it is possible
-#'    to run bw_bed with aggregate_by = NULL and summarize manually after.
-#' @param labels Column names of the score fields. Must have the same
-#'    length as bigwig file list. If not provided, labels are the names of
-#'    the files in bwfiles.
-#' @param per_locus_stat Aggregate per locus function.
 #' @param aggregate_by Statistic to aggregate per group. If NULL, values are
 #'    not aggregated. This is the behavior by default.
-#' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
 #' @export
+#' @inheritParams bw_bins
 #' @importFrom rtracklayer import BigWigFile
 #' @importFrom GenomeInfoDb sortSeqlevels
 bw_bed <- function(bwfiles,
@@ -253,11 +268,11 @@ bw_bed <- function(bwfiles,
 }
 
 
+#' Validate an array of paths
+#'
 #' Check that a list of files is valid: not empty and contents exist.
-#' Crashes if this is not the case.
 #'
 #' @param filelist An array of files
-#'
 #' @return NULL
 validate_filelist <- function(filelist) {
   if (length(filelist) == 0) {
@@ -270,7 +285,8 @@ validate_filelist <- function(filelist) {
   }
 }
 
-#' Moves a column of a dataframe to rownames and naturally sorts the rows
+#' Take a column of a data frame to use as row names, drop such column and
+#' reorder the data frame so row names follow natural order.
 #'
 #' @param df A dataframe
 #' @param col The column (usually name)
@@ -283,19 +299,19 @@ natural_sort_by_field <- function(df, col) {
   df[order, , drop=FALSE]
 }
 
-#' Build a bins GRanges object.
+#' Build a unscored bins GRanges object.
 #'
 #' Build a GRanges of bins of a given size, for a specific genome. Supported
 #' genomes (required for the package): mm9, hg38.
 #'
-#' @param bin_size Bin size. 10000 by default.
-#' @param genome Genome used. mm9 by default. Valid values: mm9, hg38
-#' @return A GRanges object
-#' @export
+#' @param bin_size Bin size.
+#' @param genome Genome.
 #' @importFrom GenomicRanges tileGenome
 #' @importFrom GenomeInfoDb seqinfo
 #' @importFrom BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm9
 #' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
+#' @return A GRanges object
+#' @export
 build_bins <- function(bin_size=10000, genome='mm9') {
   seq_lengths <- NULL
 
@@ -318,18 +334,16 @@ build_bins <- function(bin_size=10000, genome='mm9') {
 
 #' Score a GRanges object against a BigWig file
 #'
-#' Build a scored GRanges object from a GRanges object and a BigWig file.
+#' Build a scored GRanges object from a GRanges object and a single BigWig file.
 #' The aggregating function can be min, max, sd, mean.
 #'
-#' @param bwfile BigWig file to be summarized.
+#' @param bwfile Path to a single BigWig file to be summarized.
 #' @param granges GRanges object file to be summarized.
-#' @param per_locus_stat Aggregating function (per locus). Mean by default.
-#'    Choices: min, max, sd, mean. These choices depend on rtracklayer library.
-#' @param selection A GRanges object to restrict analysis to.
 #' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
-#' @return GRanges with column score.`
+#' @inheritParams bw_bins
+#' @return GRanges with column score.
 bw_ranges <- function (bwfile, granges, per_locus_stat='mean', selection=NULL) {
   bw <- BigWigFile(bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
@@ -342,9 +356,10 @@ bw_ranges <- function (bwfile, granges, per_locus_stat='mean', selection=NULL) {
 }
 
 
-#' Checks that the number of categories is reasonable for an aggregation.
+#' Validate a category array
 #'
-#' Throws a warning if found more than  50 values.
+#' Checks whether the number of categories is reasonable for an aggregation.
+#' Throws a warning if it finds more than 50 different values.
 #'
 #' @param cat_values An array of values
 validate_categories <- function(cat_values) {
@@ -358,22 +373,26 @@ validate_categories <- function(cat_values) {
   }
 }
 
+#' Aggregate scores of a GRanges object on a field
 #'
-#' Aggregate scores of a GRanges object on a specific field
+#' Aggregates scores of a GRanges object on a specific field. Used for summary
+#' functions.
 #'
-#' Aggregates scores of a GRanges object on a specific field.
 #' @param scored_granges A GRanges object with numerical metadata columns
 #' @param group_col A column among the mcols that can be seen as a factor.
 #' @param aggregate_by Function used to aggregate: mean, median, true_mean.
-#'     true_mean: Mean coverage taking all elements in a class as one large bin
+#'
+#'     true_mean: Mean coverage taking all elements in a class as one large bin.
+#'
 #'     mean: mean-of-distribution approach. The mean of the aggregated value per
 #'       locus is reported.
+#'
 #'     median: median-of-distribution. The median of the aggregated value per
-#'       locus is reported
-#' @return A DataFrame with the aggregated scores (any numerical column will be
-#'     aggregated).
+#'       locus is reported.
+#'
 #' @importFrom dplyr group_by_at summarise across `%>%`
 #' @importFrom rtracklayer mcols
+#' @return A data frame with aggregated scores.
 aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
   if ( !is.null(group_col) && group_col %in% names(mcols(scored_granges))) {
 
@@ -422,27 +441,32 @@ aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
 }
 
 
+#' Calculate profile values of a bigWig file over GRanges object.
 #'
-#' Mean coverage of a BigWig list of files on a set of loci specified as BED file.
+#' Calculates profile values of a bigWig file over the loci speficied in a
+#' GRanges object. Data points are taken each bin_size base pairs.
+#'
+#' Loci are aligned depending on mode parameter:
+#'
+#' - stretch. Aligns all starts and all ends, sort of stretching the loci.
+#' The median of these lenghts is taken as the pseudo-length in order to show
+#' a realistic plot when displayed.
+#'
+#' - start. All loci are aligned by start.
+#'
+#' - end. All loci are aligned by end.
+#'
+#' - center. All loci are aligned by center.
 #'
 #' Adapted from seqplots rtracklayer wrapping functions to compute coverage values:
 #' For more on seqplots: https://www.bioconductor.org/packages/release/bioc/html/seqplots.html
 #'
 #' @param bw BigWig file to be summarized.
 #' @param granges GRanges object
-#' @param bg_bw BigWig file to be used as background
+#' @param bg_bw BigWig file to be used as background.
 #' @param label Name to give to the values
-#' @param mode How to handle differences in lengths across loci:
-#'   stretch: Anchor each locus on both sides.
-#'   start: Anchor all loci on start.
-#'   end: Anchor all loci on end.
-#'   center: Center all loci.
-#' @param bin_size Bin size. Length of bin in base pairs. The lower, the higher the resolution.
-#' @param upstream Number of base pairs to include upstream of loci.
-#' @param downstream Number of base pairs to include downstream of loci.
-#' @param ignore_strand Whether to use strand information in BED file.
-#' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
 #' @importFrom rtracklayer BigWigFile import
+#' @inheritParams bw_profile
 #' @return A DataFrame with the aggregated scores
 calculate_bw_profile <- function(bw,
                                  granges,
@@ -544,23 +568,39 @@ calculate_stretch_matrix <- function(bw,
 
 }
 
-#' Compute a coverage profile on a list of bw files with a given GRanges object.
+#' Calculate profile values of a bigWig file over a BED file.
 #'
+#' Calculates profile values of a set of tracks over the loci speficied in a
+#' BED file. Data points are taken each bin_size base pairs.
 #'
-#' @param bwfiles BigWig file list to be summarized.
-#' @param bg_bwfiles BigWig file list to be used as background to normalize to.
+#' Loci are aligned depending on mode parameter:
+#'
+#' - stretch. Aligns all starts and all ends, sort of stretching the loci.
+#' The median of these lenghts is taken as the pseudo-length in order to show
+#' a realistic plot when displayed.
+#'
+#' - start. All loci are aligned by start.
+#'
+#' - end. All loci are aligned by end.
+#'
+#' - center. All loci are aligned by center.
+#'
 #' @param bedfile BED file to summarize
-#' @param labels Names to be assigned to the columns
 #' @param mode How to handle differences in lengths across loci:
+#'
 #'   stretch: Anchor each locus on both sides.
+#'
 #'   start: Anchor all loci on start.
+#'
 #'   end: Anchor all loci on end.
+#'
 #'   center: Center all loci.
+#'
 #' @param bin_size Bin size. Length of bin in base pairs. The lower, the higher the resolution.
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
 #' @param ignore_strand Whether to use strand information in BED file.
-#' @param norm_func Function to be applied after normalizing: norm_func(bw/bg).
+#' @inheritParams bw_bins
 #' @return a data frame in long format
 #' @export
 bw_profile <- function(bwfiles,
@@ -625,14 +665,16 @@ bw_profile <- function(bwfiles,
 }
 
 
+#' Intersect a BigWig file over loci on a GRanges object
+#'
 #' Intersect a BigWig file over loci on a GRanges object, taking npoints points
 #' per locus.
 #'
-#' @param bw BigWigFile object (rtracklayer)
-#' @param granges GRanges object
-#' @param npoints How many points to take
-#' @param ignore_strand Ignore strand information in granges. Default false.
-#' @return A value matrix dimensions len(granges) x npoints
+#' @param bw BigWigFile object (rtracklayer).
+#' @param granges GRanges object.
+#' @param npoints How many points to take (different to bin size!).
+#' @param ignore_strand Ignore strand information in granges.
+#' @return A value matrix of dimensions len(granges) x npoints.
 intersect_bw_and_granges <- function(bw, granges, npoints, ignore_strand=F) {
   values <- rtracklayer::summary(bw,
                     which=granges,
@@ -649,11 +691,13 @@ intersect_bw_and_granges <- function(bw, granges, npoints, ignore_strand=F) {
 }
 
 
+#' Summarize a intersect_bw_and_granges matrix
+#'
 #' Compute averages and standard error values for a matrix returned by
 #' intersect_bw_and_granges.
 #'
-#' @param matrix A matrix returned by intersect_bw_and_granges
-#' @param label Label for the sample
+#' @param matrix A matrix returned by intersect_bw_and_granges.
+#' @param label Label for the sample.
 #' @importFrom stats median sd
 #' @return A dataframe with summarized values, sderror and medians, plus a label.
 summarize_matrix <- function(matrix, label) {

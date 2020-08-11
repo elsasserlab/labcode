@@ -2,7 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{granges_cbind}
 \alias{granges_cbind}
-\title{Performs a cbind operation on a GRanges list, appending scores}
+\title{GRanges cbind-like operation}
 \usage{
 granges_cbind(grlist, labels)
 }
@@ -12,5 +12,10 @@ granges_cbind(grlist, labels)
 \item{labels}{Vector of names for the score columns.}
 }
 \description{
+Perform a cbind operation on a GRanges list, appending scores to mcols.
 It will sort the GRanges elements in order to ensure the match is proper.
+}
+\details{
+This assumes that you are trying to cbind things that match (bins generated
+from the same parameters, BED intersections from the same BED.)
 }

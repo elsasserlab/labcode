@@ -16,25 +16,26 @@ bw_bins(
 )
 }
 \arguments{
-\item{bwfiles}{BigWig files to be summarized.}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
-\item{bg_bwfiles}{BigWig files to be used as background-}
+\item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
+background.}
 
 \item{labels}{List of names to give to the mcols of the returned GRanges
-object. If NULL, filenames are used (default).}
+object. If NULL, file names are used.}
 
 \item{per_locus_stat}{Aggregating function (per locus). Mean by default.
 Choices: min, max, sd, mean.}
 
-\item{bin_size}{Bin size. Default 10000.}
+\item{bin_size}{Bin size.}
 
 \item{genome}{Genome. Available choices are mm9, hg38.}
 
 \item{selection}{A GRanges object to restrict binning to a certain set of
-intervals. It is useful for debugging and improving performance of locus
+intervals. This is useful for debugging and improving performance of locus
 specific analyses.}
 
-\item{norm_func}{Function to apply to normalized data f(bw / bw_bg).}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }
 \value{
 A GRanges object with each bwfile as a metadata column named
@@ -42,5 +43,17 @@ A GRanges object with each bwfile as a metadata column named
 }
 \description{
 Build a binned-scored GRanges object from a bigWig file. The aggregating
-function can be min, max, sd, mean.
+function per bin can be min, max, sd, mean.
+}
+\details{
+bwfiles and bg_bwfiles must have the same length. If you are using same
+background for several files, then file paths must be repeated accordingly.
+
+Values can be normalized using background bigWig files (usually input
+files). By default, the value obtained will be bigwig / bg_bigwig per bin,
+per bigWig.
+
+If norm_func is specified, this can be changed to any given function, for
+instance, if norm_func = log2, values will represent log2(bigwig / bg_bigwig)
+per bin.
 }

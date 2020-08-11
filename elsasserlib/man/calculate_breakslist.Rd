@@ -2,19 +2,20 @@
 % Please edit documentation in R/bwplot.R
 \name{calculate_breakslist}
 \alias{calculate_breakslist}
-\title{Given a value matrix, calculate breakslist for the summarized heatmap.}
+\title{Calculate breaks list for the values in a matrix}
 \usage{
 calculate_breakslist(mat)
 }
 \arguments{
-\item{mat}{Value matrix}
+\item{mat}{Value matrix.}
 }
 \value{
 Sequence of breaks used by heatmap function
 }
 \description{
-This is done so log scale and norm scale heatmaps have the same color scale
-on the positive values, and zero values are shown as white always.
+Given a numerical matrix, calculate breakslist to use in the summarized
+heatmap plot. This is done in order to unify color scale regardless of
+normalization used (mostly log vs linear), keeping white as the zero value.
 }
 \details{
 This function ignores NA values to calculate min and max values.
