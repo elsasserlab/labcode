@@ -1,3 +1,37 @@
+#' Summary heatmap of a categorized BED file
+#'
+#' Make a summary heatmap where each cell contains an aggregated value of a
+#' bigWig file from bwfiles and a category of a BED file (bedfile). The
+#' provided BED file must have a name field that is valid (i.e. can be grouped,
+#' representing some type of category, not a per-locus unique ID).
+#'
+#' @param labels Labels to use for in the plot for the bw files.
+#' @param file_out Output the plot to a file.
+#' @inheritParams bw_bed
+#' @return A pheatmap object
+#' @export
+plot_bw_bed_summary_heatmap <- function(bwfiles,
+                                        bedfile,
+                                        bg_bwfiles=NULL,
+                                        labels=NULL,
+                                        aggregate_by="true_mean",
+                                        norm_func=identity,
+                                        file_out=NA) {
+
+  summary_values <- bw_bed(bwfiles,
+                           bedfile,
+                           bg_bwfiles = bg_bwfiles,
+                           aggregate_by=aggregate_by,
+                           norm_func=norm_func)
+  if(sum(summary_values) == 0) {
+    warning("All zero values matrix. Using same background as bw input?")
+  }
+
+  title <- paste("Coverage per region (", aggregate_by, ")")
+  title <- paste(title, "-", make_norm_label(substitute(norm_func), bg_bwfiles))
+  summary_heatmap(t(summary_values), title=title, file_out=file_out)
+}
+
 #' Bin-based scatterplot of a pair of bigWig files
 #'
 #' Plots a scatter plot from two given bigWig files and an optional set of BED
@@ -176,131 +210,6 @@ plot_bw_bins_violin <- function(bwfiles,
     extra_plot
 }
 
-#' Generate a human-readable normalization function string
-#'
-#' @param f String representing normalization function.
-#' @param bg Background file.
-#'
-#' @return A string describing normalization.
-make_norm_label <- function(f, bg) {
-  label <- "RPGC"
-  if (!is.null(bg)) {
-    if (f != "identity") {
-      label <- paste(f, "(", label, " / background)", sep="")
-    } else {
-      label <- paste(label, "/ background", sep="")
-    }
-  }
-  label
-}
-
-#' Summary heatmap of a categorized BED file
-#'
-#' Make a summary heatmap where each cell contains an aggregated value of a
-#' bigWig file from bwfiles and a category of a BED file (bedfile). The
-#' provided BED file must have a name field that is valid (i.e. can be grouped,
-#' representing some type of category, not a per-locus unique ID).
-#'
-#' @param labels Labels to use for in the plot for the bw files.
-#' @param file_out Output the plot to a file.
-#' @inheritParams bw_bed
-#' @return A pheatmap object
-#' @export
-plot_bw_bed_summary_heatmap <- function(bwfiles,
-                                   bedfile,
-                                   bg_bwfiles=NULL,
-                                   labels=NULL,
-                                   aggregate_by="true_mean",
-                                   norm_func=identity,
-                                   file_out=NA) {
-
-  summary_values <- bw_bed(bwfiles,
-                           bedfile,
-                           bg_bwfiles = bg_bwfiles,
-                           aggregate_by=aggregate_by,
-                           norm_func=norm_func)
-  if(sum(summary_values) == 0) {
-    warning("All zero values matrix. Using same background as bw input?")
-  }
-
-  title <- paste("Coverage per region (", aggregate_by, ")")
-  title <- paste(title, "-", make_norm_label(substitute(norm_func), bg_bwfiles))
-  summary_heatmap(t(summary_values), title=title, file_out=file_out)
-}
-
-
-#' Plot a pretty heatmap using pheatmap library
-#'
-#' This function ignores NA values to calculate min and max values.
-#'
-#' @param values Value matrix.
-#' @param title Plot title.
-#' @param size Square size in points.
-#' @param file_out Optional file output.
-#' @importFrom RColorBrewer brewer.pal
-#' @importFrom pheatmap pheatmap
-#' @importFrom grDevices colorRampPalette
-#' @return pheatmap object
-summary_heatmap <- function(values, title, size=35, file_out=NA) {
-  bcolor <- "white"
-
-  breakslist <- calculate_breakslist(values)
-  palette <- colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(length(breakslist))
-
-  cellsize_inches <- size / 72
-
-  margin <- 4
-  plot_width_inches <- cellsize_inches*ncol(values) + margin
-  plot_height_inches <- cellsize_inches*nrow(values) + margin
-
-  plot <- pheatmap(values,
-                   main=title,
-                   cellwidth=size,
-                   cluster_rows=F,
-                   cluster_cols=F,
-                   cellheight=size,
-                   border_color=bcolor,
-                   breaks=breakslist,
-                   color=palette,
-                   width=plot_width_inches,
-                   height=plot_height_inches,
-                   display_numbers=TRUE,
-                   filename = file_out)
-
-  plot
-}
-
-#' Calculate breaks list for the values in a matrix
-#'
-#' Given a numerical matrix, calculate breakslist to use in the summarized
-#' heatmap plot. This is done in order to unify color scale regardless of
-#' normalization used (mostly log vs linear), keeping white as the zero value.
-#'
-#' This function ignores NA values to calculate min and max values.
-#'
-#' @param mat Value matrix.
-#' @return Sequence of breaks used by heatmap function
-calculate_breakslist <- function(mat) {
-  # Compute the largest deviation from zero ignoring NAs
-  maxmat <- mat
-  maxmat[is.na(maxmat)] <- -Inf
-  maxval <- max(maxmat)
-
-  minmat <- mat
-  minmat[is.na(minmat)] <- Inf
-  minval <- min(minmat)
-
-  breaklim <- ceiling(abs(max(abs(c(minval, maxval)))))
-
-  # Compute a reasonable amount of steps
-  nsteps <- 21.0
-  stepsize <- 2*breaklim / nsteps
-
-  breakslist <- seq(-breaklim, +breaklim, by=stepsize)
-  breakslist
-}
-
-
 #' Profile plot of a set of bigWig files
 #'
 #' Plots a profile of a set of bigWig files over a set of loci in a BED file.
@@ -382,3 +291,93 @@ plot_bw_profile <- function(bwfiles,
 }
 
 
+#' Plot a pretty heatmap using pheatmap library
+#'
+#' This function ignores NA values to calculate min and max values.
+#'
+#' @param values Value matrix.
+#' @param title Plot title.
+#' @param size Square size in points.
+#' @param file_out Optional file output.
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom pheatmap pheatmap
+#' @importFrom grDevices colorRampPalette
+#' @return pheatmap object
+summary_heatmap <- function(values, title, size=35, file_out=NA) {
+  bcolor <- "white"
+
+  breakslist <- calculate_breakslist(values)
+  palette <- colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(length(breakslist))
+
+  cellsize_inches <- size / 72
+
+  margin <- 4
+  plot_width_inches <- cellsize_inches*ncol(values) + margin
+  plot_height_inches <- cellsize_inches*nrow(values) + margin
+
+  plot <- pheatmap(values,
+                   main=title,
+                   cellwidth=size,
+                   cluster_rows=F,
+                   cluster_cols=F,
+                   cellheight=size,
+                   border_color=bcolor,
+                   breaks=breakslist,
+                   color=palette,
+                   width=plot_width_inches,
+                   height=plot_height_inches,
+                   display_numbers=TRUE,
+                   filename = file_out)
+
+  plot
+}
+
+
+#' Calculate breaks list for the values in a matrix
+#'
+#' Given a numerical matrix, calculate breakslist to use in the summarized
+#' heatmap plot. This is done in order to unify color scale regardless of
+#' normalization used (mostly log vs linear), keeping white as the zero value.
+#'
+#' This function ignores NA values to calculate min and max values.
+#'
+#' @param mat Value matrix.
+#' @return Sequence of breaks used by heatmap function
+calculate_breakslist <- function(mat) {
+  # Compute the largest deviation from zero ignoring NAs
+  maxmat <- mat
+  maxmat[is.na(maxmat)] <- -Inf
+  maxval <- max(maxmat)
+
+  minmat <- mat
+  minmat[is.na(minmat)] <- Inf
+  minval <- min(minmat)
+
+  breaklim <- ceiling(abs(max(abs(c(minval, maxval)))))
+
+  # Compute a reasonable amount of steps
+  nsteps <- 21.0
+  stepsize <- 2*breaklim / nsteps
+
+  breakslist <- seq(-breaklim, +breaklim, by=stepsize)
+  breakslist
+}
+
+
+#' Generate a human-readable normalization function string
+#'
+#' @param f String representing normalization function.
+#' @param bg Background file.
+#'
+#' @return A string describing normalization.
+make_norm_label <- function(f, bg) {
+  label <- "RPGC"
+  if (!is.null(bg)) {
+    if (f != "identity") {
+      label <- paste(f, "(", label, " / background)", sep="")
+    } else {
+      label <- paste(label, "/ background", sep="")
+    }
+  }
+  label
+}
