@@ -22,8 +22,8 @@ plot_bw_bins_scatter <- function(x,
                                 bg_x=NULL,
                                 bg_y=NULL,
                                 bin_size=10000,
-                                per_locus_stat='mean',
-                                genome='mm9',
+                                per_locus_stat="mean",
+                                genome="mm9",
                                 highlight=NULL,
                                 minoverlap=0L,
                                 highlight_label=NULL,
@@ -40,7 +40,7 @@ plot_bw_bins_scatter <- function(x,
                       genome=genome,
                       per_locus_stat=per_locus_stat,
                       norm_func=norm_func_x,
-                      labels='x')
+                      labels="x")
 
   bins_values_y <- bw_bins(y,
                       bg_bwfiles=bg_y,
@@ -48,17 +48,17 @@ plot_bw_bins_scatter <- function(x,
                       genome=genome,
                       per_locus_stat=per_locus_stat,
                       norm_func=norm_func_y,
-                      labels='y')
+                      labels="y")
 
 
-  bins_df <- cbind(data.frame(bins_values_x), data.frame(bins_values_y)[,'y'])
+  bins_df <- cbind(data.frame(bins_values_x), data.frame(bins_values_y)[,"y"])
   colnames(bins_df) <- c(colnames(bins_df)[1:ncol(bins_df)-1], 'y')
   bins_values <- makeGRangesFromDataFrame(bins_df, keep.extra.columns = T)
 
   extra_plot <- NULL
 
   if (!is.null(highlight)) {
-    gr_list <- lapply(highlight, rtracklayer::import, format='BED')
+    gr_list <- lapply(highlight, rtracklayer::import, format="BED")
 
     subset_func <- purrr::partial(IRanges::subsetByOverlaps,
                                   x=bins_values,
@@ -75,19 +75,19 @@ plot_bw_bins_scatter <- function(x,
     highlight_values <- do.call(rbind, df_values_labeled)
 
     extra_plot <- geom_point(data=highlight_values,
-                             aes_string(x='x', y='y', color='group'),
+                             aes_string(x="x", y="y", color="group"),
                              alpha=0.8)
   }
 
   x_label <- paste(make.names(basename(x)), '-', make_norm_label(substitute(norm_func_x), bg_x))
   y_label <- paste(make.names(basename(y)), '-', make_norm_label(substitute(norm_func_y), bg_y))
 
-  p <- ggplot(bins_df, aes_string(x='x', y='y')) +
+  p <- ggplot(bins_df, aes_string(x="x", y="y")) +
     geom_point(color='#cccccc', alpha=0.8) +
     theme_elsasserlab_screen(base_size = 18) +
     xlab(x_label) +
     ylab(y_label) +
-    ggtitle(paste('Bin coverage (bin_size = ', bin_size, ')', sep='')) +
+    ggtitle(paste("Bin coverage (bin_size = ", bin_size, ")", sep="")) +
     extra_plot
 
   p
@@ -115,8 +115,8 @@ plot_bw_bins_violin <- function(bwfiles,
                                bg_bwfiles=NULL,
                                bw_label=NULL,
                                bin_size=10000,
-                               per_locus_stat='mean',
-                               genome='mm9',
+                               per_locus_stat="mean",
+                               genome="mm9",
                                highlight=NULL,
                                minoverlap=0L,
                                norm_func=identity) {
@@ -131,15 +131,15 @@ plot_bw_bins_violin <- function(bwfiles,
 
   bins_df <- data.frame(bins_values)
   bwnames <- colnames(mcols(bins_values))
-  bin_id <- c('seqnames', 'start', 'end')
+  bin_id <- c("seqnames", "start", "end")
 
   melted_bins <- melt(bins_df[, c(bin_id, bwnames)], id.vars=bin_id)
-  title <- paste('Global bin distribution (binsize=', bin_size, ')', sep='')
+  title <- paste("Global bin distribution (binsize=", bin_size, ")", sep="")
   extra_plot <- NULL
 
   if (!is.null(highlight)) {
-    title <- paste(title, 'vs', basename(highlight))
-    gr_highlight <- rtracklayer::import(highlight, format='BED')
+    title <- paste(title, "vs", basename(highlight))
+    gr_highlight <- rtracklayer::import(highlight, format="BED")
 
     overlapping_values <- IRanges::subsetByOverlaps(bins_values,
                                                     gr_highlight,
@@ -150,19 +150,19 @@ plot_bw_bins_violin <- function(bwfiles,
     melted_highlight <- melt(overlapping_df[, c(bin_id, bwnames)], id.vars=bin_id)
 
     extra_plot <- geom_jitter(data=melted_highlight,
-                                  aes_string(x='variable', y='value', color='variable'),
+                                  aes_string(x="variable", y="value", color="variable"),
                                   alpha=0.7)
   }
 
   y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)
 
-  ggplot(melted_bins, aes_string(x='variable', y='value')) +
-    geom_violin(fill='#cccccc') +
+  ggplot(melted_bins, aes_string(x="variable", y="value")) +
+    geom_violin(fill="#cccccc") +
     theme_elsasserlab_screen(base_size = 18) +
-    xlab('') +
+    xlab("") +
     ylab(y_label) +
     ggtitle(title) +
-    theme(legend.position='none', axis.text.x=element_text(angle=45, hjust=1)) +
+    theme(legend.position="none", axis.text.x=element_text(angle=45, hjust=1)) +
     extra_plot
 }
 
@@ -173,12 +173,12 @@ plot_bw_bins_violin <- function(bwfiles,
 #'
 #' @return A string with the corresponding label
 make_norm_label <- function(f, bg) {
-  label <- 'RPGC'
+  label <- "RPGC"
   if (!is.null(bg)) {
-    if (f != 'identity') {
-      label <- paste(f, '(', label, ' / background)', sep='')
+    if (f != "identity") {
+      label <- paste(f, "(", label, " / background)", sep="")
     } else {
-      label <- paste(label, '/ background', sep='')
+      label <- paste(label, "/ background", sep="")
     }
   }
   label
@@ -201,7 +201,7 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
                                    bedfile,
                                    bg_bwfiles=NULL,
                                    labels=NULL,
-                                   aggregate_by='true_mean',
+                                   aggregate_by="true_mean",
                                    norm_func=identity,
                                    file_out=NA) {
 
@@ -211,11 +211,11 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
                            aggregate_by=aggregate_by,
                            norm_func=norm_func)
   if(sum(summary_values) == 0) {
-    warning('All zero values matrix. Using same background as bw input?')
+    warning("All zero values matrix. Using same background as bw input?")
   }
 
-  title <- paste('Coverage per region (', aggregate_by, ')')
-  title <- paste(title, '-', make_norm_label(substitute(norm_func), bg_bwfiles))
+  title <- paste("Coverage per region (", aggregate_by, ")")
+  title <- paste(title, "-", make_norm_label(substitute(norm_func), bg_bwfiles))
   summary_heatmap(t(summary_values), title=title, file_out=file_out)
 }
 
@@ -311,7 +311,7 @@ calculate_breakslist <- function(mat) {
 plot_bw_profile <- function(bwfiles,
                             bedfile,
                             bg_bwfiles=NULL,
-                            mode='stretch',
+                            mode="stretch",
                             bin_size=100,
                             upstream=2500,
                             downstream=2500,
@@ -338,39 +338,39 @@ plot_bw_profile <- function(bwfiles,
   # index value starts at 1
   axis_breaks <- c(1, left_flank_size, nrows)
 
-  axis_labels <- c(paste('-', upstream/1000, 'kb', sep=''),
+  axis_labels <- c(paste("-", upstream/1000, "kb", sep=""),
                    mode,
-                   paste('+', downstream/1000, 'kb', sep=''))
+                   paste("+", downstream/1000, "kb", sep=""))
 
   lines <- axis_breaks[2]
 
-  if (mode == 'stretch') {
+  if (mode == "stretch") {
     axis_breaks <- c(1,
                      left_flank_size,
                      nrows-right_flank_size,
                      nrows)
 
-    axis_labels <- c(paste('-', upstream/1000, 'kb', sep=''),
-                     'start',
-                     'end',
-                     paste('+', downstream/1000, 'kb', sep=''))
+    axis_labels <- c(paste("-", upstream/1000, "kb", sep=""),
+                     "start",
+                     "end",
+                     paste("+", downstream/1000, "kb", sep=""))
 
     lines <- axis_breaks[2:3]
 
   }
 
-  loci <- length(import(bedfile, format='BED'))
-  x_title <- paste(basename(bedfile), '-', loci, 'loci', sep=' ')
+  loci <- length(import(bedfile, format="BED"))
+  x_title <- paste(basename(bedfile), "-", loci, "loci", sep=" ")
 
-  p <- ggplot(values, aes_string(x='index', y='mean', color='sample', fill='sample')) +
+  p <- ggplot(values, aes_string(x="index", y="mean", color="sample", fill="sample")) +
     geom_line(size=0.8) +
-    geom_vline(xintercept=lines, linetype='dashed', color='#cccccc', alpha=0.8) +
+    geom_vline(xintercept=lines, linetype="dashed", color="#cccccc", alpha=0.8) +
     scale_x_continuous(breaks=axis_breaks, labels=axis_labels) +
     xlab(x_title) +
     ylab(y_label) +
-    ggtitle('Profile plot') +
+    ggtitle("Profile plot") +
     theme_elsasserlab_screen(base_size=18) +
-    theme(legend.position=c(0.80,0.90), legend.direction = 'vertical', legend.title = element_blank())
+    theme(legend.position=c(0.80,0.90), legend.direction = "vertical", legend.title = element_blank())
 
   if (show_error) {
     p <- p + geom_ribbon(aes(x=index, ymin=mean-sderror, ymax=mean+sderror), color=NA, alpha=0.3)

@@ -22,9 +22,9 @@
 bw_bins <- function(bwfiles,
                     bg_bwfiles=NULL,
                     labels=NULL,
-                    per_locus_stat='mean',
+                    per_locus_stat="mean",
                     bin_size=10000,
-                    genome='mm9',
+                    genome="mm9",
                     selection=NULL,
                     norm_func=identity) {
 
@@ -72,7 +72,7 @@ bw_bins <- function(bwfiles,
 multi_bw_ranges <- function(bwfiles,
                             labels,
                             granges,
-                            per_locus_stat='mean',
+                            per_locus_stat="mean",
                             selection=NULL) {
 
   if (length(bwfiles) != length(labels)) {
@@ -94,7 +94,7 @@ multi_bw_ranges <- function(bwfiles,
 
 #' Intersect a list of bw files with a GRanges object and normalize to a set
 #' of background bwfiles.
-#'#'
+#'
 #' @param bwfilelist BigWig file list to be summarized.
 #' @param bg_bwfilelist Background BigWig files.
 #' @param labels Names to be assigned to the columns
@@ -108,12 +108,12 @@ multi_bw_ranges_norm <- function(bwfilelist,
                                  bg_bwfilelist,
                                  labels,
                                  granges,
-                                 per_locus_stat='mean',
+                                 per_locus_stat="mean",
                                  selection=NULL,
                                  norm_func=identity) {
 
   if (length(bwfilelist) != length(bg_bwfilelist)) {
-    stop('Background and signal bwfile lists must have the same length.')
+    stop("Background and signal bwfile lists must have the same length.")
   }
 
   result <- multi_bw_ranges(bwfilelist,
@@ -142,7 +142,7 @@ multi_bw_ranges_norm <- function(bwfilelist,
 #' @param labels Vector of names for the score columns.
 #' @importFrom GenomeInfoDb sortSeqlevels
 granges_cbind <- function(grlist, labels) {
-  fixed.fields <- c('seqnames', 'start', 'end', 'width', 'strand')
+  fixed.fields <- c("seqnames", "start", "end", "width", "strand")
 
   grlist[[1]] <- sortSeqlevels(grlist[[1]])
   grlist[[1]] <- sort(grlist[[1]])
@@ -184,7 +184,7 @@ bw_bed <- function(bwfiles,
                    bedfile,
                    bg_bwfiles=NULL,
                    labels=NULL,
-                   per_locus_stat='mean',
+                   per_locus_stat="mean",
                    aggregate_by=NULL,
                    norm_func=identity) {
 
@@ -224,10 +224,10 @@ bw_bed <- function(bwfiles,
 
   if (!is.null(aggregate_by)) {
     df <- aggregate_scores(result,
-                           group_col='name',
+                           group_col="name",
                            aggregate_by=aggregate_by)
 
-    result <- natural_sort_by_field(df, 'name')
+    result <- natural_sort_by_field(df, "name")
 
     if (!is.null(bg_bwfiles)) {
       bg <- multi_bw_ranges(bg_bwfiles,
@@ -240,12 +240,12 @@ bw_bed <- function(bwfiles,
       }
 
       bg_df <- aggregate_scores(bg,
-                                group_col='name',
+                                group_col="name",
                                 aggregate_by=aggregate_by)
 
       values <- cbind(norm_func(df[, labels]/ bg_df[, labels]), df$name)
-      colnames(values) <- c(labels, 'name')
-      result <- natural_sort_by_field(values, 'name')
+      colnames(values) <- c(labels, "name")
+      result <- natural_sort_by_field(values, "name")
     }
   }
 
@@ -299,10 +299,10 @@ natural_sort_by_field <- function(df, col) {
 build_bins <- function(bin_size=10000, genome='mm9') {
   seq_lengths <- NULL
 
-  if (genome == 'mm9') {
+  if (genome == "mm9") {
     seq_lengths <- seqinfo(BSgenome.Mmusculus.UCSC.mm9)
   } else {
-    if (genome == 'hg38') {
+    if (genome == "hg38") {
       seq_lengths <- seqinfo(BSgenome.Hsapiens.UCSC.hg38)
     } else {
       stop("Supported genomes: mm9, hg38")
@@ -387,7 +387,7 @@ aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
     score_cols <- make.names(score_cols)
     score_cols <- score_cols[!score_cols %in% c(group_col)]
 
-    if (aggregate_by == 'true_mean') {
+    if (aggregate_by == "true_mean") {
        sum_vals <- df[, score_cols]*df$length
        colnames(sum_vals) <- score_cols
        sum_vals[, group_col] <- df[, group_col]
@@ -402,7 +402,7 @@ aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
        df <- sum_vals[, score_cols]/sum_vals$length
        df[, group_col] <- sum_vals[, group_col]
 
-    } else if (aggregate_by %in% c('mean', 'median')) {
+    } else if (aggregate_by %in% c("mean", "median")) {
       f <- get(aggregate_by)
       df <- df %>%
         group_by_at(group_col) %>%
@@ -448,7 +448,7 @@ calculate_bw_profile <- function(bw,
                                  granges,
                                  bg_bw=NULL,
                                  label=NULL,
-                                 mode='stretch',
+                                 mode="stretch",
                                  bin_size=100,
                                  upstream=2500,
                                  downstream=2500,
@@ -567,7 +567,7 @@ bw_profile <- function(bwfiles,
                        bg_bwfiles=NULL,
                        bedfile=NULL,
                        labels=NULL,
-                       mode='stretch',
+                       mode="stretch",
                        bin_size=100,
                        upstream=2500,
                        downstream=2500,
@@ -579,19 +579,19 @@ bw_profile <- function(bwfiles,
   granges <- rtracklayer::import(bedfile)
 
   if (bin_size <= 0) {
-    stop(paste('bin size must be a positive value:', bin_size))
+    stop(paste("bin size must be a positive value:", bin_size))
   }
 
   if (upstream <= 0) {
-    stop(paste('upstream size must be a positive value:', upstream))
+    stop(paste("upstream size must be a positive value:", upstream))
   }
 
   if (downstream <= 0) {
-    stop(paste('downstream size must be a positive value:', downstream))
+    stop(paste("downstream size must be a positive value:", downstream))
   }
 
   if (bin_size > upstream || bin_size > downstream) {
-    stop('bin size must be smaller than flanking regions')
+    stop("bin size must be smaller than flanking regions")
   }
 
   if (is.null(labels)) {
@@ -599,7 +599,7 @@ bw_profile <- function(bwfiles,
   }
 
   if (length(bwfiles) != length(labels)) {
-    stop('labels and bwfiles must have the same length')
+    stop("labels and bwfiles must have the same length")
   }
 
   calculate_bw_profile_fixed <- purrr::partial(calculate_bw_profile,
@@ -641,8 +641,8 @@ intersect_bw_and_granges <- function(bw, granges, npoints, ignore_strand=F) {
 
   # Reverse minus strand rows
   if (!ignore_strand) {
-    values[as.character(GenomicRanges::strand(granges))=='-',] <- values[
-      as.character(GenomicRanges::strand(granges))=='-', ncol(values):1]
+    values[as.character(GenomicRanges::strand(granges))=="-",] <- values[
+      as.character(GenomicRanges::strand(granges))=="-", ncol(values):1]
   }
 
   values
@@ -663,7 +663,7 @@ summarize_matrix <- function(matrix, label) {
   omitted_vals <- sum(is.na(matrix))
   if(omitted_vals > 100) {
     mean_per_locus <- omitted_vals / nrow(matrix)
-    warning(paste('Profile plot:', omitted_vals, 'generated (', mean_per_locus,'per locus)'))
+    warning(paste("Profile plot:", omitted_vals, "generated (", mean_per_locus,"per locus)"))
   }
 
 

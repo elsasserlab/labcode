@@ -146,7 +146,7 @@ test_that("plot_bw_bins_violin with highlight returns a plot with jitter", {
       p <- plot_bw_bins_violin(
         c(bw1, bw2),
         bg_bwfiles = c(bg_bw, bg_bw),
-        bw_label = c('A', 'B'),
+        bw_label = c("A", "B"),
         highlight = bed,
         bin_size = 5000,
         norm_func = log2,

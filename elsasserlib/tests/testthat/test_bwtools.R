@@ -32,12 +32,12 @@ toy_example <- function(bw1, bw2, bw_special, bed_with_names, bg1, bg2) {
   )
 
   labeled_gr <- GRanges(
-    seqnames = c('chr1', 'chr1', 'chr2', 'chr2', 'chr2'),
+    seqnames = c("chr1", "chr1", "chr2", "chr2", "chr2"),
     ranges = IRanges(c(21,  61, 21, 111, 161),
                      c(40, 100, 40, 130, 180))
   )
 
-  labeled_gr$name <- c('typeA', 'typeB', 'typeA', 'typeB', 'typeB')
+  labeled_gr$name <- c("typeA", "typeB", "typeA", "typeB", "typeB")
 
   chromsizes <- c(200,200)
 
@@ -57,12 +57,12 @@ toy_example <- function(bw1, bw2, bw_special, bed_with_names, bg1, bg2) {
 }
 
 
-bw1 <- tempfile('bigwig', fileext='.bw')
-bw2 <- tempfile('bigwig', fileext='.bw')
-bg1 <- tempfile('bigwig_bg1', fileext='.bw')
-bg2 <- tempfile('bigwig_bg2', fileext='.bw')
-bw_special <- tempfile('bigwig', fileext='.bw')
-bed_with_names <-tempfile('bed', fileext='.bed')
+bw1 <- tempfile("bigwig", fileext=".bw")
+bw2 <- tempfile("bigwig", fileext=".bw")
+bg1 <- tempfile("bigwig_bg1", fileext=".bw")
+bg2 <- tempfile("bigwig_bg2", fileext=".bw")
+bw_special <- tempfile("bigwig", fileext=".bw")
+bed_with_names <-tempfile("bed", fileext=".bed")
 
 setup(toy_example(bw1, bw2, bw_special, bed_with_names, bg1, bg2))
 
@@ -71,12 +71,12 @@ teardown({
 })
 
 test_that("Setup files exist", {
-  expect_true(file_test('-f', bw1))
-  expect_true(file_test('-f', bw2))
-  expect_true(file_test('-f', bg1))
-  expect_true(file_test('-f', bg2))
-  expect_true(file_test('-f', bed_with_names))
-  expect_true(file_test('-f', bw_special))
+  expect_true(file_test("-f", bw1))
+  expect_true(file_test("-f", bw2))
+  expect_true(file_test("-f", bg1))
+  expect_true(file_test("-f", bg2))
+  expect_true(file_test("-f", bed_with_names))
+  expect_true(file_test("-f", bw_special))
 })
 
 test_that("bw_ranges returns a GRanges object", {
@@ -84,8 +84,8 @@ test_that("bw_ranges returns a GRanges object", {
                       tilewidth=20,
                       cut.last.tile.in.chrom=T)
 
-  bins <- bw_ranges(bw1, tiles, per_locus_stat='mean')
-  expect_is(bins, 'GRanges')
+  bins <- bw_ranges(bw1, tiles, per_locus_stat="mean")
+  expect_is(bins, "GRanges")
 
 })
 
@@ -95,7 +95,7 @@ test_that("bw_ranges returns correct values", {
                       tilewidth=20,
                       cut.last.tile.in.chrom=T)
 
-  bins <- bw_ranges(bw1, tiles, per_locus_stat='mean')
+  bins <- bw_ranges(bw1, tiles, per_locus_stat="mean")
   expect_equal(bins[1]$score, 1)
   expect_equal(bins[2]$score, 2)
   expect_equal(bins[10]$score, 10)
@@ -109,7 +109,7 @@ test_that("bw_ranges returns correct values on subset", {
   subset <- GRanges(seqnames=c('chr1'),
                     ranges=IRanges(c(10, 40)))
 
-  bins <- bw_ranges(bw1, tiles, per_locus_stat='mean', selection=subset)
+  bins <- bw_ranges(bw1, tiles, per_locus_stat="mean", selection=subset)
 
   expect_equal(bins[1]$score, 1)
   expect_equal(bins[2]$score, 2)
@@ -121,9 +121,9 @@ test_that("multi_bw_ranges returns correct values", {
                       tilewidth=20,
                       cut.last.tile.in.chrom=T)
 
-  values <- multi_bw_ranges(c(bw1, bw2), c('bw1','bw2'), tiles)
+  values <- multi_bw_ranges(c(bw1, bw2), c("bw1","bw2"), tiles)
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 1)
   expect_equal(values[1]$bw2, 20)
   expect_equal(values[2]$bw1, 2)
@@ -138,9 +138,9 @@ test_that("multi_bw_ranges_norm with bwfilelist == bg_bwfilelist returns all 1 v
 
   values <- multi_bw_ranges_norm(c(bw1, bw2),
                                  bg_bwfilelist=c(bw1, bw2),
-                                 c('bw1','bw2'), tiles, norm_func=identity)
+                                 c("bw1","bw2"), tiles, norm_func=identity)
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 1)
   expect_equal(values[1]$bw2, 1)
   expect_equal(values[2]$bw1, 1)
@@ -155,9 +155,9 @@ test_that("multi_bw_ranges_norm returns correct values", {
 
   values <- multi_bw_ranges_norm(c(bw1, bw2),
                                  bg_bwfilelist=c(bg1, bg2),
-                                 c('bw1','bw2'), tiles, norm_func=identity)
+                                 c("bw1","bw2"), tiles, norm_func=identity)
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 1)
   expect_equal(values[2]$bw1, 2)
   expect_equal(values[1]$bw2, 10)
@@ -171,8 +171,8 @@ test_that("multi_bw_ranges_norm fails on background length not matching bwlist",
 
   expect_error({values <- multi_bw_ranges_norm(c(bw1, bw2),
                                  bg_bwfilelist=c(bg1),
-                                 c('bw1','bw2'), tiles, norm_func=identity)},
-               'Background and signal bwfile lists must have the same length.')
+                                 c("bw1","bw2"), tiles, norm_func=identity)},
+               "Background and signal bwfile lists must have the same length.")
 
 })
 
@@ -183,7 +183,7 @@ test_that("multi_bw_ranges returns correct values for single bigWig", {
 
   values <- multi_bw_ranges(bw1, 'bw1', tiles)
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 1)
   expect_equal(values[2]$bw1, 2)
 
@@ -194,15 +194,15 @@ test_that("multi_bw_ranges returns correct values on subset", {
                       tilewidth=20,
                       cut.last.tile.in.chrom=T)
 
-  subset <- GRanges(seqnames=c('chr1'),
+  subset <- GRanges(seqnames=c("chr1"),
                     ranges=IRanges(c(30, 50)))
 
   values <- multi_bw_ranges(c(bw1, bw2),
-                            c('bw1','bw2'),
+                            c("bw1","bw2"),
                             tiles,
                             selection=subset)
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 2)
   expect_equal(values[1]$bw2, 19)
   expect_equal(values[2]$bw1, 3)
@@ -213,10 +213,10 @@ test_that("multi_bw_ranges returns correct values on subset", {
 test_that("bw_bed returns correct per locus values", {
   values <- bw_bed(bw1,
                    bed_with_names,
-                   labels='bw1',
-                   per_locus_stat='mean')
+                   labels="bw1",
+                   per_locus_stat="mean")
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 2)
   expect_equal(values[2]$bw1, 4.5)
 })
@@ -224,10 +224,10 @@ test_that("bw_bed returns correct per locus values", {
 test_that("bw_bins returns correct per locus values", {
   values <- bw_bins(bw1,
                    selection=import(bed_with_names),
-                   labels='bw1',
-                   per_locus_stat='mean')
+                   labels="bw1",
+                   per_locus_stat="mean")
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 5.5)
   expect_equal(values[2]$bw1, 15.5)
 })
@@ -236,8 +236,8 @@ test_that("bw_bins returns correct per locus values, with bg", {
   values <- bw_bins(bw1,
                     bg_bwfiles=bw1,
                     selection=import(bed_with_names),
-                    labels='bw1',
-                    per_locus_stat='mean')
+                    labels="bw1",
+                    per_locus_stat="mean")
 
   # TODO: Fix this - subjacent normalized values in GRanges object are matrix
   # print(values)
@@ -249,10 +249,10 @@ test_that("bw_bins returns correct per locus values, with bg", {
 test_that("bw_bed returns correct per locus values on multiple files", {
   values <- bw_bed(c(bw1, bw2),
                    bed_with_names,
-                   labels=c('bw1','bw2'),
-                   per_locus_stat='mean')
+                   labels=c("bw1","bw2"),
+                   per_locus_stat="mean")
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(values[1]$bw1, 2)
   expect_equal(values[2]$bw1, 4.5)
   expect_equal(values[1]$bw2, 19)
@@ -263,10 +263,10 @@ test_that("bw_bed returns correct per locus values on multiple files, with bg", 
   values <- bw_bed(c(bw1, bw2),
                    bg_bwfiles = c(bg1, bg2),
                    bed_with_names,
-                   labels=c('bw1','bw2'),
-                   per_locus_stat='mean')
+                   labels=c("bw1","bw2"),
+                   per_locus_stat="mean")
 
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
 
   expect_equal(values[1]$bw2, 9.5)
   expect_equal(values[2]$bw2, 8.25)
@@ -276,16 +276,16 @@ test_that("bw_bed returns correct per locus values on multiple files, with bg", 
 test_that("bw_bed handles default names with special characters", {
   values <- bw_bed(bw_special,
                    bed_with_names,
-                   aggregate_by='true_mean')
+                   aggregate_by="true_mean")
 
-  expect_is(values, 'data.frame')
+  expect_is(values, "data.frame")
 })
 
 test_that("bw_bed crashes on wrong number of labels for multiple files", {
   expect_error({ values <- bw_bed(c(bw1, bw2),
                    bed_with_names,
-                   labels='bw1',
-                   per_locus_stat='mean') },
+                   labels="bw1",
+                   per_locus_stat="mean") },
                "BigWig file list and column names must have the same length.")
 
 })
@@ -293,32 +293,32 @@ test_that("bw_bed crashes on wrong number of labels for multiple files", {
 test_that("bw_bed returns correct mean-of-means aggregated values", {
   values <- bw_bed(bw1,
                    bed_with_names,
-                   labels='bw1',
-                   per_locus_stat='mean',
-                   aggregate_by='mean')
+                   labels="bw1",
+                   per_locus_stat="mean",
+                   aggregate_by="mean")
 
-  expect_is(values, 'data.frame')
-  expect_equal(values['typeA', 'bw1'], 7)
-  expect_equal(values['typeB', 'bw1'], 13.3333333333)
+  expect_is(values, "data.frame")
+  expect_equal(values["typeA", "bw1"], 7)
+  expect_equal(values["typeB", "bw1"], 13.3333333333)
 })
 
 test_that("bw_bed returns correct true_mean aggregated values", {
   values <- bw_bed(bw1,
                    bed_with_names,
-                   labels='bw1',
-                   per_locus_stat='mean',
-                   aggregate_by='true_mean')
+                   labels="bw1",
+                   per_locus_stat="mean",
+                   aggregate_by="true_mean")
 
-  expect_is(values, 'data.frame')
-  expect_equal(values['typeA', 'bw1'], 7)
-  expect_equal(values['typeB', 'bw1'], 11.125)
+  expect_is(values, "data.frame")
+  expect_equal(values["typeA", "bw1"], 7)
+  expect_equal(values["typeB", "bw1"], 11.125)
 })
 
 test_that("bw_bed on an empty list throws an error", {
   expect_error({ values <- bw_bed(c(),
                    bed_with_names,
-                   per_locus_stat='mean',
-                   aggregate_by='true_mean')},
+                   per_locus_stat="mean",
+                   aggregate_by="true_mean")},
                "File list provided is empty."
   )
 
@@ -335,16 +335,16 @@ test_that("bw_profile on an empty list throws an error", {
 
 test_that("bw_bed on non-existing bed file throws an error", {
   expect_error({ values <- bw_bed(bw1,
-                                  'invalidname.bed',
-                                  per_locus_stat='mean',
-                                  aggregate_by='true_mean')},
+                                  "invalidname.bed",
+                                  per_locus_stat="mean",
+                                  aggregate_by="true_mean")},
                "Files not found: invalidname.bed"
   )
 })
 
 test_that("bw_profile on non-existing bed file throws an error", {
   expect_error({ values <- bw_profile(bw1,
-                                  bedfile='invalidname.bed',
+                                  bedfile="invalidname.bed",
                                   labels=NULL)},
                "Files not found: invalidname.bed"
   )
@@ -352,17 +352,17 @@ test_that("bw_profile on non-existing bed file throws an error", {
 
 
 test_that("bw_bed errors on non existing files on bwlist", {
-  expect_error({ values <- bw_bed(c(bw1, 'invalidname.bw'),
+  expect_error({ values <- bw_bed(c(bw1, "invalidname.bw"),
                                   bed_with_names,
-                                  per_locus_stat='mean',
-                                  aggregate_by='true_mean')},
+                                  per_locus_stat="mean",
+                                  aggregate_by="true_mean")},
                "Files not found: invalidname.bw"
   )
 })
 
 
 test_that("bw_profile errors on non existing files on bwlist", {
-  expect_error({ values <- bw_profile(c(bw1, 'invalidname.bw'),
+  expect_error({ values <- bw_profile(c(bw1, "invalidname.bw"),
                                       bedfile=bed_with_names,
                                       labels=NULL)},
                "Files not found: invalidname.bw"
@@ -381,7 +381,7 @@ test_that("bw_profile runs quiet on valid parameters, mode start", {
   expect_silent({values <- bw_profile(c(bw1, bw2),
                                       bedfile=bed_with_names,
                                       upstream=1, downstream=1, bin_size=1,
-                                      mode='start')})
+                                      mode="start")})
 
 })
 
@@ -390,7 +390,7 @@ test_that("bw_profile runs quiet on valid parameters, mode start, with backgroun
                                       bg_bwfiles = c(bg1, bg2),
                                       bedfile=bed_with_names,
                                       upstream=1, downstream=1, bin_size=1,
-                                      mode='start')})
+                                      mode="start")})
 
 })
 
@@ -399,18 +399,18 @@ test_that("bw_profile normalized returns correct values", {
                        bg_bwfiles = c(bw1, bw2),
                        bedfile=bed_with_names,
                        upstream=1, downstream=1, bin_size=1,
-                       mode='start')
+                       mode="start")
 
-  expect_is(values, 'data.frame')
-  expect_equal(values[1,'mean'], 1)
-  expect_equal(values[2,'mean'], 1)
+  expect_is(values, "data.frame")
+  expect_equal(values[1,"mean"], 1)
+  expect_equal(values[2,"mean"], 1)
 
 })
 
 test_that("bw_profile fails if labels and bwfiles have different length", {
   expect_error({values <- bw_profile(c(bw1, bw2),
                        bedfile=bed_with_names,
-                       labels=c('bw1'),
+                       labels=c("bw1"),
                        upstream=1, downstream=1, bin_size=1,
                        mode="start")},
                "labels and bwfiles must have the same length")
@@ -422,7 +422,7 @@ test_that("bw_profile runs quiet on valid parameters, mode end", {
   expect_silent({values <- bw_profile(c(bw1, bw2),
                                       bedfile=bed_with_names,
                                       upstream=1, downstream=1, bin_size=1,
-                                      mode='end')})
+                                      mode="end")})
 
 })
 
@@ -470,13 +470,13 @@ test_that("bw_profile throws error on negative downstream value", {
 test_that("bw_bed returns correct median-of-means aggregated values", {
   values <- bw_bed(bw1,
                    bed_with_names,
-                   labels='bw1',
-                   per_locus_stat ='mean',
-                   aggregate_by='median')
+                   labels="bw1",
+                   per_locus_stat ="mean",
+                   aggregate_by="median")
 
-  expect_is(values, 'data.frame')
-  expect_equal(values['typeA', 'bw1'], 7)
-  expect_equal(values['typeB', 'bw1'], 16.5)
+  expect_is(values, "data.frame")
+  expect_equal(values["typeA", "bw1"], 7)
+  expect_equal(values["typeB", "bw1"], 16.5)
 })
 
 
@@ -487,26 +487,26 @@ test_that("build_bins crashes on unknown or not included genome", {
 
 test_that("build_bins runs for mm9", {
   values <- build_bins(bin_size=50000, genome="mm9")
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
 })
 
 test_that("build_bins creates bins of correct size", {
   values <- build_bins(bin_size=50000, genome="mm9")
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
   expect_equal(width(ranges(values[1])), 50000)
 })
 
 test_that("build_bins runs for hg38", {
   values <- build_bins(bin_size=50000, genome="hg38")
-  expect_is(values, 'GRanges')
+  expect_is(values, "GRanges")
 })
 
 
 test_that("bw_bed throws error on not implemented aggregate_by", {
   expect_error(values <- bw_bed(bw1,
                                 bed_with_names,
-                                labels='bw1',
-                                per_locus_stat='mean',
-                                aggregate_by='max'))
+                                labels="bw1",
+                                per_locus_stat="mean",
+                                aggregate_by="max"))
 })
 
