@@ -2,7 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{bw_profile}
 \alias{bw_profile}
-\title{Compute a coverage profile on a list of bw files with a given GRanges object.}
+\title{Calculate profile values of a bigWig file over a BED file.}
 \usage{
 bw_profile(
   bwfiles,
@@ -13,26 +13,33 @@ bw_profile(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F,
+  ignore_strand = FALSE,
   norm_func = identity
 )
 }
 \arguments{
-\item{bwfiles}{BigWig file list to be summarized.}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
-\item{bg_bwfiles}{BigWig file list to be used as background to normalize to.}
+\item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
+background.}
 
 \item{bedfile}{BED file to summarize}
 
-\item{labels}{Names to be assigned to the columns}
+\item{labels}{List of names to give to the mcols of the returned GRanges
+object. If NULL, file names are used.}
 
 \item{mode}{How to handle differences in lengths across loci:
-stretch: Anchor each locus on both sides.
-start: Anchor all loci on start.
-end: Anchor all loci on end.
-center: Center all loci.}
 
-\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
+  stretch: Anchor each locus on both sides.
+
+  start: Anchor all loci on start.
+
+  end: Anchor all loci on end.
+
+  center: Center all loci.}
+
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher
+the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 
@@ -40,11 +47,25 @@ center: Center all loci.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
 
-\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }
 \value{
 a data frame in long format
 }
 \description{
-Compute a coverage profile on a list of bw files with a given GRanges object.
+Calculates profile values of a set of tracks over the loci speficied in a
+BED file. Data points are taken each bin_size base pairs.
+}
+\details{
+Loci are aligned depending on mode parameter:
+
+- stretch. Aligns all starts and all ends, sort of stretching the loci.
+The median of these lenghts is taken as the pseudo-length in order to show
+a realistic plot when displayed.
+
+- start. All loci are aligned by start.
+
+- end. All loci are aligned by end.
+
+- center. All loci are aligned by center.
 }

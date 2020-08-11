@@ -2,8 +2,7 @@
 % Please edit documentation in R/bwplot.R
 \name{plot_bw_profile}
 \alias{plot_bw_profile}
-\title{Profile plot of a set of bw files
-annotated bins (i.e. bins overlapping a given BED file)}
+\title{Profile plot of a set of bigWig files}
 \usage{
 plot_bw_profile(
   bwfiles,
@@ -13,37 +12,45 @@ plot_bw_profile(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F,
-  show_error = F,
+  ignore_strand = FALSE,
+  show_error = FALSE,
   norm_func = identity
 )
 }
 \arguments{
-\item{bwfiles}{BigWig files}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
-\item{bedfile}{BED file to use to summarize. It needs to have an adequate `name` field
-(where names correspond to categories that can be grouped).}
+\item{bedfile}{BED file to summarize}
 
-\item{bg_bwfiles}{BigWig files used as background (us. input)}
+\item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
+background.}
 
-\item{mode}{How to align BED loci: Can be stretch, start, end, center.}
+\item{mode}{How to handle differences in lengths across loci:
 
-\item{bin_size}{Bin size.}
+  stretch: Anchor each locus on both sides.
+
+  start: Anchor all loci on start.
+
+  end: Anchor all loci on end.
+
+  center: Center all loci.}
+
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher
+the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 
 \item{downstream}{Number of base pairs to include downstream of loci.}
 
-\item{ignore_strand}{Ignore strand information in BED file (default false).}
+\item{ignore_strand}{Whether to use strand information in BED file.}
 
 \item{show_error}{Show standard error.}
 
-\item{norm_func}{Function to apply after bw / bg (default identity)}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }
 \value{
-A plot object
+A ggplot object.
 }
 \description{
-Profile plot of a set of bw files
-annotated bins (i.e. bins overlapping a given BED file)
+Plots a profile of a set of bigWig files over a set of loci in a BED file.
 }

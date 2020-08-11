@@ -2,18 +2,20 @@
 % Please edit documentation in R/bwtools.R
 \name{natural_sort_by_field}
 \alias{natural_sort_by_field}
-\title{Moves a column of a dataframe to rownames and naturally sorts the rows}
+\title{Take a column of a data frame to use as row names, drop such column and
+reorder the data frame so row names follow natural order.}
 \usage{
 natural_sort_by_field(df, col)
 }
 \arguments{
-\item{df}{A dataframe}
+\item{df}{A data frame.}
 
-\item{col}{The column (usually name)}
+\item{col}{The column (usually name).}
 }
 \value{
 A sorted df
 }
 \description{
-Moves a column of a dataframe to rownames and naturally sorts the rows
+Take a column of a data frame to use as row names, drop such column and
+reorder the data frame so row names follow natural order.
 }

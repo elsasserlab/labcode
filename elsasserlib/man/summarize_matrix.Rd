@@ -2,18 +2,17 @@
 % Please edit documentation in R/bwtools.R
 \name{summarize_matrix}
 \alias{summarize_matrix}
-\title{Compute averages and standard error values for a matrix returned by
-intersect_bw_and_granges.}
+\title{Summarize a intersect_bw_and_granges matrix}
 \usage{
 summarize_matrix(matrix, label)
 }
 \arguments{
-\item{matrix}{A matrix returned by intersect_bw_and_granges}
+\item{matrix}{A matrix returned by intersect_bw_and_granges.}
 
-\item{label}{Label for the sample}
+\item{label}{Label for the sample.}
 }
 \value{
-A dataframe with summarized values, sderror and medians, plus a label.
+A data frame with summarized values, stderr and medians, plus label.
 }
 \description{
 Compute averages and standard error values for a matrix returned by

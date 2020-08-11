@@ -2,8 +2,7 @@
 % Please edit documentation in R/bwplot.R
 \name{plot_bw_bins_violin}
 \alias{plot_bw_bins_violin}
-\title{Violin plot of bin distribution of a set of bigWig files overlayed with
-annotated bins (i.e. bins overlapping a given BED file)}
+\title{Bin-based violin plot of a set of bigWig files}
 \usage{
 plot_bw_bins_violin(
   bwfiles,
@@ -18,28 +17,31 @@ plot_bw_bins_violin(
 )
 }
 \arguments{
-\item{bwfiles}{BigWig files}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
-\item{bg_bwfiles}{BigWig files used as background (us. input)}
+\item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
+background.}
 
-\item{bw_label}{Labels to use for in the plot for the bw files.}
+\item{bw_label}{Labels for the bw files. If omitted, file names will be used.}
 
-\item{bin_size}{Bin size. Default 10000.}
+\item{bin_size}{Bin size.}
 
-\item{per_locus_stat}{Statistics used in the calculation of bins.}
+\item{per_locus_stat}{Aggregating function (per locus). Mean by default.
+Choices: min, max, sd, mean.}
 
 \item{genome}{Genome. Available choices are mm9, hg38.}
 
-\item{highlight}{Bed file to use as highlight for subgroups.}
+\item{highlight}{BED file to use as highlight for subgroups.}
 
-\item{minoverlap}{Minimum overlap required for a bin to be highlighted}
+\item{minoverlap}{Minimum overlap required for a bin to be highlighted.}
 
-\item{norm_func}{Function to use on top of dividing bw/bg_bw (usually identity or log2)}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }
 \value{
-A ggplot object
+A ggplot object.
 }
 \description{
-Violin plot of bin distribution of a set of bigWig files overlayed with
-annotated bins (i.e. bins overlapping a given BED file)
+Plots a violin plot of bin distribution of a set of bigWig files optionally
+overlaid with annotated bins. Bins overlapping loci of the provided BED
+file will be shown as a jitter plot on top of the violin plot.
 }

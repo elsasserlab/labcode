@@ -2,18 +2,18 @@
 % Please edit documentation in R/bwplot.R
 \name{make_norm_label}
 \alias{make_norm_label}
-\title{Construct a string that represents the normalization function.}
+\title{Generate a human-readable normalization function string}
 \usage{
 make_norm_label(f, bg)
 }
 \arguments{
-\item{f}{Function name used to norm}
+\item{f}{String representing normalization function.}
 
-\item{bg}{Background}
+\item{bg}{Background file.}
 }
 \value{
-A string with the corresponding label
+A string describing normalization.
 }
 \description{
-Construct a string that represents the normalization function.
+Generate a human-readable normalization function string
 }

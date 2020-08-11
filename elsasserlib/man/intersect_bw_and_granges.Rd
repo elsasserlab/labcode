@@ -2,22 +2,21 @@
 % Please edit documentation in R/bwtools.R
 \name{intersect_bw_and_granges}
 \alias{intersect_bw_and_granges}
-\title{Intersect a BigWig file over loci on a GRanges object, taking npoints points
-per locus.}
+\title{Intersect a BigWig file over loci on a GRanges object}
 \usage{
-intersect_bw_and_granges(bw, granges, npoints, ignore_strand = F)
+intersect_bw_and_granges(bw, granges, npoints, ignore_strand = FALSE)
 }
 \arguments{
-\item{bw}{BigWigFile object (rtracklayer)}
+\item{bw}{BigWigFile object (rtracklayer).}
 
-\item{granges}{GRanges object}
+\item{granges}{GRanges object.}
 
-\item{npoints}{How many points to take}
+\item{npoints}{How many points to take (different to bin size!).}
 
-\item{ignore_strand}{Ignore strand information in granges. Default false.}
+\item{ignore_strand}{Ignore strand information in granges.}
 }
 \value{
-A value matrix dimensions len(granges) x npoints
+A value matrix of dimensions len(granges) x npoints.
 }
 \description{
 Intersect a BigWig file over loci on a GRanges object, taking npoints points

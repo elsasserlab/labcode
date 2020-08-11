@@ -2,7 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{calculate_bw_profile}
 \alias{calculate_bw_profile}
-\title{Mean coverage of a BigWig list of files on a set of loci specified as BED file.}
+\title{Calculate profile values of a bigWig file over GRanges object.}
 \usage{
 calculate_bw_profile(
   bw,
@@ -13,7 +13,7 @@ calculate_bw_profile(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F,
+  ignore_strand = FALSE,
   norm_func = identity
 )
 }
@@ -22,17 +22,22 @@ calculate_bw_profile(
 
 \item{granges}{GRanges object}
 
-\item{bg_bw}{BigWig file to be used as background}
+\item{bg_bw}{BigWig file to be used as background.}
 
 \item{label}{Name to give to the values}
 
 \item{mode}{How to handle differences in lengths across loci:
-stretch: Anchor each locus on both sides.
-start: Anchor all loci on start.
-end: Anchor all loci on end.
-center: Center all loci.}
 
-\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
+  stretch: Anchor each locus on both sides.
+
+  start: Anchor all loci on start.
+
+  end: Anchor all loci on end.
+
+  center: Center all loci.}
+
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher
+the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 
@@ -40,12 +45,29 @@ center: Center all loci.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
 
-\item{norm_func}{Function to be applied after normalizing: norm_func(bw/bg).}
+\item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }
 \value{
 A DataFrame with the aggregated scores
 }
 \description{
-Adapted from seqplots rtracklayer wrapping functions to compute coverage values:
-For more on seqplots: https://www.bioconductor.org/packages/release/bioc/html/seqplots.html
+Calculates profile values of a bigWig file over the loci speficied in a
+GRanges object. Data points are taken each bin_size base pairs.
+}
+\details{
+Loci are aligned depending on mode parameter:
+
+- stretch. Aligns all starts and all ends, sort of stretching the loci.
+The median of these lenghts is taken as the pseudo-length in order to show
+a realistic plot when displayed.
+
+- start. All loci are aligned by start.
+
+- end. All loci are aligned by end.
+
+- center. All loci are aligned by center.
+
+Adapted from seqplots rtracklayer wrapper functions to compute coverage:
+For more on seqplots:
+https://www.bioconductor.org/packages/release/bioc/html/seqplots.html
 }

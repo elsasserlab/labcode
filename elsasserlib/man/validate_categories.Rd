@@ -2,7 +2,7 @@
 % Please edit documentation in R/bwtools.R
 \name{validate_categories}
 \alias{validate_categories}
-\title{Checks that the number of categories is reasonable for an aggregation.}
+\title{Validate a category array}
 \usage{
 validate_categories(cat_values)
 }
@@ -10,5 +10,6 @@ validate_categories(cat_values)
 \item{cat_values}{An array of values}
 }
 \description{
-Throws a warning if found more than  50 values.
+Checks whether the number of categories is reasonable for an aggregation.
+Throws a warning if it finds more than 50 different values.
 }
