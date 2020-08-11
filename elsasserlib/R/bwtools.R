@@ -199,50 +199,56 @@ bw_bed <- function(bwfiles,
   bed <- sortSeqlevels(bed)
   bed <- sort(bed, ignore.strand=FALSE)
 
-  result <- multi_bw_ranges(bwfiles,
-                            labels,
-                            granges=bed,
-                            per_locus_stat=per_locus_stat)
+  result <- NULL
+  if (is.null(bg_bwfiles)) {
+    result <- multi_bw_ranges(bwfiles,
+                              labels,
+                              granges=bed,
+                              per_locus_stat=per_locus_stat)
+
+  } else {
+    if (is.null(aggregate_by)) {
+      # Only want to normalize per-locus if not aggregating
+      result <- multi_bw_ranges_norm(bwfiles,
+                                     bg_bwfilelist=bg_bwfiles,
+                                     labels=labels,
+                                     granges=bed,
+                                     per_locus_stat=per_locus_stat,
+                                     norm_func=norm_func)
+    }
+  }
 
   if ( 'name' %in% names(mcols(bed)) ) {
     result$name <- bed$name
   }
 
-  if (is.null(bg_bwfiles)) {
+  if (!is.null(aggregate_by)) {
+    df <- aggregate_scores(result,
+                           group_col='name',
+                           aggregate_by=aggregate_by)
 
-    if (! is.null(aggregate_by)) {
-      df <- aggregate_scores(result,
-                             group_col='name',
-                             aggregate_by=aggregate_by)
+    result <- natural_sort_by_field(df, 'name')
 
-      result <- natural_sort_by_field(df, 'name')
-    }
+    if (!is.null(bg_bwfiles)) {
+      bg <- multi_bw_ranges(bg_bwfiles,
+                            labels,
+                            granges=bed,
+                            per_locus_stat=per_locus_stat)
 
-  } else {
-    bg <- multi_bw_ranges(bg_bwfiles,
-                          labels,
-                          granges=bed,
-                          per_locus_stat=per_locus_stat)
-
-    if ( 'name' %in% names(mcols(bed)) ) {
-      bg$name <- bed$name
-    }
-
-    if (! is.null(aggregate_by)) {
-      df <- aggregate_scores(result,
-                             group_col='name',
-                             aggregate_by=aggregate_by)
+      if ( 'name' %in% names(mcols(bed)) ) {
+        bg$name <- bed$name
+      }
 
       bg_df <- aggregate_scores(bg,
-                             group_col='name',
-                             aggregate_by=aggregate_by)
+                                group_col='name',
+                                aggregate_by=aggregate_by)
 
       values <- cbind(norm_func(df[, labels]/ bg_df[, labels]), df$name)
       colnames(values) <- c(labels, 'name')
       result <- natural_sort_by_field(values, 'name')
     }
-    # TODO: This else is missing but belongs to a different PR
   }
+
   result
 }
 
