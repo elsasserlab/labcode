@@ -12,24 +12,25 @@
 #' @export
 plot_bw_bed_summary_heatmap <- function(bwfiles,
                                         bedfile,
-                                        bg_bwfiles=NULL,
-                                        labels=NULL,
-                                        aggregate_by="true_mean",
-                                        norm_func=identity,
-                                        file_out=NA) {
+                                        bg_bwfiles = NULL,
+                                        labels = NULL,
+                                        aggregate_by = "true_mean",
+                                        norm_func = identity,
+                                        file_out = NA) {
 
-  summary_values <- bw_bed(bwfiles,
-                           bedfile,
-                           bg_bwfiles = bg_bwfiles,
-                           aggregate_by=aggregate_by,
-                           norm_func=norm_func)
-  if(sum(summary_values) == 0) {
-    warning("All zero values matrix. Using same background as bw input?")
+  summary_values <- bw_bed(bwfiles, bedfile,
+                      bg_bwfiles = bg_bwfiles,
+                      aggregate_by = aggregate_by,
+                      norm_func = norm_func
+                    )
+
+  if (sum(summary_values) == 0) {
+    warning("All zero-values matrix. Using same background as bw input?")
   }
 
   title <- paste("Coverage per region (", aggregate_by, ")")
   title <- paste(title, "-", make_norm_label(substitute(norm_func), bg_bwfiles))
-  summary_heatmap(t(summary_values), title=title, file_out=file_out)
+  summary_heatmap(t(summary_values), title = title, file_out = file_out)
 }
 
 #' Bin-based scatterplot of a pair of bigWig files
@@ -66,50 +67,57 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
 #' @export
 plot_bw_bins_scatter <- function(x,
                                 y,
-                                bg_x=NULL,
-                                bg_y=NULL,
-                                bin_size=10000,
-                                per_locus_stat="mean",
-                                genome="mm9",
-                                highlight=NULL,
-                                minoverlap=0L,
-                                highlight_label=NULL,
-                                norm_func_x=identity,
-                                norm_func_y=identity) {
+                                bg_x = NULL,
+                                bg_y = NULL,
+                                bin_size = 10000,
+                                per_locus_stat = "mean",
+                                genome = "mm9",
+                                highlight = NULL,
+                                minoverlap = 0L,
+                                highlight_label = NULL,
+                                norm_func_x = identity,
+                                norm_func_y = identity) {
 
   label_df <- function(df, name) {
-    data.frame(df, group=name)
+    data.frame(df, group = name)
   }
 
   bins_values_x <- bw_bins(x,
-                      bg_bwfiles=bg_x,
-                      bin_size=bin_size,
-                      genome=genome,
-                      per_locus_stat=per_locus_stat,
-                      norm_func=norm_func_x,
-                      labels="x")
+                      bg_bwfiles = bg_x,
+                      bin_size = bin_size,
+                      genome = genome,
+                      per_locus_stat = per_locus_stat,
+                      norm_func = norm_func_x,
+                      labels = "x"
+                    )
 
   bins_values_y <- bw_bins(y,
-                      bg_bwfiles=bg_y,
-                      bin_size=bin_size,
-                      genome=genome,
-                      per_locus_stat=per_locus_stat,
-                      norm_func=norm_func_y,
-                      labels="y")
+                      bg_bwfiles = bg_y,
+                      bin_size = bin_size,
+                      genome = genome,
+                      per_locus_stat = per_locus_stat,
+                      norm_func = norm_func_y,
+                      labels = "y"
+                    )
 
 
-  bins_df <- cbind(data.frame(bins_values_x), data.frame(bins_values_y)[,"y"])
-  colnames(bins_df) <- c(colnames(bins_df)[1:ncol(bins_df)-1], 'y')
-  bins_values <- makeGRangesFromDataFrame(bins_df, keep.extra.columns = T)
+  bins_df <- cbind(data.frame(bins_values_x),
+                   data.frame(bins_values_y)[, "y"]
+             )
+
+  colnames(bins_df) <- c(colnames(bins_df)[seq_len(ncol(bins_df) - 1)], "y")
+  bins_values <- makeGRangesFromDataFrame(bins_df, keep.extra.columns = TRUE)
 
   extra_plot <- NULL
 
   if (!is.null(highlight)) {
-    gr_list <- lapply(highlight, rtracklayer::import, format="BED")
+    gr_list <- lapply(highlight, rtracklayer::import, format = "BED")
 
-    subset_func <- purrr::partial(IRanges::subsetByOverlaps,
-                                  x=bins_values,
-                                  minoverlap=minoverlap)
+    subset_func <- purrr::partial(
+                     IRanges::subsetByOverlaps,
+                     x = bins_values,
+                     minoverlap = minoverlap
+                   )
 
     bins_subset <- lapply(gr_list, subset_func)
     subset_df <- lapply(bins_subset, data.frame)
@@ -121,23 +129,26 @@ plot_bw_bins_scatter <- function(x,
     df_values_labeled <- purrr::map2(subset_df, highlight_label, label_df)
     highlight_values <- do.call(rbind, df_values_labeled)
 
-    extra_plot <- geom_point(data=highlight_values,
-                             aes_string(x="x", y="y", color="group"),
-                             alpha=0.8)
+    extra_plot <- geom_point(
+                    data = highlight_values,
+                    aes_string(x = "x", y = "y", color = "group"),
+                    alpha = 0.8
+                  )
   }
 
-  x_label <- paste(make.names(basename(x)), '-', make_norm_label(substitute(norm_func_x), bg_x))
-  y_label <- paste(make.names(basename(y)), '-', make_norm_label(substitute(norm_func_y), bg_y))
+  x_label <- paste(make.names(basename(x)), "-",
+                   make_norm_label(substitute(norm_func_x), bg_x))
 
-  p <- ggplot(bins_df, aes_string(x="x", y="y")) +
-    geom_point(color='#cccccc', alpha=0.8) +
+  y_label <- paste(make.names(basename(y)), "-",
+                   make_norm_label(substitute(norm_func_y), bg_y))
+
+  ggplot(bins_df, aes_string(x = "x", y = "y")) +
+    geom_point(color = "#cccccc", alpha = 0.8) +
     theme_elsasserlab_screen(base_size = 18) +
     xlab(x_label) +
     ylab(y_label) +
-    ggtitle(paste("Bin coverage (bin_size = ", bin_size, ")", sep="")) +
+    ggtitle(paste("Bin coverage (bin_size = ", bin_size, ")", sep = "")) +
     extra_plot
-
-  p
 }
 
 
@@ -156,57 +167,62 @@ plot_bw_bins_scatter <- function(x,
 #' @return A ggplot object.
 #' @export
 plot_bw_bins_violin <- function(bwfiles,
-                               bg_bwfiles=NULL,
-                               bw_label=NULL,
-                               bin_size=10000,
-                               per_locus_stat="mean",
-                               genome="mm9",
-                               highlight=NULL,
-                               minoverlap=0L,
-                               norm_func=identity) {
+                                bg_bwfiles = NULL,
+                                bw_label = NULL,
+                                bin_size = 10000,
+                                per_locus_stat = "mean",
+                                genome = "mm9",
+                                highlight = NULL,
+                                minoverlap = 0L,
+                                norm_func = identity) {
 
   bins_values <- bw_bins(bwfiles,
-                         bg_bwfiles=bg_bwfiles,
-                         labels=bw_label,
-                         bin_size=bin_size,
-                         genome=genome,
-                         per_locus_stat=per_locus_stat,
-                         norm_func=norm_func)
+                         bg_bwfiles = bg_bwfiles,
+                         labels = bw_label,
+                         bin_size = bin_size,
+                         genome = genome,
+                         per_locus_stat = per_locus_stat,
+                         norm_func = norm_func)
 
   bins_df <- data.frame(bins_values)
   bwnames <- colnames(mcols(bins_values))
   bin_id <- c("seqnames", "start", "end")
 
-  melted_bins <- melt(bins_df[, c(bin_id, bwnames)], id.vars=bin_id)
-  title <- paste("Global bin distribution (binsize=", bin_size, ")", sep="")
+  melted_bins <- melt(bins_df[, c(bin_id, bwnames)], id.vars = bin_id)
+  title <- paste("Global bin distribution (binsize=", bin_size, ")", sep = "")
   extra_plot <- NULL
 
   if (!is.null(highlight)) {
     title <- paste(title, "vs", basename(highlight))
-    gr_highlight <- rtracklayer::import(highlight, format="BED")
+    gr_highlight <- rtracklayer::import(highlight, format = "BED")
 
-    overlapping_values <- IRanges::subsetByOverlaps(bins_values,
-                                                    gr_highlight,
-                                                    minoverlap=minoverlap)
+    overlapping_values <- IRanges::subsetByOverlaps(
+                            bins_values,
+                            gr_highlight,
+                            minoverlap = minoverlap
+                          )
 
-    overlapping_df <- data.frame(overlapping_values)
+    overlap_df <- data.frame(overlapping_values)
 
-    melted_highlight <- melt(overlapping_df[, c(bin_id, bwnames)], id.vars=bin_id)
+    melted_highlight <- melt(overlap_df[, c(bin_id, bwnames)], id.vars = bin_id)
 
-    extra_plot <- geom_jitter(data=melted_highlight,
-                                  aes_string(x="variable", y="value", color="variable"),
-                                  alpha=0.7)
+    extra_plot <- geom_jitter(data = melted_highlight,
+                    aes_string(x = "variable", y = "value", color = "variable"),
+                    alpha = 0.7
+                  )
   }
 
   y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)
 
-  ggplot(melted_bins, aes_string(x="variable", y="value")) +
-    geom_violin(fill="#cccccc") +
+  # Avoid R_CMD_CHECK note on variable / value with aes
+  ggplot(melted_bins, aes_string(x = "variable", y = "value")) +
+    geom_violin(fill = "#cccccc") +
     theme_elsasserlab_screen(base_size = 18) +
     xlab("") +
     ylab(y_label) +
     ggtitle(title) +
-    theme(legend.position="none", axis.text.x=element_text(angle=45, hjust=1)) +
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 45, hjust = 1)) +
     extra_plot
 }
 
@@ -221,70 +237,89 @@ plot_bw_bins_violin <- function(bwfiles,
 #' @export
 plot_bw_profile <- function(bwfiles,
                             bedfile,
-                            bg_bwfiles=NULL,
-                            mode="stretch",
-                            bin_size=100,
-                            upstream=2500,
-                            downstream=2500,
-                            ignore_strand=F,
-                            show_error=F,
-                            norm_func=identity) {
+                            bg_bwfiles = NULL,
+                            mode = "stretch",
+                            bin_size = 100,
+                            upstream = 2500,
+                            downstream = 2500,
+                            ignore_strand = FALSE,
+                            show_error = FALSE,
+                            norm_func = identity) {
 
-  values <- bw_profile(bwfiles,
-                       bedfile,
-                       bg_bwfiles=bg_bwfiles,
-                       mode=mode,
-                       bin_size=bin_size,
-                       upstream=upstream,
-                       downstream=downstream,
-                       ignore_strand=ignore_strand,
-                       norm_func=norm_func)
+  values <- bw_profile(bwfiles, bedfile,
+              bg_bwfiles = bg_bwfiles,
+              mode = mode,
+              bin_size = bin_size,
+              upstream = upstream,
+              downstream = downstream,
+              ignore_strand = ignore_strand,
+              norm_func = norm_func
+            )
 
   y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)
 
   nrows <- max(values$index)
-  left_flank_size <- floor(upstream/bin_size)
-  right_flank_size <- floor(downstream/bin_size)
+  upstream_nbins <- floor(upstream / bin_size)
+  downstream_nbins <- floor(downstream / bin_size)
 
   # index value starts at 1
-  axis_breaks <- c(1, left_flank_size, nrows)
-
-  axis_labels <- c(paste("-", upstream/1000, "kb", sep=""),
+  axis_breaks <- c(1, upstream_nbins, nrows)
+  axis_labels <- c(paste("-", upstream / 1000, "kb", sep = ""),
                    mode,
-                   paste("+", downstream/1000, "kb", sep=""))
+                   paste("+", downstream / 1000, "kb", sep = ""))
 
   lines <- axis_breaks[2]
 
   if (mode == "stretch") {
-    axis_breaks <- c(1,
-                     left_flank_size,
-                     nrows-right_flank_size,
-                     nrows)
+    axis_breaks <- c(1, upstream_nbins, nrows - downstream_nbins, nrows)
 
-    axis_labels <- c(paste("-", upstream/1000, "kb", sep=""),
-                     "start",
-                     "end",
-                     paste("+", downstream/1000, "kb", sep=""))
+    axis_labels <- c(paste("-", upstream / 1000, "kb", sep = ""),
+                     "start", "end",
+                     paste("+", downstream / 1000, "kb", sep = ""))
 
     lines <- axis_breaks[2:3]
 
   }
 
-  loci <- length(import(bedfile, format="BED"))
-  x_title <- paste(basename(bedfile), "-", loci, "loci", sep=" ")
+  loci <- length(import(bedfile, format = "BED"))
+  x_title <- paste(basename(bedfile), "-", loci, "loci", sep = " ")
 
-  p <- ggplot(values, aes_string(x="index", y="mean", color="sample", fill="sample")) +
-    geom_line(size=0.8) +
-    geom_vline(xintercept=lines, linetype="dashed", color="#cccccc", alpha=0.8) +
-    scale_x_continuous(breaks=axis_breaks, labels=axis_labels) +
+  p <- ggplot(values,
+              aes_string(
+                x = "index",
+                y = "mean",
+                color = "sample",
+                fill = "sample"
+              )) +
+    geom_line(size = 0.8) +
+    geom_vline(
+      xintercept = lines,
+      linetype = "dashed",
+      color = "#cccccc",
+      alpha = 0.8
+    ) +
+    scale_x_continuous(breaks = axis_breaks, labels = axis_labels) +
     xlab(x_title) +
     ylab(y_label) +
     ggtitle("Profile plot") +
-    theme_elsasserlab_screen(base_size=18) +
-    theme(legend.position=c(0.80,0.90), legend.direction = "vertical", legend.title = element_blank())
+    theme_elsasserlab_screen(base_size = 18) +
+    theme(
+      legend.position = c(0.80, 0.90),
+      legend.direction = "vertical",
+      legend.title = element_blank()
+    )
 
   if (show_error) {
-    p <- p + geom_ribbon(aes(x=index, ymin=mean-sderror, ymax=mean+sderror), color=NA, alpha=0.3)
+    p <-
+      p + geom_ribbon(
+        aes(
+          x = index,
+          ymin = mean - sderror,
+          ymax = mean + sderror
+        ),
+        color = NA,
+        alpha = 0.3
+      )
   }
 
   p
@@ -303,33 +338,34 @@ plot_bw_profile <- function(bwfiles,
 #' @importFrom pheatmap pheatmap
 #' @importFrom grDevices colorRampPalette
 #' @return pheatmap object
-summary_heatmap <- function(values, title, size=35, file_out=NA) {
+summary_heatmap <- function(values, title, size = 35, file_out = NA) {
   bcolor <- "white"
 
   breakslist <- calculate_breakslist(values)
-  palette <- colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu")))(length(breakslist))
+  html_colors <- rev(RColorBrewer::brewer.pal(n = 7, name = "RdBu"))
+  palette <- colorRampPalette(html_colors)(length(breakslist))
 
   cellsize_inches <- size / 72
 
   margin <- 4
-  plot_width_inches <- cellsize_inches*ncol(values) + margin
-  plot_height_inches <- cellsize_inches*nrow(values) + margin
+  plot_width_inches <- cellsize_inches * ncol(values) + margin
+  plot_height_inches <- cellsize_inches * nrow(values) + margin
 
-  plot <- pheatmap(values,
-                   main=title,
-                   cellwidth=size,
-                   cluster_rows=F,
-                   cluster_cols=F,
-                   cellheight=size,
-                   border_color=bcolor,
-                   breaks=breakslist,
-                   color=palette,
-                   width=plot_width_inches,
-                   height=plot_height_inches,
-                   display_numbers=TRUE,
-                   filename = file_out)
-
-  plot
+  pheatmap(
+    values,
+    main = title,
+    cellwidth = size,
+    cluster_rows = FALSE,
+    cluster_cols = FALSE,
+    cellheight = size,
+    border_color = bcolor,
+    breaks = breakslist,
+    color = palette,
+    width = plot_width_inches,
+    height = plot_height_inches,
+    display_numbers = TRUE,
+    filename = file_out
+  )
 }
 
 
@@ -341,15 +377,15 @@ summary_heatmap <- function(values, title, size=35, file_out=NA) {
 #'
 #' This function ignores NA values to calculate min and max values.
 #'
-#' @param mat Value matrix.
+#' @param values Value matrix.
 #' @return Sequence of breaks used by heatmap function
-calculate_breakslist <- function(mat) {
+calculate_breakslist <- function(values) {
   # Compute the largest deviation from zero ignoring NAs
-  maxmat <- mat
+  maxmat <- values
   maxmat[is.na(maxmat)] <- -Inf
   maxval <- max(maxmat)
 
-  minmat <- mat
+  minmat <- values
   minmat[is.na(minmat)] <- Inf
   minval <- min(minmat)
 
@@ -357,9 +393,9 @@ calculate_breakslist <- function(mat) {
 
   # Compute a reasonable amount of steps
   nsteps <- 21.0
-  stepsize <- 2*breaklim / nsteps
+  stepsize <- 2 * breaklim / nsteps
 
-  breakslist <- seq(-breaklim, +breaklim, by=stepsize)
+  breakslist <- seq(-breaklim, +breaklim, by = stepsize)
   breakslist
 }
 
@@ -374,9 +410,9 @@ make_norm_label <- function(f, bg) {
   label <- "RPGC"
   if (!is.null(bg)) {
     if (f != "identity") {
-      label <- paste(f, "(", label, " / background)", sep="")
+      label <- paste(f, "(", label, " / background)", sep = "")
     } else {
-      label <- paste(label, "/ background", sep="")
+      label <- paste(label, " / background", sep = "")
     }
   }
   label

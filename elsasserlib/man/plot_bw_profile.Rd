@@ -12,8 +12,8 @@ plot_bw_profile(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F,
-  show_error = F,
+  ignore_strand = FALSE,
+  show_error = FALSE,
   norm_func = identity
 )
 }

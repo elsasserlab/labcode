@@ -4,10 +4,10 @@
 \alias{calculate_breakslist}
 \title{Calculate breaks list for the values in a matrix}
 \usage{
-calculate_breakslist(mat)
+calculate_breakslist(values)
 }
 \arguments{
-\item{mat}{Value matrix.}
+\item{values}{Value matrix.}
 }
 \value{
 Sequence of breaks used by heatmap function
