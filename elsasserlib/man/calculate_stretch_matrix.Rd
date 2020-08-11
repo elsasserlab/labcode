@@ -10,7 +10,7 @@ calculate_stretch_matrix(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F
+  ignore_strand = FALSE
 )
 }
 \arguments{

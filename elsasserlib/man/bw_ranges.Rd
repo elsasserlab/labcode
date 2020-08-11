@@ -15,8 +15,8 @@ bw_ranges(bwfile, granges, per_locus_stat = "mean", selection = NULL)
 Choices: min, max, sd, mean.}
 
 \item{selection}{A GRanges object to restrict binning to a certain set of
-intervals. This is useful for debugging and improving performance of locus
-specific analyses.}
+intervals. This is useful for debugging and improving performance of
+locus specific analyses.}
 }
 \value{
 GRanges with column score.

@@ -13,7 +13,7 @@ bw_profile(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
-  ignore_strand = F,
+  ignore_strand = FALSE,
   norm_func = identity
 )
 }
@@ -38,7 +38,8 @@ object. If NULL, file names are used.}
 
   center: Center all loci.}
 
-\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher
+the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 

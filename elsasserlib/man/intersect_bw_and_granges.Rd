@@ -4,7 +4,7 @@
 \alias{intersect_bw_and_granges}
 \title{Intersect a BigWig file over loci on a GRanges object}
 \usage{
-intersect_bw_and_granges(bw, granges, npoints, ignore_strand = F)
+intersect_bw_and_granges(bw, granges, npoints, ignore_strand = FALSE)
 }
 \arguments{
 \item{bw}{BigWigFile object (rtracklayer).}

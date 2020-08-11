@@ -32,8 +32,8 @@ Choices: min, max, sd, mean.}
 \item{genome}{Genome. Available choices are mm9, hg38.}
 
 \item{selection}{A GRanges object to restrict binning to a certain set of
-intervals. This is useful for debugging and improving performance of locus
-specific analyses.}
+intervals. This is useful for debugging and improving performance of
+locus specific analyses.}
 
 \item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
 }

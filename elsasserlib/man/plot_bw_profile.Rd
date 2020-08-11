@@ -35,7 +35,8 @@ background.}
 
   center: Center all loci.}
 
-\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher the resolution.}
+\item{bin_size}{Bin size. Length of bin in base pairs. The lower, the higher
+the resolution.}
 
 \item{upstream}{Number of base pairs to include upstream of loci.}
 

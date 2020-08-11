@@ -12,7 +12,7 @@ summarize_matrix(matrix, label)
 \item{label}{Label for the sample.}
 }
 \value{
-A dataframe with summarized values, sderror and medians, plus a label.
+A data frame with summarized values, stderr and medians, plus label.
 }
 \description{
 Compute averages and standard error values for a matrix returned by

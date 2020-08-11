@@ -24,8 +24,8 @@ object. If NULL, file names are used.}
 Choices: min, max, sd, mean.}
 
 \item{selection}{A GRanges object to restrict binning to a certain set of
-intervals. This is useful for debugging and improving performance of locus
-specific analyses.}
+intervals. This is useful for debugging and improving performance of
+locus specific analyses.}
 }
 \value{
 A sorted GRanges object.

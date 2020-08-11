@@ -8,9 +8,9 @@ reorder the data frame so row names follow natural order.}
 natural_sort_by_field(df, col)
 }
 \arguments{
-\item{df}{A dataframe}
+\item{df}{A data frame.}
 
-\item{col}{The column (usually name)}
+\item{col}{The column (usually name).}
 }
 \value{
 A sorted df
