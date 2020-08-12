@@ -7,7 +7,7 @@
 plot_bw_bins_violin(
   bwfiles,
   bg_bwfiles = NULL,
-  bw_label = NULL,
+  labels = NULL,
   bin_size = 10000,
   per_locus_stat = "mean",
   genome = "mm9",
@@ -22,7 +22,8 @@ plot_bw_bins_violin(
 \item{bg_bwfiles}{Path or array of paths to the bigWig files to be used as
 background.}
 
-\item{bw_label}{Labels for the bw files. If omitted, file names will be used.}
+\item{labels}{List of names to give to the mcols of the returned GRanges
+object. If NULL, file names are used.}
 
 \item{bin_size}{Bin size.}
 
