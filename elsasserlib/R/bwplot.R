@@ -158,7 +158,6 @@ plot_bw_bins_scatter <- function(x,
 #' overlaid with annotated bins. Bins overlapping loci of the provided BED
 #' file will be shown as a jitter plot on top of the violin plot.
 #'
-#' @param bw_label Labels for the bw files. If omitted, file names will be used.
 #' @param highlight BED file to use as highlight for subgroups.
 #' @param minoverlap Minimum overlap required for a bin to be highlighted.
 #' @inheritParams bw_bins
@@ -168,7 +167,7 @@ plot_bw_bins_scatter <- function(x,
 #' @export
 plot_bw_bins_violin <- function(bwfiles,
                                 bg_bwfiles = NULL,
-                                bw_label = NULL,
+                                labels = NULL,
                                 bin_size = 10000,
                                 per_locus_stat = "mean",
                                 genome = "mm9",
@@ -178,7 +177,7 @@ plot_bw_bins_violin <- function(bwfiles,
 
   bins_values <- bw_bins(bwfiles,
                          bg_bwfiles = bg_bwfiles,
-                         labels = bw_label,
+                         labels = labels,
                          bin_size = bin_size,
                          genome = genome,
                          per_locus_stat = per_locus_stat,
