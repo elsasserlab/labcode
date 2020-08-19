@@ -8,7 +8,8 @@ toy_example <- function(bw1,
                         bw_special,
                         bed_with_names,
                         bg1,
-                        bg2) {
+                        bg2,
+                        unnamed_bed) {
   granges <- GRanges(
     seqnames = Rle(c("chr1", "chr2"), c(10, 10)),
     ranges = IRanges(c(seq(1, 181, by = 20), seq(1, 181, by = 20)),
@@ -43,6 +44,7 @@ toy_example <- function(bw1,
                      c(40, 100, 40, 130, 180))
   )
 
+  export(labeled_gr, unnamed_bed)
   labeled_gr$name <- c("typeA", "typeB", "typeA", "typeB", "typeB")
 
   chromsizes <- c(200, 200)
@@ -67,6 +69,7 @@ bg1 <- tempfile("bigwig_bg1", fileext = ".bw")
 bg2 <- tempfile("bigwig_bg2", fileext = ".bw")
 bw_special <- tempfile("bigwig", fileext = ".bw")
 bed_with_names <- tempfile("bed", fileext = ".bed")
+unnamed_bed <- tempfile("bed2", fileext=".bed")
 
 tiles <- tileGenome(c(chr1 = 200, chr2 = 200),
   tilewidth = 20,
@@ -74,7 +77,7 @@ tiles <- tileGenome(c(chr1 = 200, chr2 = 200),
 )
 
 
-setup(toy_example(bw1, bw2, bw_special, bed_with_names, bg1, bg2))
+setup(toy_example(bw1, bw2, bw_special, bed_with_names, bg1, bg2, unnamed_bed))
 
 teardown({
   unlink(c(bw1, bw2, bg1, bg2, bw_special, bed_with_names))
@@ -571,3 +574,14 @@ test_that("bw_bed runs with background and aggregate_by parameter", {
   expect_is(values, "data.frame")
 })
 
+test_that("bw_bed fails if aggregate_by in an unnamed bed file", {
+  expect_error({
+    values <- bw_bed(bw1, unnamed_bed, bg_bwfiles = bw2,
+                     labels = "bw1",
+                     per_locus_stat = "mean",
+                     aggregate_by = "mean"
+    )},
+    "missing values in 'row.names' are not allowed"
+  )
+
+})
