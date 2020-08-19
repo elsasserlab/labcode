@@ -39,58 +39,45 @@ bw_bed <- function(bwfiles,
   bed <- import(bedfile)
   bed <- sortSeqlevels(bed)
   bed <- sort(bed, ignore.strand = FALSE)
-
   result <- NULL
-  if (is.null(bg_bwfiles) || !is.null(aggregate_by)) {
-    result <- multi_bw_ranges(bwfiles, labels,
-                granges = bed,
-                per_locus_stat = per_locus_stat
-              )
-  } else {
-    if (is.null(aggregate_by)) {
+  if (is.null(aggregate_by)) {
+    if (is.null(bg_bwfiles)) {
+      result <- multi_bw_ranges(bwfiles, labels,
+                  granges = bed,
+                  per_locus_stat = per_locus_stat
+      )
+    }
+    else {
       # Only want to normalize per-locus if not aggregating
       result <- multi_bw_ranges_norm(
-                  bwfiles,
-                  bg_bwfilelist = bg_bwfiles,
-                  labels = labels,
-                  granges = bed,
-                  per_locus_stat = per_locus_stat,
-                  norm_func = norm_func
-                )
+        bwfiles,
+        bg_bwfilelist = bg_bwfiles,
+        labels = labels,
+        granges = bed,
+        per_locus_stat = per_locus_stat,
+        norm_func = norm_func
+      )
     }
-  }
-
-  if ("name" %in% names(mcols(bed))) {
-    result$name <- bed$name
-  }
-
-  if (!is.null(aggregate_by)) {
-    df <- aggregate_scores(
-            result,
-            group_col = "name",
-            aggregate_by = aggregate_by
-          )
-
-    result <- natural_sort_by_field(df, "name")
+  } else {
+    result <- multi_bw_ranges_aggregated(bwfiles,
+                labels = labels,
+                granges = bed,
+                per_locus_stat = per_locus_stat,
+                aggregate_by = aggregate_by
+              )
 
     if (!is.null(bg_bwfiles)) {
-      bg <- multi_bw_ranges(bg_bwfiles, labels,
+      bg <- multi_bw_ranges_aggregated(bg_bwfiles,
+              labels = labels,
               granges = bed,
-              per_locus_stat = per_locus_stat
+              per_locus_stat = per_locus_stat,
+              aggregate_by = aggregate_by
             )
 
-      if ("name" %in% names(mcols(bed))) {
-        bg$name <- bed$name
-      }
-
-      bg_df <- aggregate_scores(bg,
-                  group_col = "name",
-                  aggregate_by = aggregate_by
-               )
-
-      values <- cbind(norm_func(df[, labels] / bg_df[, labels]), df$name)
-      colnames(values) <- c(labels, "name")
-      result <- natural_sort_by_field(data.frame(values), "name")
+      rows <- rownames(result)
+      result <- data.frame(norm_func(result[rows, labels] / bg[rows, labels]))
+      rownames(result) <- rows
+      colnames(result) <- labels
     }
   }
 
@@ -324,7 +311,39 @@ multi_bw_ranges <- function(bwfiles,
   # granges_cbind sorts each element so it's safer to merge and no need to
   # sort after
   result <- granges_cbind(summaries, labels)
+
+  # Include names if granges has them
+  if ("name" %in% names(mcols(granges))) {
+    result$name <- granges$name
+  }
+
   result
+}
+
+
+#' Intersect a list of bigWig files with a GRanges object and aggregate by name
+#'
+#' @inheritParams bw_bed
+#' @param granges GRanges object to summarize. Should have a valid name field.
+#' @return An aggregated dataframe
+multi_bw_ranges_aggregated <- function(bwfiles,
+                                       labels,
+                                       granges,
+                                       per_locus_stat,
+                                       aggregate_by) {
+
+  result <- multi_bw_ranges(bwfiles, labels,
+              granges = granges,
+              per_locus_stat = per_locus_stat
+            )
+
+  df <- aggregate_scores(
+          result,
+          group_col = "name",
+          aggregate_by = aggregate_by
+        )
+
+  natural_sort_by_field(df, "name")
 }
 
 
@@ -364,11 +383,12 @@ multi_bw_ranges_norm <- function(bwfilelist,
         )
 
   result_df <- data.frame(result)
-  result_df[, labels] <-
-    norm_func(as.matrix(mcols(result)) / as.matrix(mcols(bg)))
+  bg_df <- data.frame(bg)
+  result_df[, labels] <- norm_func( result_df[, labels] / bg_df[, labels])
 
   makeGRangesFromDataFrame(result_df, keep.extra.columns = TRUE)
 }
+
 
 #' Score a GRanges object against a BigWig file
 #'
@@ -419,54 +439,50 @@ bw_ranges <- function(bwfile,
 #' @importFrom rtracklayer mcols
 #' @return A data frame with aggregated scores.
 aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
-  if (!is.null(group_col) && group_col %in% names(mcols(scored_granges))) {
+  # print(scored_granges)
+  validate_group_col(scored_granges, group_col)
 
-    # GRanges objects are 1-based and inclusive [start, end]
-    end_value <- GenomicRanges::end(scored_granges)
-    start_value <- GenomicRanges::start(scored_granges)
-    scored_granges$length <- end_value - start_value + 1
+  # GRanges objects are 1-based and inclusive [start, end]
+  end_value <- GenomicRanges::end(scored_granges)
+  start_value <- GenomicRanges::start(scored_granges)
+  scored_granges$length <- end_value - start_value + 1
 
-    df <- data.frame(mcols(scored_granges))
-    validate_categories(df[, group_col])
-    # Make sure special characters are taken into account
-    score_cols <- colnames(mcols(scored_granges))
-    score_cols <- make.names(score_cols)
-    score_cols <- score_cols[!score_cols %in% c(group_col)]
+  df <- data.frame(mcols(scored_granges))
+  validate_categories(df[, group_col])
+  # Make sure special characters are taken into account
+  score_cols <- colnames(mcols(scored_granges))
+  score_cols <- make.names(score_cols)
+  score_cols <- score_cols[!score_cols %in% c(group_col)]
 
-    if (aggregate_by == "true_mean") {
-      sum_vals <- df[, score_cols] * df$length
-      colnames(sum_vals) <- score_cols
-      sum_vals[, group_col] <- df[, group_col]
-      sum_vals$length <- df$length
+  if (aggregate_by == "true_mean") {
+    sum_vals <- df[, score_cols] * df$length
+    colnames(sum_vals) <- score_cols
+    sum_vals[, group_col] <- df[, group_col]
+    sum_vals$length <- df$length
 
-      # Summarize SUM only
-      sum_vals <- sum_vals %>%
-        group_by_at(group_col) %>%
-        summarise(across(where(is.numeric), sum))
+    # Summarize SUM only
+    sum_vals <- sum_vals %>%
+      group_by_at(group_col) %>%
+      summarise(across(where(is.numeric), sum))
 
-      # Divide sum(scores) by sum(length) and keep only scores
-      df <- sum_vals[, score_cols] / sum_vals$length
-      df[, group_col] <- sum_vals[, group_col]
+    # Divide sum(scores) by sum(length) and keep only scores
+    df <- sum_vals[, score_cols] / sum_vals$length
+    df[, group_col] <- sum_vals[, group_col]
 
-    } else if (aggregate_by %in% c("mean", "median")) {
-      f <- get(aggregate_by)
-      df <- df %>%
-        group_by_at(group_col) %>%
-        summarise(across(where(is.numeric), f))
-
-    } else {
-      stop(paste("Function not implemented as aggregate_by:", aggregate_by))
-    }
-
-    score_cols <- score_cols[!score_cols %in% c("length")]
-    df <- df[, c(score_cols, group_col), drop = FALSE]
-    data.frame(df)
+  } else if (aggregate_by %in% c("mean", "median")) {
+    f <- get(aggregate_by)
+    df <- df %>%
+      group_by_at(group_col) %>%
+      summarise(across(where(is.numeric), f))
 
   } else {
-    stop("Grouping column not provided or not present in GRanges object.")
+    stop(paste("Function not implemented as aggregate_by:", aggregate_by))
   }
-}
 
+  score_cols <- score_cols[!score_cols %in% c("length")]
+  df <- df[, c(score_cols, group_col), drop = FALSE]
+  data.frame(df)
+}
 
 
 #' Calculate profile values of a bigWig file over GRanges object.
@@ -563,6 +579,7 @@ calculate_bw_profile <- function(bw,
 
   summarize_matrix(full, label)
 }
+
 
 #' Calculate matrix for stretch mode
 #'
@@ -759,3 +776,15 @@ validate_filelist <- function(filelist) {
     stop(msg)
   }
 }
+
+
+#' Validate that group col exists in granges
+#'
+#' @param granges GRanges object to check
+#' @param group_col Group column name. Usually, name.
+validate_group_col <- function(granges, group_col) {
+  if (!group_col %in% names(mcols(granges))) {
+    stop(paste("Invalid group column not present in granges", group_col))
+  }
+}
+
