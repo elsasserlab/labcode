@@ -140,7 +140,6 @@ bw_bins <- function(bwfiles,
                 selection = selection
               )
   } else {
-    # FIXME: mcols of result may end up being <matrix> instead of <numeric>.
     result <- multi_bw_ranges_norm(bwfiles, bg_bwfiles, labels, tiles,
                 per_locus_stat = per_locus_stat,
                 selection = selection,
@@ -384,7 +383,7 @@ multi_bw_ranges_norm <- function(bwfilelist,
 
   result_df <- data.frame(result)
   bg_df <- data.frame(bg)
-  result_df[, labels] <- norm_func( result_df[, labels] / bg_df[, labels])
+  result_df[, labels] <- norm_func(result_df[, labels] / bg_df[, labels])
 
   makeGRangesFromDataFrame(result_df, keep.extra.columns = TRUE)
 }
