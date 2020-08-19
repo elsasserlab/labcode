@@ -560,3 +560,14 @@ test_that("bw_bed throws error on not implemented aggregate_by", {
     )
   )
 })
+
+test_that("bw_bed runs with background and aggregate_by parameter", {
+  values <- bw_bed(bw1, bed_with_names, bg_bwfiles = bw2,
+                     labels = "bw1",
+                     per_locus_stat = "mean",
+                     aggregate_by = "mean"
+  )
+
+  expect_is(values, "data.frame")
+})
+

@@ -41,7 +41,7 @@ bw_bed <- function(bwfiles,
   bed <- sort(bed, ignore.strand = FALSE)
 
   result <- NULL
-  if (is.null(bg_bwfiles)) {
+  if (is.null(bg_bwfiles) || !is.null(aggregate_by)) {
     result <- multi_bw_ranges(bwfiles, labels,
                 granges = bed,
                 per_locus_stat = per_locus_stat
@@ -90,7 +90,7 @@ bw_bed <- function(bwfiles,
 
       values <- cbind(norm_func(df[, labels] / bg_df[, labels]), df$name)
       colnames(values) <- c(labels, "name")
-      result <- natural_sort_by_field(values, "name")
+      result <- natural_sort_by_field(data.frame(values), "name")
     }
   }
 
