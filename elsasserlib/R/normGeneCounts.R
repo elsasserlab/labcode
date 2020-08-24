@@ -43,3 +43,22 @@ mean_ratio_norm <- function(gene.counts) {
   norm_mat <- sweep(gene.counts, 2, tpm_sf / exp(mean(log(tpm_sf))), "/")
   return(norm_mat)
 }
+
+#' Limit Outliers of Gene Count Matrix
+#'
+#' This function trims extreme values above or below the indicated quantile, 
+#' processes by column and returns as a matrix.
+#'
+#' @param x Gene count table or a vector
+#' @param q Limit of quantile
+#' @return Normalised Counts
+#' @export
+trim_quantile <- function(x, q = 0.995) {
+  if (!is.null(dim(x))) {
+    cbind(trim_quantile(x[, 1], q), trim_quantile(x[, -1], q))
+  } else {
+    x[x > quantile(x, q, na.rm = T)] = quantile(x, q, na.rm = T)
+    x[x < quantile(x, 1-q, na.rm = T)] = quantile(x, 1-q, na.rm = T)
+    return(x)
+  }
+}
