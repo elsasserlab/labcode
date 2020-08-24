@@ -1,0 +1,162 @@
+---
+title: "Template for summarized heatmaps"
+output: html_notebook
+---
+```{r echo=FALSE, messages=FALSE}
+library(elsasserlib)
+library(ggplot2)
+library(reshape2)
+library(ggpubr)
+# Ongoing Issue with mcols <-
+library(rtracklayer)
+```
+
+This is a template markdown file that creates a summary heatmap (like the ones
+we make for ChromHMM17)
+
+## Calculating the aggregated values
+
+This is the most computationally costful part. I recommend to put results in a
+table after running this if you want to play with them. Additionally, this notebook
+contains a parameter `cache=TRUE` for the costful chunks of code, which means
+if you don't touch those chunks after running, it will not try to run them
+again.
+
+If you want, first set your working directory to the one where the data is:
+
+```{r}
+expdir <- 'path-to-your-experiment'
+
+```
+
+Now this will plot and label every bigwig file on a certain directory:
+
+```{r}
+
+run.dir <- './bw'
+bwpath <- paste(expdir, run.dir, sep='/')
+
+# You can actually do this with any other type of bed file. The important part
+# is that the name field contains categories that can be aggregated. For instance
+# you could also run genes_hi / genes_med and so on
+bed <- 'path-to-chromhmmfile-or-any-other-bed'
+
+# This lists all the files in the path you put there
+bwfiles <- list.files(bwpath)
+
+# And outputs them so you can see if there is any problem with it.
+bwfiles
+
+```
+
+Now we calculate the aggregated values across all these files, using
+true mean:
+
+```{r cache=TRUE}
+values <- bw_bed(paste(bwpath, bwfiles, sep='/'),
+                 bed,
+                 aggregate.by='true_mean')
+```
+
+We get a `data.frame` object where each column is a file and each row a ChromHMM
+value:
+```{r}
+head(values)
+```
+
+Reorder the values:
+
+```{r}
+library(stringr)
+
+# This is a trick for naturally sort the values when they have numbers but they
+# don't have padded zeros to the left. Basically applies to ChromHMM values
+order <- str_sort(values$name, numeric=TRUE)
+
+rownames(values) <- values$name
+write.csv(values[order, bwfiles], 'your_bedfile_truemeans.csv')
+```
+
+## Plotting the tables
+
+This uses `pheatmap` and `RColorBrewer` to plot the values. I will add this
+functionality to the package, but as of now, here is code that will do. You
+may need to adapt `fig.width` and `fig.height` on the header, as pheatmap does 
+not seem to be aware of the limits of the page.
+
+```{r fig.width=12, fig.height=7}
+library(pheatmap)
+library(RColorBrewer)
+
+# This computes limits and breaks for the color scale to look always the same,
+# regardless of only positive values or -max, 0, +max.
+compute.lims <- function(mat) {
+  maxmat <- mat
+  maxmat[is.na(maxmat)] <- -Inf
+  maxval <- max(maxmat)
+
+  minmat <- mat
+  minmat[is.na(minmat)] <- Inf
+  minval <- min(minmat)
+
+  nsteps <- 21.0
+
+  breaklim <- ceiling(abs(max(abs(c(minval, maxval)))))
+
+  # Compute a reasonable amount of steps?
+  stepsize <- 2*breaklim / nsteps
+
+  breakslist <- seq(-breaklim, +breaklim, by=stepsize)
+  breakslist
+}
+
+# Just a wrapper that sets some defaults on pheatmap
+summary_heatmap <- function(values, title, size=35) {
+  bcolor <- "white"
+
+  breakslist <- compute.lims(values)
+  palette <- colorRampPalette(rev(brewer.pal(n = 7, name = "RdBu")))(length(breakslist))
+ 
+  cellsize <- size
+  
+  pheatmap(values,
+           main=title,
+           cellwidth=cellsize,
+           cluster_rows=F,
+           cluster_cols=F,
+           cellheight=cellsize,
+           border_color=bcolor,
+           breaks=breakslist,
+           color=palette,
+           display_numbers=TRUE)
+}
+
+
+values.from.table <- read.csv('./chromhmm17_truemean_runs.csv', header=T, row.names = 1)
+summary_heatmap(t(values.from.table), "Log2 True mean per category")
+```
+
+## Checking other aggregating functions
+
+We can check variability for median or mean (mean-of-means) values.
+
+```{r cache=TRUE}
+median.values <- bw_bed(paste(bwpath, bwfiles, sep='/'),
+                 bed,
+                 aggregate.by='median')
+
+```
+
+```{r}
+rownames(median.values) <- median.values$name
+
+write.csv(median.values[order, bwfiles], 'your_bedfile_median_runs.csv')
+
+median.values[order, bwfiles]
+```
+
+You can plot also the median values:
+
+```{r fig.width=12, fig.height=7}
+summary_heatmap(t(median.values[order, bwfiles]), "Median mean per category")
+```

@@ -1,31 +1,53 @@
 Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
-Version: 0.1.0
-Authors@R: person("Carmen", "Navarro", email = "carmen.navarro@scilifelab.se",
-  role = c("aut", "cre"))
+Version: 1.0.7
+Authors@R: c( 
+  person("Carmen", "Navarro", 
+         email = "carmen.navarro@scilifelab.se",
+         role = c("aut", "cre")
+         ), 
+  person("Rui", "Shao", 
+         email = "rui.shao@scilifelab.se",
+         role = c("aut")
+         )
+  )
 Maintainer: Carmen Navarro <carmen.navarro@scilifelab.se>
 Description: Set of mixed utilities of use in the context of Simon Elsasser's
     lab at SciLifeLab. This includes genomics-related plots, analyses of outputs
     of experiments and methods developed within the lab.
-License: MIT
-Depends: R (>= 3.6.1)
+License: GPL-3 + file LICENSE
+Depends: R (>= 3.6)
 biocViews:
 Imports:
   rtracklayer,
+  rmarkdown,
   dplyr,
+  tidyselect,
+  grDevices,
+  stats,
+  methods,
   ggplot2,
+  stringr,
   reshape2,
   GenomeInfoDb,
+  GenomeInfoDbData,
   GenomicRanges,
+  IRanges,
   purrr,
+  prettydoc,
   BSgenome.Mmusculus.UCSC.mm9,
   BSgenome.Hsapiens.UCSC.hg38,
-  scales
+  scales,
+  RColorBrewer,
+  pheatmap
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Suggests: 
     knitr,
-    rmarkdown
+    testthat,
+    mockery
 VignetteBuilder: knitr
+URL: https://github.com/elsasserlab/labcode
+BugReports: https://github.com/elsasserlab/labcode/issues

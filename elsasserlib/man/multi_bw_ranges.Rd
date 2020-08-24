@@ -2,18 +2,33 @@
 % Please edit documentation in R/bwtools.R
 \name{multi_bw_ranges}
 \alias{multi_bw_ranges}
-\title{Intersect a list of bw files with a GRanges object}
+\title{Intersect a list of bigWig files with a GRanges object}
 \usage{
-multi_bw_ranges(bwfilelist, colnames, gr, per.locus.stat = "mean")
+multi_bw_ranges(
+  bwfiles,
+  labels,
+  granges,
+  per_locus_stat = "mean",
+  selection = NULL
+)
 }
 \arguments{
-\item{bwfilelist}{BigWig file to be summarized.}
+\item{bwfiles}{Path or array of paths to the bigWig files to be summarized.}
 
-\item{gr}{GRanges object to intersect}
+\item{labels}{List of names to give to the mcols of the returned GRanges
+object. If NULL, file names are used.}
 
-\item{per.locus.stat}{Aggregating function per stat}
+\item{granges}{GRanges object to intersect}
 
-\item{col.names}{Names to be assigned to the columns}
+\item{per_locus_stat}{Aggregating function (per locus). Mean by default.
+Choices: min, max, sd, mean.}
+
+\item{selection}{A GRanges object to restrict binning to a certain set of
+intervals. This is useful for debugging and improving performance of
+locus specific analyses.}
+}
+\value{
+A sorted GRanges object.
 }
 \description{
 Build a binned-scored GRanges object from a list of bigWig files. The

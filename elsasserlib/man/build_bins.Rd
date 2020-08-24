@@ -2,14 +2,14 @@
 % Please edit documentation in R/bwtools.R
 \name{build_bins}
 \alias{build_bins}
-\title{Build a bins GRanges object.}
+\title{Build a unscored bins GRanges object.}
 \usage{
-build_bins(bsize = 10000, genome = "mm9")
+build_bins(bin_size = 10000, genome = "mm9")
 }
 \arguments{
-\item{bsize}{Bin size. 10000 by default.}
+\item{bin_size}{Bin size.}
 
-\item{genome}{Genome used. mm9 by default. Valid values: mm9, hg38}
+\item{genome}{Genome.}
 }
 \value{
 A GRanges object
