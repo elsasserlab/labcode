@@ -47,11 +47,11 @@ mean_ratio_norm <- function(gene.counts) {
 #' Limit Outliers of Gene Count Matrix
 #'
 #' This function trims extreme values above or below the indicated quantile, 
-#' processes by column and returns as a matrix.
+#' processes by column.
 #'
 #' @param x Gene count table or a vector
 #' @param q Limit of quantile
-#' @return Normalised Counts
+#' @return Trimmed Counts Matrix
 #' @export
 trim_quantile <- function(x, q = 0.995) {
   if (!is.null(dim(x))) {
