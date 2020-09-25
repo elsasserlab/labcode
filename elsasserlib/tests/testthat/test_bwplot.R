@@ -224,6 +224,7 @@ test_that(
              bin_size = 1000,
              upstream = 1500,
              downstream = 1500,
+             middle = 1000,
              ignore_strand = TRUE,
              show_error = TRUE,
              norm_func = log2)
@@ -236,6 +237,7 @@ test_that(
         bin_size = bin_size,
         upstream = upstream,
         downstream = downstream,
+        middle = middle,
         ignore_strand = ignore_strand,
         norm_func = norm_func
       )
@@ -249,6 +251,7 @@ test_that(
       bin_size = 1000,
       upstream = 1500,
       downstream = 1500,
+      middle = 1000,
       ignore_strand = TRUE,
       norm_func = log2
     )

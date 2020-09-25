@@ -241,6 +241,7 @@ plot_bw_profile <- function(bwfiles,
                             bin_size = 100,
                             upstream = 2500,
                             downstream = 2500,
+                            middle = NULL,
                             ignore_strand = FALSE,
                             show_error = FALSE,
                             norm_func = identity) {
@@ -251,6 +252,7 @@ plot_bw_profile <- function(bwfiles,
               bin_size = bin_size,
               upstream = upstream,
               downstream = downstream,
+              middle = middle,
               ignore_strand = ignore_strand,
               norm_func = norm_func
             )
