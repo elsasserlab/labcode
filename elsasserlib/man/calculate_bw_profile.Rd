@@ -44,7 +44,8 @@ the resolution.}
 
 \item{downstream}{Number of base pairs to include downstream of loci.}
 
-\item{middle}{Number of base pairs that the middle section has (in stretch mode).}
+\item{middle}{Number of base pairs that the middle section has (in stretch
+mode). If not provided, median length of all loci is used.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
 

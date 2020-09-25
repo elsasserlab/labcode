@@ -25,6 +25,9 @@ calculate_stretch_matrix(
 
 \item{downstream}{Number of basepairs downstream}
 
+\item{middle}{Number of base pairs that the middle section has. If not
+provided, median is used.}
+
 \item{ignore_strand}{Ignore strand (bool)}
 }
 \value{

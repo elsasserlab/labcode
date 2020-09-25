@@ -183,7 +183,8 @@ bw_bins <- function(bwfiles,
 #'   the resolution.
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
-#' @param middle Number of base pairs that the middle section has (in stretch mode).
+#' @param middle Number of base pairs that the middle section has (in stretch
+#'  mode). If not provided, median length of all loci is used.
 #' @param ignore_strand Whether to use strand information in BED file.
 #' @inheritParams bw_bins
 #' @return a data frame in long format
@@ -592,6 +593,8 @@ calculate_bw_profile <- function(bw,
 #' @param bin_size Bin size
 #' @param upstream Number of basepairs upstream
 #' @param downstream Number of basepairs downstream
+#' @param middle Number of base pairs that the middle section has. If not
+#'   provided, median is used.
 #' @param ignore_strand Ignore strand (bool)
 #'
 #' @return Summary matrix
