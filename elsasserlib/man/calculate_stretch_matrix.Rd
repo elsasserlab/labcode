@@ -10,6 +10,7 @@ calculate_stretch_matrix(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
+  middle = NULL,
   ignore_strand = FALSE
 )
 }
@@ -23,6 +24,9 @@ calculate_stretch_matrix(
 \item{upstream}{Number of basepairs upstream}
 
 \item{downstream}{Number of basepairs downstream}
+
+\item{middle}{Number of base pairs that the middle section has. If not
+provided, median is used.}
 
 \item{ignore_strand}{Ignore strand (bool)}
 }

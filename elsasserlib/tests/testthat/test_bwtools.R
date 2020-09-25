@@ -450,7 +450,20 @@ test_that("bw_profile runs quiet on valid parameters, mode end", {
                 mode = "end"
               )
   })
+})
 
+
+test_that("bw_profile runs quiet on valid parameters, middle parameter", {
+  expect_silent({
+    values <- bw_profile(c(bw1, bw2),
+                         bedfile = bed_with_names,
+                         upstream = 1,
+                         downstream = 1,
+                         middle = 1,
+                         bin_size = 1,
+                         mode = "end"
+    )
+  })
 })
 
 

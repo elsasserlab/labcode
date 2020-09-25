@@ -183,6 +183,8 @@ bw_bins <- function(bwfiles,
 #'   the resolution.
 #' @param upstream Number of base pairs to include upstream of loci.
 #' @param downstream Number of base pairs to include downstream of loci.
+#' @param middle Number of base pairs that the middle section has (in stretch
+#'  mode). If not provided, median length of all loci is used.
 #' @param ignore_strand Whether to use strand information in BED file.
 #' @inheritParams bw_bins
 #' @return a data frame in long format
@@ -195,6 +197,7 @@ bw_profile <- function(bwfiles,
                        bin_size = 100,
                        upstream = 2500,
                        downstream = 2500,
+                       middle = NULL,
                        ignore_strand = FALSE,
                        norm_func = identity) {
 
@@ -232,6 +235,7 @@ bw_profile <- function(bwfiles,
                                   bin_size = bin_size,
                                   upstream = upstream,
                                   downstream = downstream,
+                                  middle = middle,
                                   ignore_strand = ignore_strand,
                                   norm_func = norm_func
                                 )
@@ -520,6 +524,7 @@ calculate_bw_profile <- function(bw,
                                  bin_size = 100,
                                  upstream = 2500,
                                  downstream = 2500,
+                                 middle = NULL,
                                  ignore_strand = FALSE,
                                  norm_func = identity) {
 
@@ -535,6 +540,7 @@ calculate_bw_profile <- function(bw,
               bin_size = bin_size,
               upstream = upstream,
               downstream = downstream,
+              middle = middle,
               ignore_strand = ignore_strand
             )
 
@@ -587,6 +593,8 @@ calculate_bw_profile <- function(bw,
 #' @param bin_size Bin size
 #' @param upstream Number of basepairs upstream
 #' @param downstream Number of basepairs downstream
+#' @param middle Number of base pairs that the middle section has. If not
+#'   provided, median is used.
 #' @param ignore_strand Ignore strand (bool)
 #'
 #' @return Summary matrix
@@ -595,13 +603,18 @@ calculate_stretch_matrix <- function(bw,
                                      bin_size = 100,
                                      upstream = 2500,
                                      downstream = 2500,
+                                     middle = NULL,
                                      ignore_strand = FALSE) {
 
   left_npoints <- floor(upstream / bin_size)
   right_npoints <- floor(downstream / bin_size)
 
-  # Stretch to the median value of the GR object
-  middle_npoints <- floor(median(GenomicRanges::width(granges)) / bin_size)
+  if (is.null(middle)) {
+    # Stretch to the median value of the GR object
+    middle <- floor(median(GenomicRanges::width(granges)))
+  }
+
+  middle_npoints <- middle / bin_size
 
   left <- intersect_bw_and_granges(bw,
             GenomicRanges::flank(granges, upstream, start = TRUE),

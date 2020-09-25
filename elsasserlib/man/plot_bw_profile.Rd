@@ -12,6 +12,7 @@ plot_bw_profile(
   bin_size = 100,
   upstream = 2500,
   downstream = 2500,
+  middle = NULL,
   ignore_strand = FALSE,
   show_error = FALSE,
   norm_func = identity
@@ -41,6 +42,9 @@ the resolution.}
 \item{upstream}{Number of base pairs to include upstream of loci.}
 
 \item{downstream}{Number of base pairs to include downstream of loci.}
+
+\item{middle}{Number of base pairs that the middle section has (in stretch
+mode). If not provided, median length of all loci is used.}
 
 \item{ignore_strand}{Whether to use strand information in BED file.}
 
