@@ -410,7 +410,13 @@ bw_ranges <- function(bwfile,
                       per_locus_stat = "mean",
                       selection = NULL) {
 
-  bw <- BigWigFile(bwfile)
+  valid_bwfile <- bwfile
+  if ( RCurl::url.exists(bwfile) ) {
+    valid_bwfile <- tempfile()
+    download.file(bwfile, valid_bwfile)
+  }
+
+  bw <- BigWigFile(valid_bwfile)
   explicit_summary <- getMethod("summary", "BigWigFile")
 
   if (! is.null(selection)) {
@@ -777,14 +783,16 @@ validate_categories <- function(cat_values) {
 #' Check that a list of files is valid: not empty and contents exist.
 #'
 #' @param filelist An array of files
+#' @importFrom RCurl url.exists
 #' @return NULL
 validate_filelist <- function(filelist) {
   if (length(filelist) == 0) {
     stop("File list provided is empty.")
   }
 
-  if (!all(file.exists(filelist))) {
-    msg <- paste("Files not found:", filelist[!file.exists(filelist)])
+  existence_flag <- file.exists(filelist) | RCurl::url.exists(filelist)
+  if (! all(existence_flag)) {
+    msg <- paste("Files not found:", filelist[!existence_flag])
     stop(msg)
   }
 }

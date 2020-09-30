@@ -1,7 +1,7 @@
 Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
-Version: 1.0.8
+Version: 1.0.9
 Authors@R: c( 
   person("Carmen", "Navarro", 
          email = "carmen.navarro@scilifelab.se",
@@ -40,6 +40,7 @@ Imports:
   BSgenome.Hsapiens.UCSC.hg38,
   scales,
   RColorBrewer,
+  RCurl,
   pheatmap
 Encoding: UTF-8
 LazyData: true
