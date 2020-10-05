@@ -403,6 +403,7 @@ multi_bw_ranges_norm <- function(bwfilelist,
 #' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
+#' @importFrom utils download.file
 #' @inheritParams bw_bins
 #' @return GRanges with column score.
 bw_ranges <- function(bwfile,
@@ -520,6 +521,7 @@ aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
 #' @param bg_bw BigWig file to be used as background.
 #' @param label Name to give to the values
 #' @importFrom rtracklayer BigWigFile import
+#' @importFrom utils download.file
 #' @inheritParams bw_profile
 #' @return A DataFrame with the aggregated scores
 calculate_bw_profile <- function(bw,
@@ -534,7 +536,13 @@ calculate_bw_profile <- function(bw,
                                  ignore_strand = FALSE,
                                  norm_func = identity) {
 
-  bwfile <- BigWigFile(path = bw)
+  valid_bwfile <- bw
+  if ( RCurl::url.exists(bw) ) {
+    valid_bwfile <- tempfile()
+    download.file(bw, valid_bwfile)
+  }
+
+  bwfile <- BigWigFile(path = valid_bwfile)
 
   if (is.null(label)) {
     label <- basename(bw)
