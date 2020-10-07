@@ -67,7 +67,7 @@ jobs:
       - name: Manually install BioConductor dependencies
         run: |
           install.packages("BiocManager")
-          BiocManager::install(c("rtracklayer", "GenomeInfoDb", "GenomicRanges", "BSgenome.Mmusculus.UCSC.mm9", "BSgenome.Hsapiens.UCSC.hg38"))
+          BiocManager::install(c("rtracklayer", "GenomeInfoDb", "GenomicRanges", "BSgenome.Mmusculus.UCSC.mm9", "BSgenome.Hsapiens.UCSC.hg38", "DESeq2"))
         shell: Rscript {0}
         working-directory: elsasserlib
 
