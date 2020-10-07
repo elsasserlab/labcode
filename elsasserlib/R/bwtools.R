@@ -258,7 +258,7 @@ bw_profile <- function(bwfiles,
 #' Build a unscored bins GRanges object.
 #'
 #' Build a GRanges of bins of a given size, for a specific genome. Supported
-#' genomes (required for the package): mm9, hg38.
+#' genomes (required for the package): mm9, mm10, hg38.
 #'
 #' @param bin_size Bin size.
 #' @param genome Genome.
@@ -274,7 +274,10 @@ build_bins <- function(bin_size = 10000, genome = "mm9") {
     if (genome == "hg38") {
       seq_lengths <- hg38_seqinfo
     } else {
-      stop("Supported genomes: mm9, hg38")
+      if (genome == "mm10") {
+        seq_lengths <- mm10_seqinfo
+      }
+      stop("Supported genomes: mm9, mm10, hg38")
     }
   }
 
