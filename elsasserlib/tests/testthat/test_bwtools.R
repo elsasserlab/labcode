@@ -548,7 +548,7 @@ test_that("build_bins crashes on unknown or not included genome", {
   expect_error({
     build_bins(bin_size = 10000, genome = "hg19")
   },
-  "Supported genomes: mm9, mm10, hg38")
+  "Supported genomes: mm9, mm10, hg38, hg38_latest")
 })
 
 test_that("build_bins runs for mm9", {

@@ -261,7 +261,7 @@ bw_profile <- function(bwfiles,
 #' genomes (required for the package): mm9, mm10, hg38.
 #'
 #' @param bin_size Bin size.
-#' @param genome Genome.
+#' @param genome Genome. Supported: mm9, mm10, hg38, hg38_latest.
 #' @importFrom GenomicRanges tileGenome
 #' @return A GRanges object
 #' @export
@@ -277,7 +277,12 @@ build_bins <- function(bin_size = 10000, genome = "mm9") {
       if (genome == "mm10") {
         seq_lengths <- mm10_seqinfo
       }
-      stop("Supported genomes: mm9, mm10, hg38")
+      else {
+        if (genome == "hg38_latest") {
+          seq_lengths <- hg38_latest_seqinfo
+        }
+      }
+      stop("Supported genomes: mm9, mm10, hg38, hg38_latest")
     }
   }
 
