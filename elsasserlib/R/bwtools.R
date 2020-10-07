@@ -266,26 +266,12 @@ bw_profile <- function(bwfiles,
 #' @return A GRanges object
 #' @export
 build_bins <- function(bin_size = 10000, genome = "mm9") {
-  seq_lengths <- NULL
-
-  if (genome == "mm9") {
-    seq_lengths <- mm9_seqinfo
-  } else {
-    if (genome == "hg38") {
-      seq_lengths <- hg38_seqinfo
-    } else {
-      if (genome == "mm10") {
-        seq_lengths <- mm10_seqinfo
-      }
-      else {
-        if (genome == "hg38_latest") {
-          seq_lengths <- hg38_latest_seqinfo
-        }
-      }
-      stop("Supported genomes: mm9, mm10, hg38, hg38_latest")
-    }
+  data_name <- paste(genome, "seqinfo", sep = "_")
+  if (!exists(data_name)) {
+    stop("Supported genomes: mm9, mm10, hg38, hg38_latest")
   }
 
+  seq_lengths <- get(data_name)
   tileGenome(seq_lengths, tilewidth = bin_size, cut.last.tile.in.chrom = TRUE)
 }
 
