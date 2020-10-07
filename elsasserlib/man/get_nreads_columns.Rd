@@ -2,12 +2,12 @@
 % Please edit documentation in R/bwstats.R
 \name{get_nreads_columns}
 \alias{get_nreads_columns}
-\title{Get values in a granges object as round numeric values in a matrix.}
+\title{Get values in a data frame object as round numeric values in a matrix.}
 \usage{
-get_nreads_columns(granges, fraglen = 150)
+get_nreads_columns(df, fraglen = 150)
 }
 \arguments{
-\item{granges}{Target granges object}
+\item{df}{Target data frame}
 
 \item{fraglen}{Estimated fragment length}
 }
