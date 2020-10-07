@@ -263,19 +263,16 @@ bw_profile <- function(bwfiles,
 #' @param bin_size Bin size.
 #' @param genome Genome.
 #' @importFrom GenomicRanges tileGenome
-#' @importFrom GenomeInfoDb seqinfo
-#' @importFrom BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm9
-#' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
 #' @return A GRanges object
 #' @export
 build_bins <- function(bin_size = 10000, genome = "mm9") {
   seq_lengths <- NULL
 
   if (genome == "mm9") {
-    seq_lengths <- seqinfo(BSgenome.Mmusculus.UCSC.mm9)
+    seq_lengths <- mm9_seqinfo
   } else {
     if (genome == "hg38") {
-      seq_lengths <- seqinfo(BSgenome.Hsapiens.UCSC.hg38)
+      seq_lengths <- hg38_seqinfo
     } else {
       stop("Supported genomes: mm9, hg38")
     }
