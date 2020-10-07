@@ -17,7 +17,8 @@ dependencies before running the installation:
         'GenomicRanges',
         'rtracklayer',
         'BSgenome.Mmusculus.UCSC.mm9',
-        'BSgenome.Hsapiens.UCSC.hg38'))
+        'BSgenome.Hsapiens.UCSC.hg38',
+        'DESeq2'))
 
 Then you can install directly from this GitHub repository:
 
