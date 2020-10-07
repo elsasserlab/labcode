@@ -258,29 +258,20 @@ bw_profile <- function(bwfiles,
 #' Build a unscored bins GRanges object.
 #'
 #' Build a GRanges of bins of a given size, for a specific genome. Supported
-#' genomes (required for the package): mm9, hg38.
+#' genomes (required for the package): mm9, mm10, hg38.
 #'
 #' @param bin_size Bin size.
-#' @param genome Genome.
+#' @param genome Genome. Supported: mm9, mm10, hg38, hg38_latest.
 #' @importFrom GenomicRanges tileGenome
-#' @importFrom GenomeInfoDb seqinfo
-#' @importFrom BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm9
-#' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
 #' @return A GRanges object
 #' @export
 build_bins <- function(bin_size = 10000, genome = "mm9") {
-  seq_lengths <- NULL
-
-  if (genome == "mm9") {
-    seq_lengths <- seqinfo(BSgenome.Mmusculus.UCSC.mm9)
-  } else {
-    if (genome == "hg38") {
-      seq_lengths <- seqinfo(BSgenome.Hsapiens.UCSC.hg38)
-    } else {
-      stop("Supported genomes: mm9, hg38")
-    }
+  data_name <- paste(genome, "seqinfo", sep = "_")
+  if (!exists(data_name)) {
+    stop("Supported genomes: mm9, mm10, hg38, hg38_latest")
   }
 
+  seq_lengths <- get(data_name)
   tileGenome(seq_lengths, tilewidth = bin_size, cut.last.tile.in.chrom = TRUE)
 }
 

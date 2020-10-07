@@ -1,7 +1,7 @@
 Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c( 
   person("Carmen", "Navarro", 
          email = "carmen.navarro@scilifelab.se",
@@ -36,8 +36,6 @@ Imports:
   IRanges,
   purrr,
   prettydoc,
-  BSgenome.Mmusculus.UCSC.mm9,
-  BSgenome.Hsapiens.UCSC.hg38,
   scales,
   RColorBrewer,
   RCurl,

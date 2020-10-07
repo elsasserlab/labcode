@@ -9,12 +9,12 @@ build_bins(bin_size = 10000, genome = "mm9")
 \arguments{
 \item{bin_size}{Bin size.}
 
-\item{genome}{Genome.}
+\item{genome}{Genome. Supported: mm9, mm10, hg38, hg38_latest.}
 }
 \value{
 A GRanges object
 }
 \description{
 Build a GRanges of bins of a given size, for a specific genome. Supported
-genomes (required for the package): mm9, hg38.
+genomes (required for the package): mm9, mm10, hg38.
 }
