@@ -121,16 +121,15 @@ bw_granges_diff_analysis <- function(granges_c1,
 #' complete cases are used.
 #'
 #' @param df Target data frame
-#' @param fraglen Estimated fragment length
+#' @param length_factor Scaling factor to multiply coverage values by.
 #'
 #' @return An integer matrix
 #' @importFrom stats complete.cases
-get_nreads_columns <- function(df, fraglen = 150) {
+get_nreads_columns <- function(df, length_factor = 1000) {
   # TODO: Consider whether to multiply by locus length. For bins analysis
   # this should not affect results, but for genes or loci of different length
   # it might. Since we skip the size factor step, we may bias the results?
   # So right now it's only fragment length
-  length_factor <- fraglen
   cts <- as.matrix(df)
   cts <- as.matrix(cts[complete.cases(cts),])
   cts <- round(cts*length_factor)

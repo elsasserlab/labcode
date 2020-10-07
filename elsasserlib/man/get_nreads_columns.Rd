@@ -4,12 +4,12 @@
 \alias{get_nreads_columns}
 \title{Get values in a data frame object as round numeric values in a matrix.}
 \usage{
-get_nreads_columns(df, fraglen = 150)
+get_nreads_columns(df, length_factor = 1000)
 }
 \arguments{
 \item{df}{Target data frame}
 
-\item{fraglen}{Estimated fragment length}
+\item{length_factor}{Scaling factor to multiply coverage values by.}
 }
 \value{
 An integer matrix
