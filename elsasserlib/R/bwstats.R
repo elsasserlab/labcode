@@ -9,6 +9,7 @@
 #' @param bwfiles_c2 Path or array of paths to the bigWig files for second condition.
 #' @param genome Genome. Available choices are mm9, hg38.
 #' @param bin_size Bin size.
+#' @param keep_values Keep individually calculated values.
 #' @inheritParams bw_granges_diff_analysis
 #' @return a DESeqResults object as returned by DESeq2::results function
 #' @export
@@ -18,13 +19,15 @@ bw_bins_diff_analysis <- function(bwfiles_c1,
                                   label_c2,
                                   bin_size = 10000,
                                   genome = "mm9",
-                                  estimate_size_factors = FALSE) {
+                                  estimate_size_factors = FALSE,
+                                  keep_values = FALSE) {
 
   bins_c1 <- bw_bins(bwfiles_c1, genome = genome, bin_size = bin_size)
   bins_c2 <- bw_bins(bwfiles_c2, genome = genome, bin_size = bin_size)
 
   bw_granges_diff_analysis(bins_c1, bins_c2, label_c1, label_c2,
-                           estimate_size_factors = estimate_size_factors)
+                           estimate_size_factors = estimate_size_factors,
+                           keep_values = keep_values)
 }
 
 #' Run DESeq2 analysis on bed file
@@ -45,13 +48,15 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
                                  bedfile,
                                  label_c1,
                                  label_c2,
-                                 estimate_size_factors = FALSE) {
+                                 estimate_size_factors = FALSE,
+                                 keep_values = FALSE) {
 
   loci_c1 <- bw_bed(bwfiles_c1, bedfile = bedfile)
   loci_c2 <- bw_bed(bwfiles_c2, bedfile = bedfile)
 
   bw_granges_diff_analysis(loci_c1, loci_c2, label_c1, label_c2,
-                           estimate_size_factors = estimate_size_factors)
+                           estimate_size_factors = estimate_size_factors,
+                           keep_values = keep_values)
 }
 
 
@@ -69,6 +74,9 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
 #' @param label_c2 Condition name for condition 2.
 #' @param estimate_size_factors If TRUE, normal DESeq2 procedure is done. Set it
 #'     to true to analyze non-MINUTE data.
+#' @param keep_values If true, results also include the separate bin values.
+#'     This is used to avoid recalculation in plotting functions, but set to
+#'     false by default.
 #' @importFrom DESeq2 DESeqDataSetFromMatrix estimateDispersions nbinomWaldTest `sizeFactors<-` results estimateSizeFactors
 #' @return a DESeqResults object as returned by DESeq2::results function
 #' @export
@@ -76,7 +84,8 @@ bw_granges_diff_analysis <- function(granges_c1,
                                      granges_c2,
                                      label_c1,
                                      label_c2,
-                                     estimate_size_factors = FALSE) {
+                                     estimate_size_factors = FALSE,
+                                     keep_values = FALSE) {
 
   # Bind first, get numbers after (drop complete cases separately could cause error)
   granges_c1 <- sortSeqlevels(granges_c1)
@@ -111,7 +120,13 @@ bw_granges_diff_analysis <- function(granges_c1,
   dds <- estimateDispersions(dds)
   dds <- nbinomWaldTest(dds)
 
-  results(dds)
+  stats_results <- results(dds)
+
+  if (keep_values == TRUE) {
+    stats_results[, colnames(cts_df)] <- cts_df
+  }
+
+  stats_results
 }
 
 

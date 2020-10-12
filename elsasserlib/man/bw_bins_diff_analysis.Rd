@@ -11,7 +11,8 @@ bw_bins_diff_analysis(
   label_c2,
   bin_size = 10000,
   genome = "mm9",
-  estimate_size_factors = FALSE
+  estimate_size_factors = FALSE,
+  keep_values = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ bw_bins_diff_analysis(
 
 \item{estimate_size_factors}{If TRUE, normal DESeq2 procedure is done. Set it
 to true to analyze non-MINUTE data.}
+
+\item{keep_values}{Keep individually calculated values.}
 }
 \value{
 a DESeqResults object as returned by DESeq2::results function
