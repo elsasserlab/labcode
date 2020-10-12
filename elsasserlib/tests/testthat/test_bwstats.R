@@ -38,7 +38,8 @@ test_that("bw_bins_diff_analysis passes on parameters", {
                                        bins_c2,
                                        label_c1,
                                        label_c2,
-                                       estimate_size_factors = estimate_size_factors)
+                                       estimate_size_factors = estimate_size_factors,
+                                       keep_values = keep_values)
   )
 
   expect_call(m_bins, 1,
@@ -54,7 +55,8 @@ test_that("bw_bins_diff_analysis passes on parameters", {
               granges_c2 = reduced_bg_bins,
               label_c1 = "treated",
               label_c2 = "untreated",
-              estimate_size_factors = FALSE)
+              estimate_size_factors = FALSE,
+              keep_values = FALSE)
 
   expect_args(m_bins, 1,
               c(bw1, bw2),
@@ -81,7 +83,8 @@ test_that("bw_bed_diff_analysis passes on parameters", {
                                        loci_c2,
                                        label_c1,
                                        label_c2,
-                                       estimate_size_factors = estimate_size_factors)
+                                       estimate_size_factors = estimate_size_factors,
+                                       keep_values = keep_values)
   )
 
   expect_call(m_bed, 1,
@@ -97,7 +100,8 @@ test_that("bw_bed_diff_analysis passes on parameters", {
               granges_c2 = reduced_bg_bins,
               label_c1 = "treated",
               label_c2 = "untreated",
-              estimate_size_factors = FALSE)
+              estimate_size_factors = FALSE,
+              keep_values = FALSE)
 
   expect_args(m_bed, 1,
               c(bw1, bw2),

@@ -327,6 +327,102 @@ plot_bw_profile <- function(bwfiles,
 }
 
 
+#' Scatter plot with significance testing.
+#'
+#' Make a scatterplot where bins that pass a specific statistical significance
+#' threshold across replicates are highlighted.
+#'
+#' @param bwfiles_c1 Condition 1 bigwig files.
+#' @param bwfiles_c2 Condition 2 bigwig files.
+#' @param label_c1 Label for condition 1.
+#' @param label_c2 Label for condition 2.
+#' @param bg_bwfiles_c1 Optional condition 1 bigwig input (background) files.
+#' @param bg_bwfiles_c2 Optional condition 2 bigwig input (background) files.
+#' @param bin_size Bin size.
+#' @param genome Genome used. Must be one of supported.
+#' @param estimate_size_factors If True, the estimateSizeFactors step from
+#'   DESeq2 is not skipped.
+#' @param pval_cutoff P-value cutoff.
+#' @param logfc_cutoff Log fold change cutoff. If logfc_cutoff is negative,
+#'   bins under logfc_cutoff will be highlighted.
+#' @inheritParams plot_bw_bins_scatter
+#' @return ggplot object
+#' @export
+plot_bw_bins_diff_scatter <- function(bwfiles_c1,
+                                      bwfiles_c2,
+                                      label_c1,
+                                      label_c2,
+                                      bg_bwfiles_c1 = NULL,
+                                      bg_bwfiles_c2 = NULL,
+                                      bin_size = 10000,
+                                      genome = "mm9",
+                                      estimate_size_factors = FALSE,
+                                      pval_cutoff = NULL,
+                                      logfc_cutoff = NULL,
+                                      norm_func_x = identity,
+                                      norm_func_y = identity) {
+
+  stats <- bw_bins_diff_analysis(bwfiles_c1,
+             bwfiles_c2,
+             label_c1,
+             label_c2,
+             bin_size = bin_size,
+             genome = genome,
+             estimate_size_factors = estimate_size_factors,
+             keep_values = TRUE
+           )
+
+  # Mean replicates
+  stats$mean_c1 <- rowMeans(data.frame(stats[, basename(bwfiles_c1)]))
+  stats$mean_c2 <- rowMeans(data.frame(stats[, basename(bwfiles_c2)]))
+
+  if (! is.null(bg_bwfiles_c1) ) {
+    bg_values_x <- bw_bins(bg_bwfiles_c1,
+                           bin_size = bin_size,
+                           genome = genome)
+
+    bg_values_x$mean <- rowMeans(data.frame(bg_values_x)[, basename(bg_bwfiles_c1)])
+
+    stats$mean_c1 <- norm_func_x(stats$mean_c1 / bg_values_x$mean)
+  }
+
+  if (! is.null(bg_bwfiles_c2) ) {
+    bg_values_y <- bw_bins(bg_bwfiles_c2,
+                           bin_size = bin_size,
+                           genome = genome)
+    bg_values_y$mean <- rowMeans(data.frame(bg_values_y)[, basename(bg_bwfiles_c2)])
+
+    stats$mean_c2 <- norm_func_x(stats$mean_c2 / bg_values_y$mean)
+  }
+
+  # Replace NAs with 1s so rows are not removed from matrix
+  stats_filtered <- stats
+  stats_filtered$padj <- ifelse(is.na(stats$padj), 1, stats$padj)
+
+  if (!is.null(pval_cutoff)) {
+    stats_filtered <- stats_filtered[stats_filtered$padj < pval_cutoff, ]
+  }
+  if (!is.null(logfc_cutoff)) {
+    if (logfc_cutoff > 0) {
+      stats_filtered <- stats_filtered[stats_filtered$log2FoldChange > logfc_cutoff, ]
+    }
+    else {
+      stats_filtered <- stats_filtered[stats_filtered$log2FoldChange < logfc_cutoff, ]
+    }
+  }
+
+  stats_df <- data.frame(stats)
+  stats_filtered_df <- data.frame(stats_filtered)
+
+  ggplot(stats_df, aes_string(x = "mean_c1", y = "mean_c2")) +
+    geom_point(color = "#cccccc", alpha = 0.6) +
+    theme_elsasserlab_screen(base_size = 18) +
+    geom_point(data = stats_filtered_df, aes_string(x = "mean_c1", y = "mean_c2"), color = "#F08080") +
+    xlab(label_c1) +
+    ylab(label_c2) +
+    ggtitle(paste("Bin coverage (bin_size = ", bin_size, ")", sep = ""))
+}
+
 #' Plot a pretty heatmap using pheatmap library
 #'
 #' This function ignores NA values to calculate min and max values.

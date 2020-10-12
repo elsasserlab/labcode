@@ -9,7 +9,8 @@ bw_granges_diff_analysis(
   granges_c2,
   label_c1,
   label_c2,
-  estimate_size_factors = FALSE
+  estimate_size_factors = FALSE,
+  keep_values = FALSE
 )
 }
 \arguments{
@@ -24,6 +25,10 @@ Note that these objects must correspond to the same loci.}
 
 \item{estimate_size_factors}{If TRUE, normal DESeq2 procedure is done. Set it
 to true to analyze non-MINUTE data.}
+
+\item{keep_values}{If true, results also include the separate bin values.
+This is used to avoid recalculation in plotting functions, but set to
+false by default.}
 }
 \value{
 a DESeqResults object as returned by DESeq2::results function
