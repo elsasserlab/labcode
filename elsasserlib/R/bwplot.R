@@ -423,6 +423,78 @@ plot_bw_bins_diff_scatter <- function(bwfiles_c1,
     ggtitle(paste("Bin coverage (bin_size = ", bin_size, ")", sep = ""))
 }
 
+
+#' Volcano plot for differential analysis of genome-wide bins
+#'
+#' Make a volcano plot where bins that pass a specific statistical significance
+#' threshold across replicates are highlighted.
+#'
+#' @param bwfiles_c1 Condition 1 bigwig files.
+#' @param bwfiles_c2 Condition 2 bigwig files.
+#' @param label_c1 Label for condition 1.
+#' @param label_c2 Label for condition 2.
+#' @param bin_size Bin size.
+#' @param genome Genome used. Must be one of supported.
+#' @param estimate_size_factors If True, the estimateSizeFactors step from
+#'   DESeq2 is not skipped.
+#' @param pval_cutoff P-value cutoff.
+#' @param logfc_cutoff Log fold change cutoff. In volcano plot this cutoff is
+#'   used as absolute value (-logfc cutoff and + logfc cutoff are selected).
+#' @return ggplot object
+#' @export
+plot_bw_bins_diff_volcano <- function(bwfiles_c1,
+                                      bwfiles_c2,
+                                      label_c1,
+                                      label_c2,
+                                      bin_size = 10000,
+                                      genome = "mm9",
+                                      estimate_size_factors = FALSE,
+                                      pval_cutoff = NULL,
+                                      logfc_cutoff = NULL) {
+
+  stats <- bw_bins_diff_analysis(bwfiles_c1,
+                                 bwfiles_c2,
+                                 label_c1,
+                                 label_c2,
+                                 bin_size = bin_size,
+                                 genome = genome,
+                                 estimate_size_factors = estimate_size_factors,
+                                 keep_values = TRUE
+  )
+
+  # Replace NAs with 1s so rows are not removed from matrix
+  stats$padj <- ifelse(is.na(stats$padj), 1, stats$padj)
+  stats$log10padj <- -log10(stats$padj)
+
+  stats_filtered <- stats
+  extra_lines_pval <- NULL
+  extra_lines_fc <- NULL
+
+  if (!is.null(pval_cutoff)) {
+    stats_filtered <- stats_filtered[stats_filtered$padj < pval_cutoff, ]
+    extra_lines_pval <- geom_hline(yintercept = -log10(pval_cutoff), linetype = "dashed")
+  }
+  if (!is.null(logfc_cutoff)) {
+    stats_filtered <- stats_filtered[abs(stats_filtered$log2FoldChange) > logfc_cutoff, ]
+    extra_lines_fc <- geom_vline(xintercept = c(-logfc_cutoff, logfc_cutoff), linetype = "dashed")
+  }
+
+  stats_df <- data.frame(stats)
+  stats_filtered_df <- data.frame(stats_filtered)
+
+  ggplot(stats_df, aes_string(x = "log2FoldChange", y = "log10padj")) +
+    geom_point(color = "#cccccc", alpha = 0.6) +
+    theme_elsasserlab_screen(base_size = 18) +
+    geom_point(data = stats_filtered_df, aes_string(x = "log2FoldChange", y = "log10padj"), color = "#F08080") +
+    xlab("log2 fold change") +
+    ylab("-log10 p-value") +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    ggtitle(paste("Volcano plot - ", label_c1, "vs", label_c2, "(bin_size = ", bin_size, ")", sep = "")) +
+    extra_lines_pval + extra_lines_fc
+
+}
+
+
 #' Plot a pretty heatmap using pheatmap library
 #'
 #' This function ignores NA values to calculate min and max values.
