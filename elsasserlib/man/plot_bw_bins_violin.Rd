@@ -13,7 +13,8 @@ plot_bw_bins_violin(
   genome = "mm9",
   highlight = NULL,
   minoverlap = 0L,
-  norm_func = identity
+  norm_func = identity,
+  highlight_colors = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ Choices: min, max, sd, mean.}
 \item{minoverlap}{Minimum overlap required for a bin to be highlighted.}
 
 \item{norm_func}{Function to apply to normalize bin values f(bw / bw_bg).}
+
+\item{highlight_colors}{Array of color values for the highlighted groups.}
 }
 \value{
 A ggplot object.

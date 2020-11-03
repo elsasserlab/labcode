@@ -63,6 +63,7 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
 #'  If not provided, filenames are used.
 #' @param norm_func_x Function to use after x / x_bg.
 #' @param norm_func_y Function to use after y / y_bg.
+#' @param highlight_colors Array of color values for the highlighting groups
 #' @import ggplot2
 #' @inheritParams bw_bins
 #' @return A ggplot object.
@@ -78,7 +79,8 @@ plot_bw_bins_scatter <- function(x,
                                 minoverlap = 0L,
                                 highlight_label = NULL,
                                 norm_func_x = identity,
-                                norm_func_y = identity) {
+                                norm_func_y = identity,
+                                highlight_colors = NULL) {
 
   label_df <- function(df, name) {
     data.frame(df, group = name)
@@ -111,6 +113,7 @@ plot_bw_bins_scatter <- function(x,
   bins_values <- makeGRangesFromDataFrame(bins_df, keep.extra.columns = TRUE)
 
   extra_plot <- NULL
+  extra_colors <- NULL
 
   if (!is.null(highlight)) {
     gr_list <- lapply(highlight, rtracklayer::import, format = "BED")
@@ -131,11 +134,19 @@ plot_bw_bins_scatter <- function(x,
     df_values_labeled <- purrr::map2(subset_df, highlight_label, label_df)
     highlight_values <- do.call(rbind, df_values_labeled)
 
+    # Order of factors need to match to assign properly colors to points
+    highlight_values$group <- factor(highlight_values$group,
+                                     levels = highlight_label)
+
     extra_plot <- geom_point(
                     data = highlight_values,
                     aes_string(x = "x", y = "y", color = "group"),
                     alpha = 0.8
                   )
+
+    if (!is.null(colors)) {
+      extra_colors <- scale_color_manual(values=highlight_colors)
+    }
   }
 
   x_label <- paste(make_label_from_filename(x), "-",
@@ -150,7 +161,8 @@ plot_bw_bins_scatter <- function(x,
     xlab(x_label) +
     ylab(y_label) +
     ggtitle(paste("Bin coverage (bin_size = ", bin_size, ")", sep = "")) +
-    extra_plot
+    extra_plot +
+    extra_colors
 }
 
 
@@ -162,6 +174,7 @@ plot_bw_bins_scatter <- function(x,
 #'
 #' @param highlight BED file to use as highlight for subgroups.
 #' @param minoverlap Minimum overlap required for a bin to be highlighted.
+#' @param highlight_colors Array of color values for the highlighted groups.
 #' @inheritParams bw_bins
 #' @import ggplot2
 #' @importFrom reshape2 melt
@@ -175,7 +188,8 @@ plot_bw_bins_violin <- function(bwfiles,
                                 genome = "mm9",
                                 highlight = NULL,
                                 minoverlap = 0L,
-                                norm_func = identity) {
+                                norm_func = identity,
+                                highlight_colors = NULL) {
 
   bins_values <- bw_bins(bwfiles,
                          bg_bwfiles = bg_bwfiles,
@@ -192,6 +206,7 @@ plot_bw_bins_violin <- function(bwfiles,
   melted_bins <- melt(bins_df[, c(bin_id, bwnames)], id.vars = bin_id)
   title <- paste("Global bin distribution (binsize=", bin_size, ")", sep = "")
   extra_plot <- NULL
+  extra_colors <- NULL
 
   if (!is.null(highlight)) {
     title <- paste(title, "vs", basename(highlight))
@@ -211,6 +226,11 @@ plot_bw_bins_violin <- function(bwfiles,
                     aes_string(x = "variable", y = "value", color = "variable"),
                     alpha = 0.7
                   )
+
+    if (!is.null(colors)) {
+      extra_colors <- scale_color_manual(values = highlight_colors)
+    }
+
   }
 
   y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)
@@ -224,7 +244,8 @@ plot_bw_bins_violin <- function(bwfiles,
     ggtitle(title) +
     theme(legend.position = "none",
           axis.text.x = element_text(angle = 45, hjust = 1)) +
-    extra_plot
+    extra_plot +
+    extra_colors
 }
 
 #' Profile plot of a set of bigWig files
@@ -232,6 +253,8 @@ plot_bw_bins_violin <- function(bwfiles,
 #' Plots a profile of a set of bigWig files over a set of loci in a BED file.
 #'
 #' @param show_error Show standard error.
+#' @param colors Array of colors that will  be assigned to labels or files
+#'    (in that order)
 #' @inheritParams bw_profile
 #' @import ggplot2
 #' @return A ggplot object.
@@ -247,7 +270,8 @@ plot_bw_profile <- function(bwfiles,
                             ignore_strand = FALSE,
                             show_error = FALSE,
                             norm_func = identity,
-                            labels = NULL) {
+                            labels = NULL,
+                            colors = NULL) {
 
   values <- bw_profile(bwfiles, bedfile,
               bg_bwfiles = bg_bwfiles,
@@ -325,6 +349,10 @@ plot_bw_profile <- function(bwfiles,
         color = NA,
         alpha = 0.3
       )
+  }
+
+  if (!is.null(colors)) {
+    p <- p + scale_color_manual(values=colors)
   }
 
   p
