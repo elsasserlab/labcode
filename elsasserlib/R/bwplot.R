@@ -21,8 +21,10 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
   summary_values <- bw_bed(bwfiles, bedfile,
                       bg_bwfiles = bg_bwfiles,
                       aggregate_by = aggregate_by,
-                      norm_func = norm_func
+                      norm_func = norm_func,
+                      labels = labels
                     )
+
 
   if (sum(summary_values) == 0) {
     warning("All zero-values matrix. Using same background as bw input?")

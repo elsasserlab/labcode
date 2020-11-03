@@ -182,7 +182,8 @@ test_that(
             bedfile = bed,
             bg_bwfiles <- c(bg_bw, bg_bw),
             aggregate_by = "median",
-            norm_func = log2
+            norm_func = log2,
+            labels = c("bw1", "bw2")
         )
     })
 
@@ -191,7 +192,8 @@ test_that(
         bedfile,
         bg_bwfiles = bg_bwfiles,
         aggregate_by = aggregate_by,
-        norm_func = norm_func
+        norm_func = norm_func,
+        labels = labels
       )
     )
 
@@ -200,7 +202,8 @@ test_that(
       bedfile = bed,
       bg_bwfiles = c(bg_bw, bg_bw),
       aggregate_by = "median",
-      norm_func = log2
+      norm_func = log2,
+      labels = c("bw1", "bw2")
     )
 })
 
