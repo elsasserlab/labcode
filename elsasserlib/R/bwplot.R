@@ -246,7 +246,8 @@ plot_bw_profile <- function(bwfiles,
                             middle = NULL,
                             ignore_strand = FALSE,
                             show_error = FALSE,
-                            norm_func = identity) {
+                            norm_func = identity,
+                            labels = NULL) {
 
   values <- bw_profile(bwfiles, bedfile,
               bg_bwfiles = bg_bwfiles,
@@ -256,7 +257,8 @@ plot_bw_profile <- function(bwfiles,
               downstream = downstream,
               middle = middle,
               ignore_strand = ignore_strand,
-              norm_func = norm_func
+              norm_func = norm_func,
+              labels = labels
             )
 
   y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)

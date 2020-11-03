@@ -230,7 +230,8 @@ test_that(
              middle = 1000,
              ignore_strand = TRUE,
              show_error = TRUE,
-             norm_func = log2)
+             norm_func = log2,
+             labels = c("bw1", "bw2"))
     })
 
     expect_call(m, 1,
@@ -242,7 +243,8 @@ test_that(
         downstream = downstream,
         middle = middle,
         ignore_strand = ignore_strand,
-        norm_func = norm_func
+        norm_func = norm_func,
+        labels = labels
       )
     )
 
@@ -256,6 +258,7 @@ test_that(
       downstream = 1500,
       middle = 1000,
       ignore_strand = TRUE,
-      norm_func = log2
+      norm_func = log2,
+      labels = c("bw1", "bw2")
     )
 })

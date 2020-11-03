@@ -251,6 +251,7 @@ bw_profile <- function(bwfiles,
   }
 
   values <- do.call(rbind, values_list)
+
   values
 }
 
