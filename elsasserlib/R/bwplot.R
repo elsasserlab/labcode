@@ -138,10 +138,10 @@ plot_bw_bins_scatter <- function(x,
                   )
   }
 
-  x_label <- paste(make.names(basename(x)), "-",
+  x_label <- paste(make_label_from_filename(x), "-",
                    make_norm_label(substitute(norm_func_x), bg_x))
 
-  y_label <- paste(make.names(basename(y)), "-",
+  y_label <- paste(make_label_from_filename(y), "-",
                    make_norm_label(substitute(norm_func_y), bg_y))
 
   ggplot(bins_df, aes_string(x = "x", y = "y")) +
