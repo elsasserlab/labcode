@@ -21,8 +21,10 @@ plot_bw_bed_summary_heatmap <- function(bwfiles,
   summary_values <- bw_bed(bwfiles, bedfile,
                       bg_bwfiles = bg_bwfiles,
                       aggregate_by = aggregate_by,
-                      norm_func = norm_func
+                      norm_func = norm_func,
+                      labels = labels
                     )
+
 
   if (sum(summary_values) == 0) {
     warning("All zero-values matrix. Using same background as bw input?")
@@ -136,10 +138,10 @@ plot_bw_bins_scatter <- function(x,
                   )
   }
 
-  x_label <- paste(make.names(basename(x)), "-",
+  x_label <- paste(make_label_from_filename(x), "-",
                    make_norm_label(substitute(norm_func_x), bg_x))
 
-  y_label <- paste(make.names(basename(y)), "-",
+  y_label <- paste(make_label_from_filename(y), "-",
                    make_norm_label(substitute(norm_func_y), bg_y))
 
   ggplot(bins_df, aes_string(x = "x", y = "y")) +
@@ -244,7 +246,8 @@ plot_bw_profile <- function(bwfiles,
                             middle = NULL,
                             ignore_strand = FALSE,
                             show_error = FALSE,
-                            norm_func = identity) {
+                            norm_func = identity,
+                            labels = NULL) {
 
   values <- bw_profile(bwfiles, bedfile,
               bg_bwfiles = bg_bwfiles,
@@ -254,7 +257,8 @@ plot_bw_profile <- function(bwfiles,
               downstream = downstream,
               middle = middle,
               ignore_strand = ignore_strand,
-              norm_func = norm_func
+              norm_func = norm_func,
+              labels = labels
             )
 
   y_label <- make_norm_label(substitute(norm_func), bg_bwfiles)

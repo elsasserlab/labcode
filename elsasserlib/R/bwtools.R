@@ -33,7 +33,7 @@ bw_bed <- function(bwfiles,
   validate_filelist(bedfile)
 
   if (is.null(labels)) {
-    labels <- basename(bwfiles)
+    labels <- make_label_from_filename(bwfiles)
   }
 
   bed <- import(bedfile)
@@ -129,7 +129,7 @@ bw_bins <- function(bwfiles,
   validate_filelist(bwfiles)
 
   if (is.null(labels)) {
-    labels <- make.names(basename(bwfiles))
+    labels <- make_label_from_filename(bwfiles)
   }
 
   tiles <- build_bins(bin_size = bin_size, genome = genome)
@@ -222,7 +222,7 @@ bw_profile <- function(bwfiles,
   }
 
   if (is.null(labels)) {
-    labels <- basename(bwfiles)
+    labels <- make_label_from_filename(bwfiles)
   }
 
   if (length(bwfiles) != length(labels)) {
@@ -251,6 +251,7 @@ bw_profile <- function(bwfiles,
   }
 
   values <- do.call(rbind, values_list)
+
   values
 }
 
@@ -740,6 +741,17 @@ granges_cbind <- function(grlist, labels) {
 
   result <- makeGRangesFromDataFrame(result, keep.extra.columns = TRUE)
   result
+}
+
+
+#' Get a valid label from a filename
+#'
+#' @param filename File to convert to label
+#'
+#' @return A valid label name
+make_label_from_filename <- function(filename) {
+  filename_clean <- basename(tools::file_path_sans_ext(filename))
+  make.names(filename_clean)
 }
 
 

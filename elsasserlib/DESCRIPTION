@@ -1,7 +1,7 @@
 Package: elsasserlib
 Type: Package
 Title: General utilities used within Elsasser lab
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c( 
   person("Carmen", "Navarro", 
          email = "carmen.navarro@scilifelab.se",
@@ -40,7 +40,8 @@ Imports:
   RColorBrewer,
   RCurl,
   pheatmap,
-  DESeq2
+  DESeq2,
+  tools
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
