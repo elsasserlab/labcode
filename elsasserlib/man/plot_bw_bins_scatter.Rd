@@ -16,7 +16,8 @@ plot_bw_bins_scatter(
   minoverlap = 0L,
   highlight_label = NULL,
   norm_func_x = identity,
-  norm_func_y = identity
+  norm_func_y = identity,
+  highlight_colors = NULL
 )
 }
 \arguments{
@@ -45,6 +46,8 @@ If not provided, filenames are used.}
 \item{norm_func_x}{Function to use after x / x_bg.}
 
 \item{norm_func_y}{Function to use after y / y_bg.}
+
+\item{highlight_colors}{Array of color values for the highlighting groups}
 }
 \value{
 A ggplot object.

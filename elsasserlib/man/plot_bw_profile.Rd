@@ -16,7 +16,8 @@ plot_bw_profile(
   ignore_strand = FALSE,
   show_error = FALSE,
   norm_func = identity,
-  labels = NULL
+  labels = NULL,
+  colors = NULL
 )
 }
 \arguments{
@@ -55,6 +56,9 @@ mode). If not provided, median length of all loci is used.}
 
 \item{labels}{List of names to give to the mcols of the returned GRanges
 object. If NULL, file names are used.}
+
+\item{colors}{Array of colors that will  be assigned to labels or files
+(in that order)}
 }
 \value{
 A ggplot object.
