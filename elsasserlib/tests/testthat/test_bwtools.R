@@ -598,3 +598,49 @@ test_that("bw_bed fails if aggregate_by in an unnamed bed file", {
   )
 
 })
+
+
+test_that("bw_heatmap returns correct values", {
+  values <- bw_heatmap(bw1,
+                       bg_bwfiles = NULL,
+                       bedfile = bed_with_names,
+                       upstream = 5,
+                       downstream = 5,
+                       bin_size = 1,
+                       mode = "start"
+  )
+
+  expect_is(values[[1]], "matrix")
+  expect_equal(nrow(values[[1]]), 5)
+  expect_equal(ncol(values[[1]]), 10)
+
+  expect_equal(values[[1]][1, ], c(rep(1,5), rep(2,5)))
+  expect_equal(values[[1]][2, ], c(rep(3,5), rep(4,5)))
+  expect_equal(values[[1]][3, ], c(rep(11, 5), rep(12, 5)))
+  expect_equal(values[[1]][4, ], rep(16, 10))
+  expect_equal(values[[1]][5, ], c(rep(18,5), rep(19,5)))
+
+})
+
+
+test_that("bw_heatmap with bg returns correct values", {
+  values <- bw_heatmap(bw1,
+                       bg_bwfiles = bw1,
+                       bedfile = bed_with_names,
+                       upstream = 5,
+                       downstream = 5,
+                       bin_size = 1,
+                       mode = "start"
+  )
+
+  expect_is(values[[1]], "matrix")
+  expect_equal(nrow(values[[1]]), 5)
+  expect_equal(ncol(values[[1]]), 10)
+
+  expect_equal(values[[1]][1, ], c(rep(1,10)))
+  expect_equal(values[[1]][2, ], c(rep(1,10)))
+  expect_equal(values[[1]][3, ], c(rep(1,10)))
+  expect_equal(values[[1]][4, ], c(rep(1,10)))
+  expect_equal(values[[1]][5, ], c(rep(1,10)))
+
+})
