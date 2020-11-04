@@ -150,6 +150,56 @@ bw_bins <- function(bwfiles,
   result
 }
 
+#' Calculate heatmap matrix of a bigWig file over a BED file
+#'
+#' @inheritParams bw_profile
+bw_heatmap <- function(bwfiles,
+                       bg_bwfiles = NULL,
+                       bedfile = NULL,
+                       labels = NULL,
+                       mode = "stretch",
+                       bin_size = 100,
+                       upstream = 2500,
+                       downstream = 2500,
+                       middle = NULL,
+                       ignore_strand = FALSE,
+                       norm_func = identity) {
+
+  validate_filelist(bwfiles)
+  validate_filelist(bedfile)
+  granges <- rtracklayer::import(bedfile)
+
+  validate_profile_parameters(bin_size, upstream, downstream)
+
+  if (is.null(labels)) {
+    labels <- basename(bwfiles)
+  }
+
+  if (length(bwfiles) != length(labels)) {
+    stop("labels and bwfiles must have the same length")
+  }
+
+  calculate_matrix_norm_fixed <- purrr::partial(calculate_matrix_norm,
+                                                granges = granges,
+                                                mode = mode,
+                                                bin_size = bin_size,
+                                                upstream = upstream,
+                                                downstream = downstream,
+                                                middle = middle,
+                                                ignore_strand = ignore_strand,
+                                                norm_func = norm_func
+  )
+
+  if (is.null(bg_bwfiles)) {
+    values_list <- purrr::map(bwfiles, calculate_matrix_norm_fixed, bg_bw = NULL)
+
+  } else {
+    values_list <- purrr::map2(bwfiles, bg_bwfiles, calculate_matrix_norm_fixed)
+  }
+
+  values_list
+}
+
 
 #' Calculate profile values of a bigWig file over a BED file.
 #'
@@ -205,21 +255,7 @@ bw_profile <- function(bwfiles,
   validate_filelist(bedfile)
   granges <- rtracklayer::import(bedfile)
 
-  if (bin_size <= 0) {
-    stop(paste("bin size must be a positive value:", bin_size))
-  }
-
-  if (upstream <= 0) {
-    stop(paste("upstream size must be a positive value:", upstream))
-  }
-
-  if (downstream <= 0) {
-    stop(paste("downstream size must be a positive value:", downstream))
-  }
-
-  if (bin_size > upstream || bin_size > downstream) {
-    stop("bin size must be smaller than flanking regions")
-  }
+  validate_profile_parameters(bin_size, upstream, downstream)
 
   if (is.null(labels)) {
     labels <- make_label_from_filename(bwfiles)
@@ -528,36 +564,55 @@ calculate_bw_profile <- function(bw,
                                  ignore_strand = FALSE,
                                  norm_func = identity) {
 
-  valid_bwfile <- bw
-  if ( RCurl::url.exists(bw) ) {
-    valid_bwfile <- tempfile()
-    download.file(bw, valid_bwfile)
-  }
-
-  bwfile <- BigWigFile(path = valid_bwfile)
 
   if (is.null(label)) {
     label <- basename(bw)
   }
 
-  if (mode == "stretch") {
+  full <- calculate_matrix_norm(bw,
+                           granges,
+                           bg_bw = bg_bw,
+                           mode = mode,
+                           bin_size = bin_size,
+                           upstream = upstream,
+                           downstream = downstream,
+                           middle = middle,
+                           ignore_strand = ignore_strand,
+                           norm_func = identity)
 
-    full <- calculate_stretch_matrix(bwfile, granges,
-              bin_size = bin_size,
-              upstream = upstream,
-              downstream = downstream,
-              middle = middle,
-              ignore_strand = ignore_strand
-            )
+  summarize_matrix(full, label)
+}
+
+#' Calculate a normalized heatmap matrix for a bigWig file over a BED file
+#'
+#' @inheritParams calculate_bw_profile
+#' @export
+calculate_matrix_norm <- function(bw,
+                                  granges,
+                                  bg_bw = NULL,
+                                  mode = "stretch",
+                                  bin_size = 100,
+                                  upstream = 2500,
+                                  downstream = 2500,
+                                  middle = NULL,
+                                  ignore_strand = FALSE,
+                                  norm_func = identity) {
+  if (mode == "stretch") {
+    full <- calculate_stretch_matrix(bw, granges,
+                                     bin_size = bin_size,
+                                     upstream = upstream,
+                                     downstream = downstream,
+                                     middle = middle,
+                                     ignore_strand = ignore_strand
+    )
 
     if (!is.null(bg_bw)) {
-      bg_bwfile <- BigWigFile(path = bg_bw)
-      bg <- calculate_stretch_matrix(bg_bwfile, granges,
-              bin_size = bin_size,
-              upstream = upstream,
-              downstream = downstream,
-              ignore_strand = ignore_strand
-            )
+      bg <- calculate_stretch_matrix(bg_bw, granges,
+                                     bin_size = bin_size,
+                                     upstream = upstream,
+                                     downstream = downstream,
+                                     ignore_strand = ignore_strand
+      )
 
       full <- norm_func(full / bg)
     }
@@ -569,26 +624,24 @@ calculate_bw_profile <- function(bw,
     npoints <- floor((upstream + downstream) / bin_size)
 
     full <- intersect_bw_and_granges(
-              bwfile,
-              granges,
-              npoints = npoints,
-              ignore_strand = FALSE
-            )
+      bw,
+      granges,
+      npoints = npoints,
+      ignore_strand = FALSE
+    )
 
     if (!is.null(bg_bw)) {
-      bg_bwfile <- BigWigFile(path = bg_bw)
       bg <- intersect_bw_and_granges(
-              bg_bwfile,
-              granges,
-              npoints = npoints,
-              ignore_strand = FALSE
-            )
+        bg_bw,
+        granges,
+        npoints = npoints,
+        ignore_strand = FALSE
+      )
 
       full <- norm_func(full / bg)
     }
   }
-
-  summarize_matrix(full, label)
+  full
 }
 
 
@@ -659,7 +712,9 @@ intersect_bw_and_granges <- function(bw,
                                      npoints,
                                      ignore_strand = FALSE) {
 
-  values <- rtracklayer::summary(bw,
+  bwfile <- fetch_bigwig(bw)
+
+  values <- rtracklayer::summary(bwfile,
               which = granges,
               as = "matrix",
               size = npoints
@@ -713,6 +768,23 @@ summarize_matrix <- function(matrix, label) {
   df
 }
 
+
+#' Make a BigWigFile object out of a path or an URL
+#'
+#' @param bw BigWig file path or URL
+#'
+#' @return BigWigFile object
+#' @export
+fetch_bigwig <- function(bw) {
+  if (!is.null(bw)) {
+    valid_bwfile <- bw
+    if ( RCurl::url.exists(bw) ) {
+      valid_bwfile <- tempfile()
+      download.file(bw, valid_bwfile)
+    }
+    BigWigFile(path = valid_bwfile)
+  }
+}
 
 #' GRanges cbind-like operation
 #'
@@ -819,3 +891,27 @@ validate_group_col <- function(granges, group_col) {
   }
 }
 
+
+#' Validate profile and heatmap relevant parameters
+#'
+#' @param bin_size Bin size. Must be a positive number.
+#' @param upstream Upstream bp. Must be positive and larger than bin size.
+#' @param downstream Downstream bp. Must be positive and larger than bin size.
+#'
+validate_profile_parameters <- function(bin_size, upstream, downstream) {
+  if (bin_size <= 0) {
+    stop(paste("bin size must be a positive value:", bin_size))
+  }
+
+  if (upstream <= 0) {
+    stop(paste("upstream size must be a positive value:", upstream))
+  }
+
+  if (downstream <= 0) {
+    stop(paste("downstream size must be a positive value:", downstream))
+  }
+
+  if (bin_size > upstream || bin_size > downstream) {
+    stop("bin size must be smaller than flanking regions")
+  }
+}
