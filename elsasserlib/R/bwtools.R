@@ -33,7 +33,7 @@ bw_bed <- function(bwfiles,
   validate_filelist(bedfile)
 
   if (is.null(labels)) {
-    labels <- basename(bwfiles)
+    labels <- make_label_from_filename(bwfiles)
   }
 
   bed <- import(bedfile)
@@ -129,7 +129,7 @@ bw_bins <- function(bwfiles,
   validate_filelist(bwfiles)
 
   if (is.null(labels)) {
-    labels <- make.names(basename(bwfiles))
+    labels <- make_label_from_filename(bwfiles)
   }
 
   tiles <- build_bins(bin_size = bin_size, genome = genome)
@@ -241,7 +241,7 @@ bw_profile <- function(bwfiles,
   validate_profile_parameters(bin_size, upstream, downstream)
 
   if (is.null(labels)) {
-    labels <- basename(bwfiles)
+    labels <- make_label_from_filename(bwfiles)
   }
 
   if (length(bwfiles) != length(labels)) {
@@ -270,6 +270,7 @@ bw_profile <- function(bwfiles,
   }
 
   values <- do.call(rbind, values_list)
+
   values
 }
 
@@ -277,29 +278,20 @@ bw_profile <- function(bwfiles,
 #' Build a unscored bins GRanges object.
 #'
 #' Build a GRanges of bins of a given size, for a specific genome. Supported
-#' genomes (required for the package): mm9, hg38.
+#' genomes (required for the package): mm9, mm10, hg38.
 #'
 #' @param bin_size Bin size.
-#' @param genome Genome.
+#' @param genome Genome. Supported: mm9, mm10, hg38, hg38_latest.
 #' @importFrom GenomicRanges tileGenome
-#' @importFrom GenomeInfoDb seqinfo
-#' @importFrom BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm9
-#' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
 #' @return A GRanges object
 #' @export
 build_bins <- function(bin_size = 10000, genome = "mm9") {
-  seq_lengths <- NULL
-
-  if (genome == "mm9") {
-    seq_lengths <- seqinfo(BSgenome.Mmusculus.UCSC.mm9)
-  } else {
-    if (genome == "hg38") {
-      seq_lengths <- seqinfo(BSgenome.Hsapiens.UCSC.hg38)
-    } else {
-      stop("Supported genomes: mm9, hg38")
-    }
+  data_name <- paste(genome, "seqinfo", sep = "_")
+  if (!exists(data_name)) {
+    stop("Supported genomes: mm9, mm10, hg38, hg38_latest")
   }
 
+  seq_lengths <- get(data_name)
   tileGenome(seq_lengths, tilewidth = bin_size, cut.last.tile.in.chrom = TRUE)
 }
 
@@ -422,6 +414,7 @@ multi_bw_ranges_norm <- function(bwfilelist,
 #' @importFrom rtracklayer BigWigFile
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom methods getMethod
+#' @importFrom utils download.file
 #' @inheritParams bw_bins
 #' @return GRanges with column score.
 bw_ranges <- function(bwfile,
@@ -539,6 +532,7 @@ aggregate_scores <- function(scored_granges, group_col, aggregate_by) {
 #' @param bg_bw BigWig file to be used as background.
 #' @param label Name to give to the values
 #' @importFrom rtracklayer BigWigFile import
+#' @importFrom utils download.file
 #' @inheritParams bw_profile
 #' @return A DataFrame with the aggregated scores
 calculate_bw_profile <- function(bw,
@@ -553,7 +547,13 @@ calculate_bw_profile <- function(bw,
                                  ignore_strand = FALSE,
                                  norm_func = identity) {
 
-  bwfile <- BigWigFile(path = bw)
+  valid_bwfile <- bw
+  if ( RCurl::url.exists(bw) ) {
+    valid_bwfile <- tempfile()
+    download.file(bw, valid_bwfile)
+  }
+
+  bwfile <- BigWigFile(path = valid_bwfile)
 
   if (is.null(label)) {
     label <- basename(bw)
@@ -760,6 +760,17 @@ granges_cbind <- function(grlist, labels) {
 
   result <- makeGRangesFromDataFrame(result, keep.extra.columns = TRUE)
   result
+}
+
+
+#' Get a valid label from a filename
+#'
+#' @param filename File to convert to label
+#'
+#' @return A valid label name
+make_label_from_filename <- function(filename) {
+  filename_clean <- basename(tools::file_path_sans_ext(filename))
+  make.names(filename_clean)
 }
 
 
