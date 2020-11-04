@@ -150,6 +150,39 @@ bw_bins <- function(bwfiles,
   result
 }
 
+#' Calculate heatmap matrix of a bigWig file over a BED file
+#'
+#' @inheritParams bw_profile
+bw_heatmap <- function(bwfiles,
+                       bg_bwfiles = NULL,
+                       bedfile = NULL,
+                       labels = NULL,
+                       mode = "stretch",
+                       bin_size = 100,
+                       upstream = 2500,
+                       downstream = 2500,
+                       middle = NULL,
+                       ignore_strand = FALSE,
+                       norm_func = identity) {
+
+  validate_filelist(bwfiles)
+  validate_filelist(bedfile)
+  granges <- rtracklayer::import(bedfile)
+
+  validate_profile_parameters(bin_size, upstream, downstream)
+
+  if (is.null(labels)) {
+    labels <- basename(bwfiles)
+  }
+
+  if (length(bwfiles) != length(labels)) {
+    stop("labels and bwfiles must have the same length")
+  }
+
+
+
+}
+
 
 #' Calculate profile values of a bigWig file over a BED file.
 #'
@@ -205,21 +238,7 @@ bw_profile <- function(bwfiles,
   validate_filelist(bedfile)
   granges <- rtracklayer::import(bedfile)
 
-  if (bin_size <= 0) {
-    stop(paste("bin size must be a positive value:", bin_size))
-  }
-
-  if (upstream <= 0) {
-    stop(paste("upstream size must be a positive value:", upstream))
-  }
-
-  if (downstream <= 0) {
-    stop(paste("downstream size must be a positive value:", downstream))
-  }
-
-  if (bin_size > upstream || bin_size > downstream) {
-    stop("bin size must be smaller than flanking regions")
-  }
+  validate_profile_parameters(bin_size, upstream, downstream)
 
   if (is.null(labels)) {
     labels <- basename(bwfiles)
@@ -808,3 +827,27 @@ validate_group_col <- function(granges, group_col) {
   }
 }
 
+
+#' Validate profile and heatmap relevant parameters
+#'
+#' @param bin_size Bin size. Must be a positive number.
+#' @param upstream Upstream bp. Must be positive and larger than bin size.
+#' @param downstream Downstream bp. Must be positive and larger than bin size.
+#'
+validate_profile_parameters <- function(bin_size, upstream, downstream) {
+  if (bin_size <= 0) {
+    stop(paste("bin size must be a positive value:", bin_size))
+  }
+
+  if (upstream <= 0) {
+    stop(paste("upstream size must be a positive value:", upstream))
+  }
+
+  if (downstream <= 0) {
+    stop(paste("downstream size must be a positive value:", downstream))
+  }
+
+  if (bin_size > upstream || bin_size > downstream) {
+    stop("bin size must be smaller than flanking regions")
+  }
+}
