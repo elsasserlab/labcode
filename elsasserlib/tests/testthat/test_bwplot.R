@@ -24,6 +24,11 @@ profile_values <- bw_profile(bw1,
                     downstream = 1000
                   )
 
+heatmap_values <- bw_heatmap(bw1,
+                             bedfile = bed,
+                             upstream = 1000,
+                             downstream = 1000)
+
 test_that("Setup files exist", {
   expect_true(file_test("-f", bw1))
   expect_true(file_test("-f", bw2))
@@ -217,6 +222,15 @@ test_that(
 })
 
 test_that(
+  "plot_bw_heatmap with defaults returns a ggplot object", {
+    m <- mock(profile_values)
+    with_mock(bw_profile = m, {
+      p <- plot_bw_heatmap(bw1, bedfile = bed)
+      expect_is(p, "ggplot")
+    })
+  })
+
+test_that(
   "plot_bw_profile passes on parameters to bw_profile call", {
     m <- mock(profile_values)
     with_mock(bw_profile = m, {
@@ -262,3 +276,48 @@ test_that(
       labels = c("bw1", "bw2")
     )
 })
+
+test_that(
+  "plot_bw_heatmap passes on parameters to bw_heatmap call", {
+    m <- mock(heatmap_values)
+    with_mock(bw_heatmap = m, {
+      p <- plot_bw_heatmap(bw1,
+                           bedfile = bed,
+                           bg_bwfile = bg_bw,
+                           mode = "start",
+                           bin_size = 1000,
+                           upstream = 1500,
+                           downstream = 1500,
+                           middle = 1000,
+                           ignore_strand = TRUE,
+                           norm_func = log2,
+                           cmap = "Blues",
+                           max_rows_allowed = 2000)
+    })
+
+    expect_call(m, 1,
+                bw_heatmap(bwfile, bedfile,
+                           bg_bwfiles = bg_bwfile,
+                           mode = mode,
+                           bin_size = bin_size,
+                           upstream = upstream,
+                           downstream = downstream,
+                           middle = middle,
+                           ignore_strand = ignore_strand,
+                           norm_func = norm_func
+                )
+    )
+
+    expect_args(m, 1,
+                bw1,
+                bedfile = bed,
+                bg_bwfile = bg_bw,
+                mode = "start",
+                bin_size = 1000,
+                upstream = 1500,
+                downstream = 1500,
+                middle = 1000,
+                ignore_strand = TRUE,
+                norm_func = log2
+    )
+  })
