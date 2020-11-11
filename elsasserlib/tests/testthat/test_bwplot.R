@@ -7,10 +7,10 @@ get_file_path <- function(filename) {
   system.file("extdata", filename, package = "elsasserlib")
 }
 
-bw1 <- get_file_path("ES_H33_00h_rep1_hoxc.bw")
-bw2 <- get_file_path("ES_H33_03h_rep1_hoxc.bw")
-bg_bw <- get_file_path("ES_H33_inp_rep1_hoxc.bw")
-bed <- get_file_path("chromhmm_hoxc.bed")
+bw1 <- get_file_path("sample_H33_ChIP.bw")
+bw2 <- get_file_path("sample_H3K9me3_ChIP.bw")
+bg_bw <- get_file_path("sample_Input.bw")
+bed <- get_file_path("sample_chromhmm.bed")
 
 bw_limits <- GRanges(seqnames = c("chr15"),
                      ranges = IRanges(c(102723600, 102959000)))
