@@ -153,6 +153,7 @@ bw_bins <- function(bwfiles,
 #' Calculate heatmap matrix of a bigWig file over a BED file
 #'
 #' @inheritParams bw_profile
+#' @export
 bw_heatmap <- function(bwfiles,
                        bg_bwfiles = NULL,
                        bedfile = NULL,
@@ -621,7 +622,9 @@ calculate_matrix_norm <- function(bw,
     start_pos <- GenomicRanges::resize(granges, 1, fix = mode)
     granges <- GenomicRanges::promoters(start_pos, upstream, downstream)
 
-    npoints <- floor((upstream + downstream) / bin_size)
+    # To properly center one needs to floor separately upstream and downstream.
+    # This way the tick will always be in between bins.
+    npoints <- floor(upstream/bin_size) + floor(downstream / bin_size)
 
     full <- intersect_bw_and_granges(
       bw,
@@ -673,7 +676,7 @@ calculate_stretch_matrix <- function(bw,
     middle <- floor(median(GenomicRanges::width(granges)))
   }
 
-  middle_npoints <- middle / bin_size
+  middle_npoints <- floor(middle / bin_size)
 
   left <- intersect_bw_and_granges(bw,
             GenomicRanges::flank(granges, upstream, start = TRUE),

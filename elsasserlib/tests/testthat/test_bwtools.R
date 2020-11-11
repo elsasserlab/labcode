@@ -214,7 +214,7 @@ test_that("bw_bins returns correct per locus values", {
   expect_equal(values[2]$bw1, 15.5)
 })
 
-test_that("bw_bins returns correct per locus values, with bg", {
+test_that("bw_bins returns 1 when bwfile == bg_bwfile", {
   values <- bw_bins(bw1,
               bg_bwfiles = bw1,
               selection = import(bed_with_names),
@@ -222,10 +222,9 @@ test_that("bw_bins returns correct per locus values, with bg", {
               per_locus_stat = "mean"
             )
 
-  # FIXME: underlying normalized values in GRanges object are matrix
-  # expect_is(values, 'GRanges')
-  # expect_equal(values[1]$bw1, 1)
-  # expect_equal(values[2]$bw1, 1)
+  expect_is(values, 'GRanges')
+  expect_equal(values[1]$bw1, 1)
+  expect_equal(values[2]$bw1, 1)
 })
 
 test_that("bw_bed returns correct per locus values on multiple files", {
@@ -409,7 +408,7 @@ test_that(
 
 })
 
-test_that("bw_profile normalized returns correct values", {
+test_that("bw_profile normalized returns 1 when fg == bg", {
   values <- bw_profile(c(bw1, bw2),
               bg_bwfiles = c(bw1, bw2),
               bedfile = bed_with_names,
@@ -600,6 +599,51 @@ test_that("bw_bed fails if aggregate_by in an unnamed bed file", {
 })
 
 
+test_that("bw_heatmap returns correct values odd bin size", {
+  values <- bw_heatmap(bw1,
+                       bg_bwfiles = NULL,
+                       bedfile = bed_with_names,
+                       upstream = 5,
+                       downstream = 5,
+                       bin_size = 2,
+                       mode = "start"
+  )
+
+  expect_is(values[[1]], "matrix")
+  expect_equal(nrow(values[[1]]), 5)
+  expect_equal(ncol(values[[1]]), 4)
+
+  expect_equal(values[[1]][1, ], c(rep(1,2), rep(2,2)))
+  expect_equal(values[[1]][2, ], c(rep(3,2), rep(4,2)))
+  expect_equal(values[[1]][3, ], c(rep(11, 2), rep(12, 2)))
+  expect_equal(values[[1]][4, ], rep(16, 4))
+  expect_equal(values[[1]][5, ], c(rep(18,2), rep(19,2)))
+
+})
+
+test_that("bw_heatmap returns correct values odd bin size stretch", {
+  values <- bw_heatmap(bw1,
+                       bg_bwfiles = NULL,
+                       bedfile = bed_with_names,
+                       upstream = 5,
+                       downstream = 5,
+                       middle = 4,
+                       bin_size = 2,
+                       mode = "stretch"
+  )
+
+  expect_is(values[[1]], "matrix")
+  expect_equal(nrow(values[[1]]), 5)
+  expect_equal(ncol(values[[1]]), 6)
+
+  expect_equal(values[[1]][1, ], c(1, 1, 2, 2, 3, 3))
+  expect_equal(values[[1]][2, ], c(3, 3, 4, 5, 6, 6))
+  expect_equal(values[[1]][3, ], c(11,11,12,12,13,13))
+  expect_equal(values[[1]][4, ], c(16,16,16,17,17,17))
+  expect_equal(values[[1]][5, ], c(18,18,19,19,20,20))
+
+})
+
 test_that("bw_heatmap returns correct values", {
   values <- bw_heatmap(bw1,
                        bg_bwfiles = NULL,
@@ -622,8 +666,7 @@ test_that("bw_heatmap returns correct values", {
 
 })
 
-
-test_that("bw_heatmap with bg returns correct values", {
+test_that("bw_heatmap with bg returns 1 when fg == bg", {
   values <- bw_heatmap(bw1,
                        bg_bwfiles = bw1,
                        bedfile = bed_with_names,
