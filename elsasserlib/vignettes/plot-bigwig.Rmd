@@ -1,0 +1,445 @@
+---
+title: "Elsasserlib BigWig functionality"
+author: "Carmen Navarro"
+date: "Nov 12 2020"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{plot-bigwig}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteDepends{elsasserlib}
+  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Summary
+
+This is a brief documentation on how to use the `elsasserlib` package to visualize
+the content of `bigWig` files. There are several ways you can visualize this kind
+of data, which can be grouped into two main categories:
+
+- **Genome-wide analysis**. Genome is partitioned on equally-sized bins and
+their value distributions are plotted. Useful to get a general idea of the
+signal distribution without looking at specific places.
+- **Across a set of *loci***. One can be interested in looking at a specific set
+of *loci*. This can be either summarized categories, profile plots or heatmaps.
+
+# About the built-in data
+
+This package comes with a set of small files to show the functionality. These
+have been built from a published data from our lab and correspond to a 
+H3.3 and H3K9me3 ChIP + input (`GSE149080`), subset across a
+500kbp genomic region: `chr15-102600000-103100000`, which overlaps with the *HOXC*
+gene cluster. A ChromHMM annotation has also been subsampled to overlap with
+such region.
+
+```{r setup, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(scales)
+library(rtracklayer)
+library(elsasserlib)
+
+h33_chip <- system.file("extdata", "sample_H33_ChIP.bw", package = "elsasserlib")
+h3k9me3_chip <- system.file("extdata", "sample_H3K9me3_ChIP.bw", package = "elsasserlib")
+input_chip <- system.file("extdata", "sample_Input.bw", package = "elsasserlib")
+genes <- system.file("extdata", "sample_genes_mm9.bed", package = "elsasserlib")
+chromhmm <- system.file("extdata", "sample_chromhmm.bed", package = "elsasserlib")
+```
+
+All these values are paths to bigWig and BED files.
+
+# Genome-wide plots
+
+Bin-based genome-wide analysis is currently supported in two formats: 
+
+- `plot_bw_bins_violin`. Makes a violin plot of one or more bigWig files.
+- `plot_bw_bins_scatter`. Makes a scatter plot of two different bigWig files
+against each other. 
+
+Both plot types allow for background bigWig signal to be provided (i.e. input).
+
+## Violin plots
+
+For a set of bigWig files, it is possible to visualize the genome-wide signal
+distribution. For example:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+plot_bw_bins_violin(h33_chip, bin_size = 50000)
+```
+
+Note that `bin_size` parameter influences the time any of these functions take
+to run. Reasonable resolution for this is 5000 or 10000.
+
+It is possible to plot several bigWig files at a time:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+plot_bw_bins_violin(c(h33_chip, input_chip), bin_size = 50000)
+```
+
+Additionally, one can highlight bins that overlap with a certain set of interest
+loci. This is done via the `highlight` parameter:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+plot_bw_bins_violin(
+  c(h33_chip, input_chip),
+  bin_size = 50000,
+  highlight = genes,
+  highlight_color = c("red", "red") # It is possible to provide different colors
+)
+```
+
+It is also possible to provide a list of bigWig files to be used as background
+to normalize the bin values to. For instance, in the previous case, one could
+want to use the input values to normalize the H3.3 ChIP data:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+# bg_bwfiles parameter is set now to input_chip
+plot_bw_bins_violin(
+  h33_chip, 
+  bg_bwfiles = input_chip,
+  bin_size = 50000,
+  highlight = genes,
+  highlight_color = c("red")
+)
+```
+
+If `norm_func` is provided, it is possible to log-transform these values as
+well:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+# bg_bwfiles parameter is set now to input_chip
+plot_bw_bins_violin(
+  h33_chip, 
+  bg_bwfiles = input_chip,
+  bin_size = 50000,
+  highlight = genes,
+  highlight_color = c("#000088"), # Colors can be also HTML codes
+  norm_func = log2  # Note this is a function, not a string
+)
+```
+
+## Genome-wide scatterplots
+
+Is it possible to compare two signals against each other on a scatter plot. To
+do so, you can use `plot_bw_bins_scatter`. This function works very similarly to
+`plot_bw_bins_violin` but instead of accepting an array of bigWig files, it
+accepts separate `x` and `y` parameters and the corresponding optional 
+`bg_x` and `bg_y`, `norm_func_x`, `norm_func_y`. You can see more details in
+the function documentation.
+
+One example would be looking at H3.3 versus H3K9me3 in this sample data:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+plot_bw_bins_scatter(
+  x = h33_chip,
+  y = h3k9me3_chip,
+  bin_size = 50000
+)
+```
+
+This is useful to see relationships between marks. In this case, as it usually
+happens, bins where H3.3 signal is high, H3K9me3 signal is low and viceversa.
+
+The same way as with `plot_bw_bins_violin`, it is possible to specify a set of
+loci to highlight within the bins, and normalize to given signals:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=7}
+plot_bw_bins_scatter(
+  x = h33_chip,
+  bg_x = input_chip,
+  y = h3k9me3_chip,
+  bg_y = input_chip,
+  bin_size = 50000,
+  highlight = genes,
+  highlight_colors = "red",
+  highlight_label = "genes", # It is also possible to label the groups
+  norm_func_x = log2 # Each norm func is provided separately
+)
+```
+
+# Locus-specific plots
+
+It is also possible to look at the ChIP data in a more specific way. For this,
+`elsasserlib` provides the following functions:
+
+- `plot_bw_bed_summary_heatmap`: Summarizes the values across a BED file, using
+name field as category. 
+- `plot_bw_profile`: Creates a profile plot across a set of loci.
+- `plot_bw_heatmap`: Creates a heatmap across a set of loci.
+
+## Summary heatmaps
+
+These plots are meant to provide a genome-wide overview of the signal across
+different biologically-relevant categories. They get a list of bigWig files
+and a BED file as input. Each bigWig file will represent a row in the heatmap,
+and each cell will be an aggregate value of the corresponding bigWig file in
+a given category in the BED file, for example:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=3}
+# ChromHMM is a genome-wide annotation according to epigenetics marks. Each
+# locus is tagged by a category. And the amount of categories must be limited.
+# In this case, it is fifteen. 
+chrom_values <- import(chromhmm, format = "BED")
+head(chrom_values)
+
+plot_bw_bed_summary_heatmap(
+  c(h33_chip, h3k9me3_chip),
+  bedfile = chromhmm,
+)
+```
+
+Since this example is reduced to a set of HOXC genes, you can see how H3.3
+signal is high and H3K9me3 is generally low.
+
+It is possible as in the previous types of plots to provide bigWig files as
+normalization / input tracks and use them in the same way as before:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=3}
+plot_bw_bed_summary_heatmap(
+  c(h33_chip, h3k9me3_chip),
+  bg_bwfiles = c(input_chip, input_chip),
+  bedfile = chromhmm
+)
+```
+
+### How to save summary heatmap plots
+
+These plots are made under the hood with the nice `pheatmap` library, which is
+a dependency of the package. Since these do not output `ggplot` objects, 
+`ggsave` will not work. To this end, there is a parameter that can be passed
+to the function: `plot_bw_bed_summary_heatmap(..., file_out = "output.pdf")`.
+
+### How the values are aggregated
+
+Since this function is aggregating the values, it is possible to specify the 
+way the per-locus values are aggregated. Default is **true mean**. What it means
+is that all the coverage values are binned together and the mean is performed
+as if each category is one big locus. Another possibilities are:
+**mean of means** (`aggregate_by = "mean"`), which will calculate mean coverage
+per locus and then the aggregate value will be the mean of those mean values,
+and **median of means** (`aggregate_by = "median"`). Median per-locus coverage
+values tend to be noisy, so a median of means could be useful in some cases.
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=3}
+plot_bw_bed_summary_heatmap(
+  c(h33_chip, h3k9me3_chip),
+  bg_bwfiles = c(input_chip, input_chip),
+  bedfile = chromhmm,
+  aggregate_by = "median"   # Note this is a string value, not a function
+)
+```
+
+## Profile plots
+
+Another way to look at how the ChIP data looks is to summarize a profile across
+a set of *loci*. In order to do that you can use the `plot_bw_profile` function:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_profile(
+  c(h33_chip, h3k9me3_chip, input_chip),
+  bedfile = genes,
+  labels = c("H3.3", "H3K9me3", "Input")
+)
+```
+
+The default mode is called `stretch`, where start (3' end) and end (5' end) of
+*loci* are aligned and the length of the *locus* is stretched to a given 
+pseudolength (`middle` parameter). If this parameter is not given, the pseudolength
+will be assigned as the median value of the length distribution of *loci*, 
+in an attempt to match a realistic length. 
+
+It is possible to align only 3' ends, 5' ends or center of loci, similarly to
+what formatting text alignment would do:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_profile(
+  c(h33_chip, h3k9me3_chip, input_chip),
+  bedfile = genes,
+  labels = c("H3.3", "H3K9me3", "Input"),
+  mode = "start"
+)
+```
+
+It is also possible to specify the upstream and downstream lengths:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_profile(
+  c(h33_chip, h3k9me3_chip, input_chip),
+  bedfile = genes,
+  labels = c("H3.3", "H3K9me3", "Input"),
+  mode = "center",
+  upstream = 3000,
+  downstream = 3000
+)
+```
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_profile(
+  c(h33_chip, h3k9me3_chip, input_chip),
+  bedfile = genes,
+  labels = c("H3.3", "H3K9me3", "Input"),
+  mode = "end",
+  upstream = 7000,
+  downstream = 3000,
+  show_error = TRUE # Turn error estimates on
+)
+
+```
+
+## Heatmaps
+
+Finally, it is possible to look at the profile across a set of *loci* in a 
+per-*locus* way by looking at heatmaps. 
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_heatmap(
+  h33_chip,
+  bedfile = genes
+)
+```
+
+This gene annotation includes some variants of the same genes that overlap a lot,
+so some of the rows look very similar or even like duplicates.
+
+Most of the parameters are shared between `plot_bw_profile` and `plot_bw_heatmap`
+making it possible to arrange them on top of each other later on, so it is
+possible to align them in different ways:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_heatmap(
+  h33_chip,
+  bedfile = genes,
+  mode = "start",
+  upstream = 2500,
+  downstream = 2500
+)
+```
+
+It is possible to specify `bin_size` to increase or decrease resolution (this
+can also be done on profile plots):
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_heatmap(
+  h33_chip,
+  bedfile = genes,
+  mode = "start",
+  upstream = 2500,
+  downstream = 2500,
+  bin_size = 20
+)
+```
+
+At this point, heatmap values are shown in order from maximum mean value across
+all the beans to lowest.
+
+By default, colorscale is set to percentiles 0.01 and 0.99 of whole matrix 
+range. You can set these values to fixed numbers. This is useful mostly to 
+plot together several heatmaps with the same color scale. For example:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_heatmap(
+  h33_chip,
+  bedfile = genes,
+  mode = "start",
+  upstream = 2500,
+  downstream = 2500,
+  bin_size = 100,
+  zmin = 2,
+  zmax = 10
+)
+```
+
+It is also possible to change the color of the heatmap using any `RColorBrewer`
+available palette:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+plot_bw_heatmap(
+  h33_chip,
+  bedfile = genes,
+  bin_size = 100,
+  cmap = "RdYlBu"
+)
+```
+
+There is also a `max_rows_allowed` parameter that defaults to 10000. This 
+allows to plot large matrices by binning vertically the heatmap and plotting the
+underlying mean associated, provided that a screen or a reasonable screen will
+not be able to display all the data points anyway. If the number of rows is 
+larger than `max_rows_allowed`, rows will be binned in a way that the resulting
+plotted matrix will have `max_rows_allowed` height and a warning will be shown.
+Since the matrix is not subsampled only, but the underlying values averaged,
+this may result in a smoothened effect in the image. This is a similar approach
+to how image resizing works.
+
+# Comments on runtime and resolution options
+
+All these functions work on genome-wide data, and often you will want to run
+these on more than one bigWig file at a time. It is possible to run all of this
+in a regular laptop, however if resolution is too high, waiting times will 
+raise to minutes and even hours, depending on the amount of files and the 
+given resolution.
+
+In a intel i7 laptop, bins analyses for a single bigWig file in resolution
+around 10000bp tend to take a few seconds. 5000bp is still reasonable interactive
+time. For plotting under 5000 bp resolution you will need to wait quite some
+time and I would recommend running these in a script outsinde R environment.
+
+Locus-based analyses runtime tends to be smaller since the amount of values to
+be calculated is smaller than genome-wide bins. An exception to this are 
+ChromHMM plots, since these *are* also genome-wide bins, if only of different
+lengths and labeled with categories. Keep this in mind when plotting a large
+set of bigWig files. It will take some time as well.
+
+# Customizing plots
+
+All plotting functions (except for `plot_bw_bed_summary_heatmap`) return a 
+`ggplot` object. This means that essentially you can overlay any other data
+you want or further customize the results. For example:
+
+```{r, warning = FALSE, message = FALSE, fig.width=9, fig.height=5}
+profile_plot <- plot_bw_profile(
+  c(h33_chip, h3k9me3_chip, input_chip),
+  bedfile = genes
+)
+
+profile_plot + 
+  ggtitle("New title for the plot") + # Add a custom title
+  geom_hline(yintercept = 1, linetype="dashed") # Add a horizontal line on y=1
+```
+
+# Advanced use of elsasserlib
+
+If none of these functions provide you with what you want, this package also
+offers a set of functions that just return the underlying values of these plots.
+This way, you can perform more advanced operations if you want. When possible,
+these functions return a `GRanges` object. When the data is summarized in some
+way, they return data frames.
+
+Functions you can use to calculate values:
+
+- `bw_bins`. Returns a `GRanges` object with the summarized values for each
+gene in a given genome. If a list of bigWig files is provided, it returns a 
+single `GRanges` object with one metadata column per bigWig file. By default,
+these columns will be named after the bigWig file names. Otherwise you can
+provide an array of custom names for it.
+- `bw_bed`. It works the same as `bw_bins` but instead of partitioning the
+genome in bins, it takes a BED file as a parameter and returns a `GRanges`
+with score values corresponding to each locus. It is possible to summarize
+this with extra parameters and obtain the values that are plotted in 
+`bw_bed_summary_heatmap` function.
+- `bw_profile`. Returns a data frame with summarized values for a profile plot,
+including error estimates.
+- `bw_heatmap`. Returns a matrix with the underlying values of the heatmap 
+plot obtained by `plot_bw_heatmap` function.
