@@ -264,6 +264,7 @@ plot_bw_bins_violin <- function(bwfiles,
 #'   on the y axis until it fits max_rows_allowed. This speeds up plotting of
 #'   very large matrices, where higher resolution would not be perceivable by eye.
 #' @importFrom dplyr group_by summarise
+#' @export
 plot_bw_heatmap <- function(bwfile,
                             bedfile,
                             bg_bwfile = NULL,
