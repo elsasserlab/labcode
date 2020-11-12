@@ -10,14 +10,15 @@ get_file_path <- function(filename) {
 bw1 <- get_file_path("sample_H33_ChIP.bw")
 bw2 <- get_file_path("sample_H3K9me3_ChIP.bw")
 bg_bw <- get_file_path("sample_Input.bw")
-bed <- get_file_path("sample_chromhmm.bed")
+bed <- get_file_path("sample_genes_mm9.bed")
+bed_summary <- get_file_path("sample_chromhmm.bed")
 
 bw_limits <- GRanges(seqnames = c("chr15"),
                      ranges = IRanges(c(102723600, 102959000)))
 
 reduced_bins <- bw_bins(bw1, selection = bw_limits, labels = "x")
 reduced_bins_2 <- bw_bins(bw2, selection = bw_limits, labels = "y")
-summary_values <- bw_bed(c(bw1, bw2), bed, aggregate_by = "mean")
+summary_values <- bw_bed(c(bw1, bw2), bed_summary, aggregate_by = "mean")
 profile_values <- bw_profile(bw1,
                     bedfile = bed,
                     upstream = 1000,
