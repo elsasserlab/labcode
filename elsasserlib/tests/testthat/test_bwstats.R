@@ -38,7 +38,8 @@ test_that("bw_bins_diff_analysis passes on parameters", {
                                        bins_c2,
                                        label_c1,
                                        label_c2,
-                                       estimate_size_factors = estimate_size_factors)
+                                       estimate_size_factors = estimate_size_factors,
+                                       as_granges = as_granges)
   )
 
   expect_call(m_bins, 1,
@@ -54,7 +55,8 @@ test_that("bw_bins_diff_analysis passes on parameters", {
               granges_c2 = reduced_bg_bins,
               label_c1 = "treated",
               label_c2 = "untreated",
-              estimate_size_factors = FALSE)
+              estimate_size_factors = FALSE,
+              as_granges = FALSE)
 
   expect_args(m_bins, 1,
               c(bw1, bw2),
@@ -74,14 +76,15 @@ test_that("bw_bed_diff_analysis passes on parameters", {
   with_mock(
     bw_granges_diff_analysis = m_func,
     bw_bed = m_bed,
-    bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated")
+    bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated", as_granges = TRUE)
   )
   expect_call(m_func, 1,
               bw_granges_diff_analysis(loci_c1,
                                        loci_c2,
                                        label_c1,
                                        label_c2,
-                                       estimate_size_factors = estimate_size_factors)
+                                       estimate_size_factors = estimate_size_factors,
+                                       as_granges = as_granges)
   )
 
   expect_call(m_bed, 1,
@@ -97,7 +100,8 @@ test_that("bw_bed_diff_analysis passes on parameters", {
               granges_c2 = reduced_bg_bins,
               label_c1 = "treated",
               label_c2 = "untreated",
-              estimate_size_factors = FALSE)
+              estimate_size_factors = FALSE,
+              as_granges = TRUE)
 
   expect_args(m_bed, 1,
               c(bw1, bw2),
