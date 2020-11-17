@@ -9,14 +9,15 @@ bw_granges_diff_analysis(
   granges_c2,
   label_c1,
   label_c2,
-  estimate_size_factors = FALSE
+  estimate_size_factors = FALSE,
+  as_granges = FALSE
 )
 }
 \arguments{
 \item{granges_c1}{GRanges object containing the values for condition 1.}
 
 \item{granges_c2}{GRanges object containing the values for condition 2.
-Note that these objects must correspond to the same loci.}
+Note that these objects MUST CORRESPOND to the same loci.}
 
 \item{label_c1}{Condition name for condition 1.}
 
@@ -24,9 +25,13 @@ Note that these objects must correspond to the same loci.}
 
 \item{estimate_size_factors}{If TRUE, normal DESeq2 procedure is done. Set it
 to true to analyze non-MINUTE data.}
+
+\item{as_granges}{If TRUE, returns a GRanges object. This is useful when
+loci coordinates are relevant.}
 }
 \value{
-a DESeqResults object as returned by DESeq2::results function
+a DESeqResults object as returned by DESeq2::results function. A GRanges object
+    if as_granges parameter is TRUE.
 }
 \description{
 Runs a DESeq2 analysis on loci specified on GRanges objects.

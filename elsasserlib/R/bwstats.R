@@ -18,13 +18,15 @@ bw_bins_diff_analysis <- function(bwfiles_c1,
                                   label_c2,
                                   bin_size = 10000,
                                   genome = "mm9",
-                                  estimate_size_factors = FALSE) {
+                                  estimate_size_factors = FALSE,
+                                  as_granges = FALSE) {
 
   bins_c1 <- bw_bins(bwfiles_c1, genome = genome, bin_size = bin_size)
   bins_c2 <- bw_bins(bwfiles_c2, genome = genome, bin_size = bin_size)
 
   bw_granges_diff_analysis(bins_c1, bins_c2, label_c1, label_c2,
-                           estimate_size_factors = estimate_size_factors)
+                           estimate_size_factors = estimate_size_factors,
+                           as_granges = as_granges)
 }
 
 #' Run DESeq2 analysis on bed file
@@ -45,13 +47,15 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
                                  bedfile,
                                  label_c1,
                                  label_c2,
-                                 estimate_size_factors = FALSE) {
+                                 estimate_size_factors = FALSE,
+                                 as_granges = FALSE) {
 
   loci_c1 <- bw_bed(bwfiles_c1, bedfile = bedfile)
   loci_c2 <- bw_bed(bwfiles_c2, bedfile = bedfile)
 
   bw_granges_diff_analysis(loci_c1, loci_c2, label_c1, label_c2,
-                           estimate_size_factors = estimate_size_factors)
+                           estimate_size_factors = estimate_size_factors,
+                           as_granges = as_granges)
 }
 
 
@@ -64,19 +68,23 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
 #'
 #' @param granges_c1 GRanges object containing the values for condition 1.
 #' @param granges_c2 GRanges object containing the values for condition 2.
-#'     Note that these objects must correspond to the same loci.
+#'     Note that these objects MUST CORRESPOND to the same loci.
 #' @param label_c1 Condition name for condition 1.
 #' @param label_c2 Condition name for condition 2.
 #' @param estimate_size_factors If TRUE, normal DESeq2 procedure is done. Set it
 #'     to true to analyze non-MINUTE data.
+#' @param as_granges If TRUE, returns a GRanges object. This is useful when
+#'     loci coordinates are relevant.
 #' @importFrom DESeq2 DESeqDataSetFromMatrix estimateDispersions nbinomWaldTest `sizeFactors<-` results estimateSizeFactors
-#' @return a DESeqResults object as returned by DESeq2::results function
+#' @return a DESeqResults object as returned by DESeq2::results function. A GRanges object
+#'     if as_granges parameter is TRUE.
 #' @export
 bw_granges_diff_analysis <- function(granges_c1,
                                      granges_c2,
                                      label_c1,
                                      label_c2,
-                                     estimate_size_factors = FALSE) {
+                                     estimate_size_factors = FALSE,
+                                     as_granges = FALSE) {
 
   # Bind first, get numbers after (drop complete cases separately could cause error)
   granges_c1 <- sortSeqlevels(granges_c1)
@@ -96,7 +104,8 @@ bw_granges_diff_analysis <- function(granges_c1,
 
   dds <- DESeqDataSetFromMatrix(countData = cts,
                                 colData = coldata,
-                                design = ~ condition)
+                                design = ~ condition,
+                                rowRanges = granges_c1)
 
 
   if (estimate_size_factors == TRUE) {
@@ -111,7 +120,12 @@ bw_granges_diff_analysis <- function(granges_c1,
   dds <- estimateDispersions(dds)
   dds <- nbinomWaldTest(dds)
 
-  results(dds)
+  format <- "DataFrame"
+  if (as_granges) {
+    format <- "GRanges"
+  }
+
+  results(dds, format=format)
 }
 
 

@@ -11,7 +11,8 @@ bw_bins_diff_analysis(
   label_c2,
   bin_size = 10000,
   genome = "mm9",
-  estimate_size_factors = FALSE
+  estimate_size_factors = FALSE,
+  as_granges = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ bw_bins_diff_analysis(
 
 \item{estimate_size_factors}{If TRUE, normal DESeq2 procedure is done. Set it
 to true to analyze non-MINUTE data.}
+
+\item{as_granges}{If TRUE, returns a GRanges object. This is useful when
+loci coordinates are relevant.}
 }
 \value{
 a DESeqResults object as returned by DESeq2::results function
