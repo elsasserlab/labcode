@@ -93,19 +93,34 @@ bw_granges_diff_analysis <- function(granges_c1,
   granges_c2 <- sortSeqlevels(granges_c2)
   granges_c2 <- sort(granges_c2)
 
+  names_values <- NULL
+  if ("name" %in% names(mcols(granges_c1))) {
+    names_values <- granges_c1$name
+
+    granges_c1$name <- NULL
+  }
+
+  if ("name" %in% names(mcols(granges_c2))) {
+    granges_c2$name <- NULL
+  }
+
   cts_df <- cbind(data.frame(granges_c1), mcols(granges_c2))
+
+  # Needs to drop non-complete cases and match rows
+  complete <- complete.cases(cts_df)
+  cts_df <- cts_df[complete, ]
 
   cts <- get_nreads_columns(cts_df[, 6:ncol(cts_df)])
 
   condition_labels <- c(rep(label_c1, length(mcols(granges_c1))),
                         rep(label_c2, length(mcols(granges_c2))))
 
-  coldata <- data.frame(colnames(cts), condition = condition_labels)
+  coldata <- data.frame(colnames(cts), condition = as.factor(condition_labels))
 
   dds <- DESeqDataSetFromMatrix(countData = cts,
                                 colData = coldata,
                                 design = ~ condition,
-                                rowRanges = granges_c1)
+                                rowRanges = granges_c1[complete, ])
 
 
   if (estimate_size_factors == TRUE) {
@@ -120,12 +135,18 @@ bw_granges_diff_analysis <- function(granges_c1,
   dds <- estimateDispersions(dds)
   dds <- nbinomWaldTest(dds)
 
-  format <- "DataFrame"
   if (as_granges) {
-    format <- "GRanges"
+    result <- results(dds, format = "GRanges")
+    if (!is.null(names_values)) {
+      result$name <- names_values[complete]
+    }
+
+  }
+  else {
+   result <- results(dds, format="DataFrame")
   }
 
-  results(dds, format=format)
+  result
 }
 
 
