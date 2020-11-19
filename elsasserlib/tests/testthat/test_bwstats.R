@@ -18,6 +18,9 @@ bw_limits <- GRanges(seqnames = c("chr15"),
 reduced_bins <- bw_bins(c(bw1, bw2), selection = bw_limits)
 reduced_bg_bins <- bw_bins(c(bg_bw), selection = bw_limits)
 
+reduced_bed <- bw_bed(c(bw1, bw2), bedfile = bed)
+reduced_bg_bed <- bw_bed(c(bg_bw, bg_bw), bedfile = bed)
+
 test_that("Setup files exist", {
   expect_true(file_test("-f", bw1))
   expect_true(file_test("-f", bw2))
@@ -67,6 +70,25 @@ test_that("bw_bins_diff_analysis passes on parameters", {
               bg_bw,
               genome = "mm9",
               bin_size = 10000)
+})
+
+test_that("bw_bed_diff_analysis does not fail on named BED", {
+  m_bed <- mock(reduced_bed, reduced_bg_bed)
+  with_mock(
+    bw_bed = m_bed,
+    bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated", as_granges = TRUE)
+  )
+})
+
+test_that("bw_bed_diff_analysis reference is not alphabetical order", {
+  m_bed <- mock(reduced_bed, reduced_bg_bed, reduced_bed, reduced_bg_bed)
+  with_mock(
+    bw_bed = m_bed, {
+      a <- bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "untreated", "treated")
+      b <- bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated")
+    }
+  )
+  expect_true(!all(a$log2FoldChange == b$log2FoldChange))
 })
 
 
