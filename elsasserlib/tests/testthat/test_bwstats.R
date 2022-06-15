@@ -2,6 +2,7 @@ context("Test functions for bigWig stats")
 library(GenomicRanges)
 library(testthat)
 library(mockery)
+library(wigglescout)
 
 get_file_path <- function(filename) {
   system.file("extdata", filename, package = "elsasserlib")
@@ -18,8 +19,8 @@ bw_limits <- GRanges(seqnames = c("chr15"),
 reduced_bins <- bw_bins(c(bw1, bw2), selection = bw_limits)
 reduced_bg_bins <- bw_bins(c(bg_bw), selection = bw_limits)
 
-reduced_bed <- bw_bed(c(bw1, bw2), bedfile = bed)
-reduced_bg_bed <- bw_bed(c(bg_bw, bg_bw), bedfile = bed)
+reduced_bed <- bw_loci(c(bw1, bw2), loci = bed)
+reduced_bg_bed <- bw_loci(c(bg_bw, bg_bw), loci = bed)
 
 test_that("Setup files exist", {
   expect_true(file_test("-f", bw1))
@@ -72,18 +73,11 @@ test_that("bw_bins_diff_analysis passes on parameters", {
               bin_size = 10000)
 })
 
-test_that("bw_bed_diff_analysis does not fail on named BED", {
-  m_bed <- mock(reduced_bed, reduced_bg_bed)
-  with_mock(
-    bw_bed = m_bed,
-    bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated", as_granges = TRUE)
-  )
-})
 
 test_that("bw_bed_diff_analysis reference is not alphabetical order", {
   m_bed <- mock(reduced_bed, reduced_bg_bed, reduced_bed, reduced_bg_bed)
   with_mock(
-    bw_bed = m_bed, {
+    bw_loci = m_bed, {
       a <- bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "untreated", "treated")
       b <- bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated")
     }
@@ -97,7 +91,7 @@ test_that("bw_bed_diff_analysis passes on parameters", {
   m_bed <- mock(reduced_bins, reduced_bg_bins)
   with_mock(
     bw_granges_diff_analysis = m_func,
-    bw_bed = m_bed,
+    bw_loci = m_bed,
     bw_bed_diff_analysis(c(bw1, bw2), bg_bw, bed, "treated", "untreated", as_granges = TRUE)
   )
   expect_call(m_func, 1,
@@ -110,11 +104,11 @@ test_that("bw_bed_diff_analysis passes on parameters", {
   )
 
   expect_call(m_bed, 1,
-              bw_bed(bwfiles_c1, bedfile = bedfile)
+              bw_loci(bwfiles_c1, loci = bedfile)
   )
 
   expect_call(m_bed, 2,
-              bw_bed(bwfiles_c2, bedfile = bedfile)
+              bw_loci(bwfiles_c2, loci = bedfile)
   )
 
   expect_args(m_func, 1,
@@ -127,10 +121,10 @@ test_that("bw_bed_diff_analysis passes on parameters", {
 
   expect_args(m_bed, 1,
               c(bw1, bw2),
-              bedfile = bed)
+              loci = bed)
 
   expect_args(m_bed, 2,
               bg_bw,
-              bedfile = bed)
+              loci = bed)
 })
 

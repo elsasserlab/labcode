@@ -41,6 +41,7 @@ bw_bins_diff_analysis <- function(bwfiles_c1,
 #' @param bedfile BED file for locus specific analysis.
 #' @inheritParams bw_granges_diff_analysis
 #' @return a DESeqResults object as returned by DESeq2::results function
+#' @importFrom wigglescout bw_loci
 #' @export
 bw_bed_diff_analysis <- function(bwfiles_c1,
                                  bwfiles_c2,
@@ -50,8 +51,8 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
                                  estimate_size_factors = FALSE,
                                  as_granges = FALSE) {
 
-  loci_c1 <- bw_bed(bwfiles_c1, bedfile = bedfile)
-  loci_c2 <- bw_bed(bwfiles_c2, bedfile = bedfile)
+  loci_c1 <- bw_loci(bwfiles_c1, loci = bedfile)
+  loci_c2 <- bw_loci(bwfiles_c2, loci = bedfile)
 
   bw_granges_diff_analysis(loci_c1, loci_c2, label_c1, label_c2,
                            estimate_size_factors = estimate_size_factors,
