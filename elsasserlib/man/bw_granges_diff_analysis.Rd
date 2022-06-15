@@ -10,7 +10,8 @@ bw_granges_diff_analysis(
   label_c1,
   label_c2,
   estimate_size_factors = FALSE,
-  as_granges = FALSE
+  as_granges = FALSE,
+  length_factor = 1000
 )
 }
 \arguments{
