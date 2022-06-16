@@ -27,7 +27,7 @@ that can be read in large publication panels.
 \section{BigWig manipulation}{
 
 
-Here you can find functions to handle bigwig data files, such as binning,
-averaging and intersecting with bed files.
+Here you can find some extra functions besides wigglescout to do stats and
+other analysis on bigWig file values
 }
 

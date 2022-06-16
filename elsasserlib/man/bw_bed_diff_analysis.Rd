@@ -12,7 +12,9 @@ bw_bed_diff_analysis(
   label_c2,
   estimate_size_factors = FALSE,
   as_granges = FALSE,
-  length_factor = 1000
+  length_factor = 1000,
+  shrink = TRUE,
+  p_cutoff = 0.05
 )
 }
 \arguments{
@@ -35,6 +37,10 @@ loci coordinates are relevant.}
 \item{length_factor}{Value to multiply read counts by. Ideally, this factor
 should approximate locus_length / fragment_length to simulate actual read
 counts from bigWig coverage.}
+
+\item{shrink}{If TRUE, apply apelgm method for low counts shrinkage}
+
+\item{p_cutoff}{Pvalue cutoff to find a result significant}
 }
 \value{
 a DESeqResults object as returned by DESeq2::results function

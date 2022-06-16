@@ -11,6 +11,7 @@
 #' @param bin_size Bin size.
 #' @inheritParams bw_granges_diff_analysis
 #' @return a DESeqResults object as returned by DESeq2::results function
+#' @importFrom wigglescout bw_bins
 #' @export
 bw_bins_diff_analysis <- function(bwfiles_c1,
                                   bwfiles_c2,
@@ -19,19 +20,22 @@ bw_bins_diff_analysis <- function(bwfiles_c1,
                                   bin_size = 10000,
                                   genome = "mm9",
                                   estimate_size_factors = FALSE,
-                                  as_granges = FALSE) {
+                                  as_granges = FALSE,
+                                  shrink = TRUE,
+                                  p_cutoff = 0.05) {
 
   bins_c1 <- bw_bins(bwfiles_c1, genome = genome, bin_size = bin_size)
   bins_c2 <- bw_bins(bwfiles_c2, genome = genome, bin_size = bin_size)
 
   frag_length <- 150
-
   length_factor <- bin_size / frag_length
 
   bw_granges_diff_analysis(bins_c1, bins_c2, label_c1, label_c2,
                            estimate_size_factors = estimate_size_factors,
                            as_granges = as_granges,
-                           length_factor = length_factor)
+                           length_factor = length_factor,
+                           shrink = TRUE,
+                           p_cutoff = 0.05)
 }
 
 #' Run DESeq2 analysis on bed file
@@ -58,7 +62,9 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
                                  label_c2,
                                  estimate_size_factors = FALSE,
                                  as_granges = FALSE,
-                                 length_factor = 1000) {
+                                 length_factor = 1000,
+                                 shrink = TRUE,
+                                 p_cutoff = 0.05) {
 
   loci_c1 <- bw_loci(bwfiles_c1, loci = bedfile)
   loci_c2 <- bw_loci(bwfiles_c2, loci = bedfile)
@@ -66,7 +72,9 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
   bw_granges_diff_analysis(loci_c1, loci_c2, label_c1, label_c2,
                            estimate_size_factors = estimate_size_factors,
                            as_granges = as_granges,
-                           length_factor = length_factor)
+                           length_factor = length_factor,
+                           shrink = shrink,
+                           p_cutoff = p_cutoff)
 }
 
 
@@ -86,7 +94,9 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
 #'     to true to analyze non-MINUTE data.
 #' @param as_granges If TRUE, returns a GRanges object. This is useful when
 #'     loci coordinates are relevant.
-#' @importFrom DESeq2 DESeqDataSetFromMatrix estimateDispersions nbinomWaldTest `sizeFactors<-` results estimateSizeFactors
+#' @param shrink If TRUE, apply apelgm method for low counts shrinkage
+#' @param p_cutoff Pvalue cutoff to find a result significant
+#' @importFrom DESeq2 DESeqDataSetFromMatrix estimateDispersions nbinomWaldTest `sizeFactors<-` results estimateSizeFactors lfcShrink
 #' @return a DESeqResults object as returned by DESeq2::results function. A GRanges object
 #'     if as_granges parameter is TRUE.
 #' @export
@@ -96,7 +106,9 @@ bw_granges_diff_analysis <- function(granges_c1,
                                      label_c2,
                                      estimate_size_factors = FALSE,
                                      as_granges = FALSE,
-                                     length_factor = 1000) {
+                                     length_factor = 1000,
+                                     shrink = TRUE,
+                                     p_cutoff = 0.05) {
 
   # Bind first, get numbers after (drop complete cases separately could cause error)
   granges_c1 <- sortSeqlevels(granges_c1)
@@ -148,15 +160,24 @@ bw_granges_diff_analysis <- function(granges_c1,
   dds <- estimateDispersions(dds)
   dds <- nbinomWaldTest(dds)
 
-  if (as_granges) {
-    result <- results(dds, format = "GRanges")
+  results <- NULL
+
+  if (shrink == TRUE) {
+    coef <- paste0("condition_", label_c2, "_vs_", label_c1)
+    result <- lfcShrink(dds, coef = coef, type = "apeglm", format = "GRanges")
+
+    if (!is.null(names_values)) {
+      result$name <- names_values[complete]
+    }
+  } else if (as_granges) {
+    result <- results(dds, alpha = p_cutoff, format = "GRanges")
     if (!is.null(names_values)) {
       result$name <- names_values[complete]
     }
 
   }
   else {
-   result <- results(dds, format="DataFrame")
+   result <- results(dds, alpha = p_cutoff, format="DataFrame")
   }
 
   result
