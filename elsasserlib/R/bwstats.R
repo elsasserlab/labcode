@@ -11,6 +11,7 @@
 #' @param bin_size Bin size.
 #' @inheritParams bw_granges_diff_analysis
 #' @return a DESeqResults object as returned by DESeq2::results function
+#' @importFrom wigglescout bw_bins
 #' @export
 bw_bins_diff_analysis <- function(bwfiles_c1,
                                   bwfiles_c2,
@@ -19,14 +20,22 @@ bw_bins_diff_analysis <- function(bwfiles_c1,
                                   bin_size = 10000,
                                   genome = "mm9",
                                   estimate_size_factors = FALSE,
-                                  as_granges = FALSE) {
+                                  as_granges = FALSE,
+                                  shrink = TRUE,
+                                  p_cutoff = 0.05) {
 
   bins_c1 <- bw_bins(bwfiles_c1, genome = genome, bin_size = bin_size)
   bins_c2 <- bw_bins(bwfiles_c2, genome = genome, bin_size = bin_size)
 
+  frag_length <- 150
+  length_factor <- bin_size / frag_length
+
   bw_granges_diff_analysis(bins_c1, bins_c2, label_c1, label_c2,
                            estimate_size_factors = estimate_size_factors,
-                           as_granges = as_granges)
+                           as_granges = as_granges,
+                           length_factor = length_factor,
+                           shrink = TRUE,
+                           p_cutoff = 0.05)
 }
 
 #' Run DESeq2 analysis on bed file
@@ -39,8 +48,12 @@ bw_bins_diff_analysis <- function(bwfiles_c1,
 #' @param bwfiles_c1 Path or array of paths to the bigWig files for first condition.
 #' @param bwfiles_c2 Path or array of paths to the bigWig files for second condition.
 #' @param bedfile BED file for locus specific analysis.
+#' @param length_factor Value to multiply read counts by. Ideally, this factor
+#'  should approximate locus_length / fragment_length to simulate actual read
+#'  counts from bigWig coverage.
 #' @inheritParams bw_granges_diff_analysis
 #' @return a DESeqResults object as returned by DESeq2::results function
+#' @importFrom wigglescout bw_loci
 #' @export
 bw_bed_diff_analysis <- function(bwfiles_c1,
                                  bwfiles_c2,
@@ -48,14 +61,20 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
                                  label_c1,
                                  label_c2,
                                  estimate_size_factors = FALSE,
-                                 as_granges = FALSE) {
+                                 as_granges = FALSE,
+                                 length_factor = 1000,
+                                 shrink = TRUE,
+                                 p_cutoff = 0.05) {
 
-  loci_c1 <- bw_bed(bwfiles_c1, bedfile = bedfile)
-  loci_c2 <- bw_bed(bwfiles_c2, bedfile = bedfile)
+  loci_c1 <- bw_loci(bwfiles_c1, loci = bedfile)
+  loci_c2 <- bw_loci(bwfiles_c2, loci = bedfile)
 
   bw_granges_diff_analysis(loci_c1, loci_c2, label_c1, label_c2,
                            estimate_size_factors = estimate_size_factors,
-                           as_granges = as_granges)
+                           as_granges = as_granges,
+                           length_factor = length_factor,
+                           shrink = shrink,
+                           p_cutoff = p_cutoff)
 }
 
 
@@ -75,7 +94,9 @@ bw_bed_diff_analysis <- function(bwfiles_c1,
 #'     to true to analyze non-MINUTE data.
 #' @param as_granges If TRUE, returns a GRanges object. This is useful when
 #'     loci coordinates are relevant.
-#' @importFrom DESeq2 DESeqDataSetFromMatrix estimateDispersions nbinomWaldTest `sizeFactors<-` results estimateSizeFactors
+#' @param shrink If TRUE, apply apelgm method for low counts shrinkage
+#' @param p_cutoff Pvalue cutoff to find a result significant
+#' @importFrom DESeq2 DESeqDataSetFromMatrix estimateDispersions nbinomWaldTest `sizeFactors<-` results estimateSizeFactors lfcShrink
 #' @return a DESeqResults object as returned by DESeq2::results function. A GRanges object
 #'     if as_granges parameter is TRUE.
 #' @export
@@ -84,7 +105,10 @@ bw_granges_diff_analysis <- function(granges_c1,
                                      label_c1,
                                      label_c2,
                                      estimate_size_factors = FALSE,
-                                     as_granges = FALSE) {
+                                     as_granges = FALSE,
+                                     length_factor = 1000,
+                                     shrink = TRUE,
+                                     p_cutoff = 0.05) {
 
   # Bind first, get numbers after (drop complete cases separately could cause error)
   granges_c1 <- sortSeqlevels(granges_c1)
@@ -110,7 +134,8 @@ bw_granges_diff_analysis <- function(granges_c1,
   complete <- complete.cases(cts_df)
   cts_df <- cts_df[complete, ]
 
-  cts <- get_nreads_columns(cts_df[, 6:ncol(cts_df)])
+  cts <- get_nreads_columns(cts_df[, 6:ncol(cts_df)],
+                            length_factor = length_factor)
 
   condition_labels <- c(rep(label_c1, length(mcols(granges_c1))),
                         rep(label_c2, length(mcols(granges_c2))))
@@ -135,15 +160,24 @@ bw_granges_diff_analysis <- function(granges_c1,
   dds <- estimateDispersions(dds)
   dds <- nbinomWaldTest(dds)
 
-  if (as_granges) {
-    result <- results(dds, format = "GRanges")
+  results <- NULL
+
+  if (shrink == TRUE) {
+    coef <- paste0("condition_", label_c2, "_vs_", label_c1)
+    result <- lfcShrink(dds, coef = coef, type = "apeglm", format = "GRanges")
+
+    if (!is.null(names_values)) {
+      result$name <- names_values[complete]
+    }
+  } else if (as_granges) {
+    result <- results(dds, alpha = p_cutoff, format = "GRanges")
     if (!is.null(names_values)) {
       result$name <- names_values[complete]
     }
 
   }
   else {
-   result <- results(dds, format="DataFrame")
+   result <- results(dds, alpha = p_cutoff, format="DataFrame")
   }
 
   result
@@ -163,8 +197,8 @@ bw_granges_diff_analysis <- function(granges_c1,
 get_nreads_columns <- function(df, length_factor = 1000) {
   # TODO: Consider whether to multiply by locus length. For bins analysis
   # this should not affect results, but for genes or loci of different length
-  # it might. Since we skip the size factor step, we may bias the results?
-  # So right now it's only fragment length
+  # it might. Since we skip the size factor step, we may bias the results
+  # otherwise.
   cts <- as.matrix(df)
   cts <- as.matrix(cts[complete.cases(cts),])
   cts <- round(cts*length_factor)

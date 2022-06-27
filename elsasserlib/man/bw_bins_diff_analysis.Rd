@@ -12,7 +12,9 @@ bw_bins_diff_analysis(
   bin_size = 10000,
   genome = "mm9",
   estimate_size_factors = FALSE,
-  as_granges = FALSE
+  as_granges = FALSE,
+  shrink = TRUE,
+  p_cutoff = 0.05
 )
 }
 \arguments{
@@ -33,6 +35,10 @@ to true to analyze non-MINUTE data.}
 
 \item{as_granges}{If TRUE, returns a GRanges object. This is useful when
 loci coordinates are relevant.}
+
+\item{shrink}{If TRUE, apply apelgm method for low counts shrinkage}
+
+\item{p_cutoff}{Pvalue cutoff to find a result significant}
 }
 \value{
 a DESeqResults object as returned by DESeq2::results function
